@@ -19,7 +19,7 @@ const TIMING = {
   assemble: 1400,
   hold: 1750,
   dissolve: 900,
-  countdownHold: 900,
+  countdownHold: 700,
 }
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -42,7 +42,7 @@ class Particle {
     this.y = Math.random() * height
     this.vx = 0
     this.vy = 0
-    this.size = Math.random() * 1.8 + 1.4
+    this.size = Math.random() * 0.7 + 0.5
     this.arrived = false
   }
 
@@ -132,9 +132,9 @@ function ParticleBirthdayScreen() {
     }
 
     function getParticleSampleStep(viewW) {
-      if (viewW < 480) return 5
-      if (viewW < 900) return 4
-      return 3
+      if (viewW < 480) return 3
+      if (viewW < 900) return 2
+      return 2
     }
 
     function getMaxTextSize() {
@@ -412,7 +412,7 @@ function ParticleBirthdayScreen() {
 
       fgCtx.save()
       fgCtx.shadowColor = PINK_GLOW
-      fgCtx.shadowBlur = phase === 'holding' ? 6 : 3
+      fgCtx.shadowBlur = phase === 'holding' ? 3 : 1.5
       for (const p of particles) {
         p.draw(fgCtx)
       }
