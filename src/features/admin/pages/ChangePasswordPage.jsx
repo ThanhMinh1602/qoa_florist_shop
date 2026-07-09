@@ -37,14 +37,14 @@ function ChangePasswordPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur md:px-8">
+      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8 md:py-5">
         <h2 className="text-2xl font-semibold text-slate-900">Đổi mật khẩu</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
           Tài khoản hiện tại: <span className="font-medium text-slate-700">{username}</span>
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col p-6 md:p-8">
+      <div className="flex flex-1 flex-col p-4 md:p-8">
         <section className="mx-auto w-full max-w-lg rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label className="block">

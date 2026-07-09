@@ -43,8 +43,8 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4">
-      <div className="w-full max-w-md rounded-3xl border border-rose-100 bg-white p-8 shadow-xl shadow-rose-100/60">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="w-full max-w-md rounded-3xl border border-rose-100 bg-white p-6 shadow-xl shadow-rose-100/60 sm:p-8">
         <div className="mb-8 text-center">
           <BrandLogoCenter size="xl" />
           <h1 className="mt-4 text-2xl font-semibold text-rose-900">Đăng nhập Admin</h1>

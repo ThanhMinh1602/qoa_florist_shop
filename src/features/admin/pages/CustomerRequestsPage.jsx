@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import {
   fetchCustomRequestsApi,
   updateCustomRequestStatusApi,
 } from '../../../api/notificationsApi'
 import CustomerRequestCard from '../components/CustomerRequestCard'
+import CustomerRequestCardMobile from '../mobile/CustomerRequestCardMobile'
 
 function CustomerRequestsPage() {
   const [searchParams] = useSearchParams()
@@ -15,6 +17,7 @@ function CustomerRequestsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [updatingId, setUpdatingId] = useState(null)
+  const isLgUp = useIsLgUp()
 
   const loadRequests = useCallback(async () => {
     setIsLoading(true)
@@ -82,15 +85,15 @@ function CustomerRequestsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur md:px-8">
+      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
         <h2 className="text-2xl font-semibold text-slate-900">Yêu cầu từ khách hàng</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
           Bấm vào từng đơn để xem chi tiết QR, giao hàng và lên vận chuyển.
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 lg:gap-6">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {[
             { value: '', label: 'Tất cả' },
             { value: 'pending', label: 'Chờ xử lý' },
@@ -102,7 +105,7 @@ function CustomerRequestsPage() {
               type="button"
               onClick={() => setFilter(item.value)}
               className={[
-                'rounded-xl border px-4 py-2 text-sm font-medium transition',
+                'shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition',
                 filter === item.value
                   ? 'border-rose-300 bg-rose-50 text-rose-700'
                   : 'border-rose-100 bg-white text-slate-600 hover:bg-rose-50/70',
@@ -130,18 +133,23 @@ function CustomerRequestsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {requests.map((request) => (
-              <CustomerRequestCard
-                key={request.id}
-                request={request}
-                isHighlighted={highlightId === request.id}
-                isExpanded={expandedIds.has(request.id)}
-                onToggle={() => toggleExpanded(request.id)}
-                onStatusChange={handleStatusChange}
-                onUpdated={handleRequestUpdated}
-                isUpdating={updatingId === request.id}
-              />
-            ))}
+            {requests.map((request) => {
+              const cardProps = {
+                request,
+                isHighlighted: highlightId === request.id,
+                isExpanded: expandedIds.has(request.id),
+                onToggle: () => toggleExpanded(request.id),
+                onStatusChange: handleStatusChange,
+                onUpdated: handleRequestUpdated,
+                isUpdating: updatingId === request.id,
+              }
+
+              if (isLgUp) {
+                return <CustomerRequestCard key={request.id} {...cardProps} />
+              }
+
+              return <CustomerRequestCardMobile key={request.id} {...cardProps} />
+            })}
           </div>
         )}
       </div>

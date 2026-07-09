@@ -4,7 +4,10 @@ import { submitCustomRequestApi } from '../api/customRequestsApi'
 import BirthdayScreen from '../components/BirthdayScreen'
 import BrandLogo from '../components/common/BrandLogo'
 import BrandLogoCenter from '../components/common/BrandLogoCenter'
+import { CollapsiblePreview } from '../components/mobile/CollapsiblePreview'
+import MobileStepIndicator from '../components/mobile/MobileStepIndicator'
 import MobileFrame from '../components/common/MobileFrame'
+import { useIsLgUp } from '../hooks/useMediaQuery'
 import {
   DEFAULT_CARD_STEP,
   DEFAULT_DELIVERY_STEP,
@@ -22,6 +25,7 @@ function CustomCardPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const isLgUp = useIsLgUp()
 
   const handleCardChange = useCallback((field, value) => {
     setError('')
@@ -80,8 +84,8 @@ function CustomCardPage() {
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4">
-        <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white p-8 text-center shadow-xl shadow-rose-100/60">
+      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4 pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white p-6 text-center shadow-xl shadow-rose-100/60 sm:p-8">
           <BrandLogoCenter size="md" />
           <p className="mt-4 text-4xl" aria-hidden="true">✅</p>
           <h1 className="mt-4 text-2xl font-semibold text-slate-900">Đã gửi yêu cầu!</h1>
@@ -104,14 +108,22 @@ function CustomCardPage() {
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-rose-50/80 via-white to-pink-50/60">
-      <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur">
+      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-6 md:py-5">
         <BrandLogo size="md" />
-        <h1 className="mt-3 text-2xl font-semibold text-rose-900">Tự thiết kế thiệp</h1>
+        <h1 className="mt-3 text-xl font-semibold text-rose-900 md:text-2xl">Tự thiết kế thiệp</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
           Bước 1: Thiết kế thiệp QR — Bước 2: Nhập thông tin giao hàng và gửi về shop.
         </p>
 
-        <div className="mt-5 flex items-center gap-3">
+        <MobileStepIndicator
+          step={step}
+          steps={[
+            { id: 'card', label: 'Thiệp & QR' },
+            { id: 'delivery', label: 'Giao hàng' },
+          ]}
+        />
+
+        <div className="mt-5 hidden items-center gap-3 lg:flex">
           <div className={`flex items-center gap-2 ${step >= 1 ? 'text-rose-700' : 'text-slate-400'}`}>
             <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step >= 1 ? 'bg-rose-500 text-white' : 'bg-slate-100'}`}>1</span>
             <span className="text-sm font-medium">Thiệp & QR</span>
@@ -124,8 +136,22 @@ function CustomCardPage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:p-8">
-        <section className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
+      <div className="mx-auto grid max-w-6xl gap-4 p-4 md:gap-8 md:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:p-8">
+        {!isLgUp ? (
+          <CollapsiblePreview label="Xem trước thiệp QR" defaultOpen={step === 1}>
+            <MobileFrame label="Xem trước thiệp QR">
+              <BirthdayScreen
+                preview
+                autoStart
+                senderName={cardData.senderName}
+                recipientName={cardData.recipientName}
+                message={cardData.message}
+              />
+            </MobileFrame>
+          </CollapsiblePreview>
+        ) : null}
+
+        <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-50 md:p-6">
           {step === 1 ? (
             <>
               <h3 className="text-lg font-semibold text-slate-900">Bước 1 — Nội dung thiệp QR</h3>
@@ -199,22 +225,24 @@ function CustomCardPage() {
           )}
         </section>
 
-        <section className="lg:sticky lg:top-6">
-          <MobileFrame label="Xem trước thiệp QR">
-            <BirthdayScreen
-              preview
-              autoStart
-              senderName={cardData.senderName}
-              recipientName={cardData.recipientName}
-              message={cardData.message}
-            />
-          </MobileFrame>
-          {step === 2 ? (
-            <p className="mt-3 max-w-xs text-center text-xs text-slate-500">
-              Mã QR sẽ được tạo tự động khi bạn gửi yêu cầu. Shop có thể tải QR ngay trên hệ thống admin.
-            </p>
-          ) : null}
-        </section>
+        {isLgUp ? (
+          <section className="lg:sticky lg:top-6">
+            <MobileFrame label="Xem trước thiệp QR">
+              <BirthdayScreen
+                preview
+                autoStart
+                senderName={cardData.senderName}
+                recipientName={cardData.recipientName}
+                message={cardData.message}
+              />
+            </MobileFrame>
+            {step === 2 ? (
+              <p className="mt-3 max-w-xs text-center text-xs text-slate-500">
+                Mã QR sẽ được tạo tự động khi bạn gửi yêu cầu. Shop có thể tải QR ngay trên hệ thống admin.
+              </p>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </div>
   )

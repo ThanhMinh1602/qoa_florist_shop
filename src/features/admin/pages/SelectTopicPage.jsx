@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { TOPICS } from '../../../constants/topics'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import SelectTopicGridMobile from '../mobile/SelectTopicGridMobile'
 
 function SelectTopicPage() {
   const navigate = useNavigate()
+  const isLgUp = useIsLgUp()
 
   function handleSelectTopic(topic) {
     if (!topic.available) return
@@ -10,7 +13,7 @@ function SelectTopicPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col p-6 md:p-8">
+    <div className="flex flex-1 flex-col p-4 md:p-8">
       <header className="mb-8">
         <p className="text-sm font-medium text-rose-500">Bước 1 / 2</p>
         <h2 className="mt-1 text-2xl font-semibold text-slate-900">Chọn chủ đề thiệp</h2>
@@ -20,6 +23,9 @@ function SelectTopicPage() {
         </p>
       </header>
 
+      {!isLgUp ? <SelectTopicGridMobile onSelectTopic={handleSelectTopic} /> : null}
+
+      {isLgUp ? (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {TOPICS.map((topic) => {
           const isDisabled = !topic.available
@@ -68,6 +74,7 @@ function SelectTopicPage() {
           )
         })}
       </div>
+      ) : null}
     </div>
   )
 }

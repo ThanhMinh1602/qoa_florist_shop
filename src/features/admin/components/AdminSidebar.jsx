@@ -1,35 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
+import { ADMIN_DRAWER_ITEMS, ADMIN_NAV_ITEMS } from '../constants/adminNavItems'
 
 const navItems = [
-  {
-    to: '/admin/create',
-    label: 'Tạo thiệp mới',
-    icon: '✨',
-  },
-  {
-    to: '/admin/manage',
-    label: 'Quản lý thiệp',
-    icon: '📋',
-  },
-  {
-    to: '/admin/requests',
-    label: 'Yêu cầu khách',
-    icon: '💌',
-  },
-  {
-    to: '/admin/change-password',
-    label: 'Đổi mật khẩu',
-    icon: '🔐',
-  },
+  ...ADMIN_NAV_ITEMS,
+  ...ADMIN_DRAWER_ITEMS,
 ]
 
 function AdminSidebar() {
   const { logout, username } = useAuth()
 
   return (
-    <aside className="sticky top-0 flex h-dvh min-h-dvh w-64 shrink-0 flex-col border-r border-rose-100 bg-white">
+    <aside className="sticky top-0 hidden h-dvh min-h-dvh w-64 shrink-0 flex-col border-r border-rose-100 bg-white lg:flex">
       <div className="flex justify-center border-b border-rose-100 px-6 py-6">
         <BrandLogo size="lg" center />
       </div>

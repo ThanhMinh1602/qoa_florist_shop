@@ -75,7 +75,7 @@ function NotificationBell() {
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-2xl shadow-rose-100/80">
+        <div className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-2xl shadow-rose-100/80 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto">
           <div className="flex items-center justify-between border-b border-rose-50 px-4 py-3">
             <h3 className="text-sm font-semibold text-slate-900">Thông báo</h3>
             {unreadCount > 0 ? (
