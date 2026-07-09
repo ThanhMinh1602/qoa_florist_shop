@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import BirthdayScreen from '../components/BirthdayScreen'
+import BrandLogoCenter from '../components/common/BrandLogoCenter'
 import { fetchCardById } from '../api/cardsApi'
 
 function GreetingPage() {
@@ -50,10 +51,8 @@ function GreetingPage() {
   if (notFound || !card) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 text-center">
-        <p className="text-4xl" aria-hidden="true">
-          🌸
-        </p>
-        <h1 className="mt-4 text-xl font-semibold text-rose-200">Không tìm thấy thiệp</h1>
+        <BrandLogoCenter size="sm" />
+        <h1 className="mt-6 text-xl font-semibold text-rose-200">Không tìm thấy thiệp</h1>
         <p className="mt-2 max-w-md text-sm text-rose-100/70">
           Mã QR này không tồn tại hoặc đã bị xóa. Vui lòng liên hệ shop hoa để được hỗ trợ.
         </p>

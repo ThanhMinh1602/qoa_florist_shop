@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import BrandLogoCenter from '../../../components/common/BrandLogoCenter'
 import { useAuth } from '../../../context/AuthContext'
 
 function LoginPage() {
@@ -45,10 +46,8 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4">
       <div className="w-full max-w-md rounded-3xl border border-rose-100 bg-white p-8 shadow-xl shadow-rose-100/60">
         <div className="mb-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-rose-400">
-            QOA Florist
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-rose-900">Đăng nhập Admin</h1>
+          <BrandLogoCenter size="xl" />
+          <h1 className="mt-4 text-2xl font-semibold text-rose-900">Đăng nhập Admin</h1>
           <p className="mt-2 text-sm text-slate-500">
             Tài khoản được quản lý trên hệ thống. Liên hệ quản trị nếu chưa có tài khoản.
           </p>

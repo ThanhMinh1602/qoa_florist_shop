@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
 
 const navItems = [
@@ -13,6 +14,11 @@ const navItems = [
     icon: '📋',
   },
   {
+    to: '/admin/requests',
+    label: 'Yêu cầu khách',
+    icon: '💌',
+  },
+  {
     to: '/admin/change-password',
     label: 'Đổi mật khẩu',
     icon: '🔐',
@@ -24,11 +30,8 @@ function AdminSidebar() {
 
   return (
     <aside className="sticky top-0 flex h-dvh min-h-dvh w-64 shrink-0 flex-col border-r border-rose-100 bg-white">
-      <div className="border-b border-rose-100 px-6 py-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400">
-          QOA Florist
-        </p>
-        <h1 className="mt-1 text-lg font-semibold text-rose-900">Admin Panel</h1>
+      <div className="flex justify-center border-b border-rose-100 px-6 py-6">
+        <BrandLogo size="lg" center />
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-4">
