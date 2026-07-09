@@ -1,242 +1,67 @@
-.birthday-screen {
-  --color-bg-start: #fff5f8;
-  --color-bg-end: #fde8ef;
-  --color-rose: #e85d8a;
-  --color-rose-dark: #c43d6b;
-  --color-gold: #d4a054;
-  --color-text: #5c3d4a;
-  --color-text-light: #8b6675;
-  --color-card: rgba(255, 255, 255, 0.72);
-  --shadow-soft: 0 24px 60px rgba(200, 90, 130, 0.14);
-  --content-width: min(920px, 100%);
-
-  position: relative;
-  min-height: 100svh;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(1rem, 3vw, 2.5rem);
-  background: linear-gradient(
-    160deg,
-    var(--color-bg-start) 0%,
-    #fff9fb 45%,
-    var(--color-bg-end) 100%
-  );
-}
-
-.birthday-screen__bg {
-  position: absolute;
+.particle-screen {
+  position: fixed;
   inset: 0;
-  pointer-events: none;
   overflow: hidden;
+  background: #000000;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  height: 100svh;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.birthday-screen__orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.45;
-}
-
-.birthday-screen__orb--1 {
-  width: clamp(180px, 30vw, 320px);
-  height: clamp(180px, 30vw, 320px);
-  top: -8%;
-  left: -6%;
-  background: #ffb8d0;
-}
-
-.birthday-screen__orb--2 {
-  width: clamp(140px, 24vw, 260px);
-  height: clamp(140px, 24vw, 260px);
-  right: -4%;
-  top: 18%;
-  background: #ffd4a8;
-}
-
-.birthday-screen__orb--3 {
-  width: clamp(160px, 28vw, 300px);
-  height: clamp(160px, 28vw, 300px);
-  bottom: -10%;
-  left: 30%;
-  background: #f5a8c8;
-}
-
-.birthday-screen__confetti {
-  position: absolute;
+.particle-screen__canvas {
+  position: fixed;
   inset: 0;
-  pointer-events: none;
+  display: block;
+}
+
+.particle-screen__canvas--bg {
+  z-index: 1;
+}
+
+.particle-screen__canvas--fg {
   z-index: 2;
+  pointer-events: none;
 }
 
-.birthday-screen__confetti-lottie {
+.particle-screen--preview {
+  position: relative;
   width: 100%;
   height: 100%;
+  min-height: 0;
 }
 
-.birthday-screen__content {
-  position: relative;
-  z-index: 3;
-  width: var(--content-width);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: clamp(0.75rem, 2.5vw, 1.5rem);
+.particle-screen--preview .particle-screen__canvas {
+  position: absolute;
+  inset: 0;
 }
 
-.birthday-screen__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.25rem;
-}
-
-.birthday-screen__brand-icon {
-  color: var(--color-rose);
-  font-size: clamp(0.9rem, 2vw, 1.1rem);
-}
-
-.birthday-screen__brand-name {
-  margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: clamp(0.8rem, 1.8vw, 0.95rem);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-rose-dark);
-}
-
-.birthday-screen__hero {
-  width: min(100%, 520px);
-  aspect-ratio: 1;
+.particle-screen__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.birthday-screen__hero-lottie {
-  width: 100%;
-  height: 100%;
-}
-
-.birthday-screen__message {
-  width: 100%;
-  padding: clamp(1.25rem, 3.5vw, 2rem) clamp(1rem, 4vw, 2.5rem);
-  border-radius: 24px;
-  background: var(--color-card);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-soft);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-}
-
-.birthday-screen__subtitle {
-  margin: 0 0 0.35rem;
-  font-size: clamp(0.85rem, 2vw, 1rem);
-  color: var(--color-gold);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-
-.birthday-screen__title {
-  margin: 0;
-  font-family: 'Segoe UI', Georgia, serif;
-  font-size: clamp(1.75rem, 5.5vw, 3rem);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--color-rose-dark), var(--color-rose));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.birthday-screen__name {
-  margin: 0.5rem 0 0.85rem;
-  font-size: clamp(1.25rem, 3.5vw, 1.85rem);
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.85);
+  color: rgba(255, 182, 193, 0.95);
+  font-size: clamp(1rem, 4vw, 1.5rem);
   font-weight: 600;
-  color: var(--color-rose-dark);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.6s ease;
+  border: none;
+  width: 100%;
+  font-family: inherit;
 }
 
-.birthday-screen__text {
-  margin: 0;
-  max-width: 38rem;
-  margin-inline: auto;
-  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-  line-height: 1.7;
-  color: var(--color-text);
-}
-
-.birthday-screen__footer {
-  display: flex;
-  gap: clamp(0.75rem, 3vw, 1.5rem);
-  font-size: clamp(1.4rem, 4vw, 2rem);
-  margin-top: 0.25rem;
-}
-
-/* Mobile */
-@media (max-width: 639px) {
-  .birthday-screen {
-    padding: 1rem 0.85rem 1.5rem;
-  }
-
-  .birthday-screen__hero {
-    width: min(100%, 300px);
-  }
-
-  .birthday-screen__message {
-    border-radius: 20px;
-  }
-
-  .birthday-screen__content {
-    gap: 0.65rem;
-  }
-}
-
-/* iPad / Tablet */
-@media (min-width: 640px) and (max-width: 1024px) {
-  .birthday-screen__hero {
-    width: min(100%, 400px);
-  }
-
-  .birthday-screen__content {
-    gap: 1rem;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1025px) {
-  .birthday-screen__hero {
-    width: min(100%, 460px);
-  }
-
-  .birthday-screen__message {
-    padding: 2rem 3rem;
-  }
-}
-
-/* Landscape phones */
-@media (max-height: 500px) and (orientation: landscape) {
-  .birthday-screen {
-    align-items: flex-start;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
-
-  .birthday-screen__hero {
-    width: min(34vh, 220px);
-  }
-
-  .birthday-screen__content {
-    gap: 0.5rem;
-  }
-
-  .birthday-screen__message {
-    padding: 0.85rem 1.25rem;
-  }
-
-  .birthday-screen__footer {
-    display: none;
-  }
+.particle-screen__overlay--hidden {
+  opacity: 0;
+  pointer-events: none;
 }
