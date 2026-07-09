@@ -3,12 +3,18 @@ import { Link, useParams } from 'react-router-dom'
 import BirthdayScreen from '../components/BirthdayScreen'
 import BrandLogoCenter from '../components/common/BrandLogoCenter'
 import { fetchCardById } from '../api/cardsApi'
+import { useIsLgUp } from '../hooks/useMediaQuery'
+import {
+  GreetingLoadingMobile,
+  GreetingNotFoundMobile,
+} from '../features/custom/mobile/GreetingMobileViews'
 
 function GreetingPage() {
   const { uuid } = useParams()
   const [card, setCard] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const isLgUp = useIsLgUp()
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +47,10 @@ function GreetingPage() {
   }, [uuid])
 
   if (isLoading) {
+    if (!isLgUp) {
+      return <GreetingLoadingMobile />
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <p className="text-sm text-rose-200/80">Đang tải thiệp...</p>
@@ -49,6 +59,10 @@ function GreetingPage() {
   }
 
   if (notFound || !card) {
+    if (!isLgUp) {
+      return <GreetingNotFoundMobile />
+    }
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 text-center">
         <BrandLogoCenter size="sm" />
