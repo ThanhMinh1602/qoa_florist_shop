@@ -4,6 +4,8 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { buildGreetingUrl } from '../../../constants/app'
 import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+import TopicLabel from '../../../components/common/TopicLabel'
 
 function formatDate(isoString) {
   if (!isoString) return '—'
@@ -55,7 +57,7 @@ function CardQrModal({ card, onClose }) {
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Mã QR thiệp</h3>
             <p className="mt-1 text-sm text-slate-500">
-              {topic?.emoji} {topic?.name ?? card.topicId} — {card.recipientName}
+              <TopicLabel topic={topic} topicId={card.topicId} /> — {card.recipientName}
             </p>
           </div>
           <button
@@ -64,7 +66,7 @@ function CardQrModal({ card, onClose }) {
             className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
             aria-label="Đóng"
           >
-            ✕
+            <MaterialIcon name="close" className="text-xl" />
           </button>
         </div>
 
@@ -121,9 +123,7 @@ function ManageCardsTable({ cards, onViewQr, onDelete, deletingId }) {
   if (cards.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-        <p className="text-3xl" aria-hidden="true">
-          📭
-        </p>
+        <MaterialIcon name="inbox" className="mx-auto text-4xl text-rose-300" />
         <p className="mt-3 text-sm font-medium text-slate-700">Chưa có thiệp nào phù hợp</p>
         <p className="mt-1 text-sm text-slate-500">
           Thử đổi bộ lọc hoặc tạo thiệp mới từ menu bên trái.
@@ -157,8 +157,7 @@ function ManageCardsTable({ cards, onViewQr, onDelete, deletingId }) {
                     {formatDate(card.createdAt)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                    <span aria-hidden="true">{topic?.emoji ?? '🎴'}</span>{' '}
-                    {topic?.name ?? card.topicId}
+                    <TopicLabel topic={topic} topicId={card.topicId} />
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-800">{card.recipientName}</td>
                   <td className="px-4 py-3 text-slate-600">{card.senderName || '—'}</td>

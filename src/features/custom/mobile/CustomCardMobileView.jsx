@@ -1,6 +1,7 @@
 import BirthdayScreen from '../../../components/BirthdayScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import MobileFrame from '../../../components/common/MobileFrame'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import CustomCardHeaderMobile from './CustomCardHeaderMobile'
 import CustomCardStepFormMobile from './CustomCardStepFormMobile'
 import CustomDeliveryFormMobile from './CustomDeliveryFormMobile'
@@ -69,7 +70,10 @@ function CustomCardMobileView({
                 onClick={onBack}
                 className="text-sm font-medium text-rose-600 active:text-rose-700"
               >
-                ← Quay lại bước 1
+                <span className="inline-flex items-center gap-1">
+                  <MaterialIcon name="arrow_back" className="text-base" />
+                  Quay lại bước 1
+                </span>
               </button>
               <h3 className="mt-3 text-base font-semibold text-slate-900">Thông tin giao hàng</h3>
               <p className="mt-1 text-xs text-slate-500">

@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import { ADMIN_NAV_ITEMS } from '../constants/adminNavItems'
 
 function AdminMobileBottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-rose-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-rose-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       aria-label="Điều hướng chính"
     >
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-2">
         {ADMIN_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -23,12 +24,11 @@ function AdminMobileBottomNav() {
               <>
                 <span
                   className={[
-                    'flex h-9 w-9 items-center justify-center rounded-2xl text-lg transition-colors',
+                    'flex h-9 w-9 items-center justify-center rounded-2xl transition-colors',
                     isActive ? 'bg-rose-50 ring-1 ring-rose-100' : 'bg-transparent',
                   ].join(' ')}
-                  aria-hidden="true"
                 >
-                  {item.icon}
+                  <MaterialIcon name={item.icon} className="text-[1.35rem]" />
                 </span>
                 <span>{item.shortLabel}</span>
               </>

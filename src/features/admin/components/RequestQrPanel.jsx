@@ -4,6 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { buildGreetingUrl } from '../../../constants/app'
 import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
+import TopicLabel from '../../../components/common/TopicLabel'
 
 function RequestQrPanel({ request }) {
   const canvasRef = useRef(null)
@@ -26,7 +27,7 @@ function RequestQrPanel({ request }) {
     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
       <h4 className="text-sm font-semibold text-slate-900">Mã QR thiệp</h4>
       <p className="mt-1 text-xs text-slate-500">
-        {topic?.emoji} {topic?.name} — {request.recipientName}
+        <TopicLabel topic={topic} topicId={request.topicId} /> — {request.recipientName}
       </p>
 
       <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:items-start">

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import BrandLogo from '../../../components/common/BrandLogo'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useAuth } from '../../../context/AuthContext'
 import { ADMIN_DRAWER_ITEMS } from '../constants/adminNavItems'
 
@@ -26,7 +27,7 @@ function AdminMobileDrawer({ isOpen, onClose }) {
             className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-rose-50 hover:text-slate-700"
             aria-label="Đóng"
           >
-            ✕
+            <MaterialIcon name="close" />
           </button>
         </div>
 
@@ -53,7 +54,7 @@ function AdminMobileDrawer({ isOpen, onClose }) {
                 ].join(' ')
               }
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <MaterialIcon name={item.icon} className="text-[1.25rem]" />
               {item.label}
             </NavLink>
           ))}
@@ -66,8 +67,9 @@ function AdminMobileDrawer({ isOpen, onClose }) {
               onClose()
               logout()
             }}
-            className="w-full rounded-xl border border-rose-100 px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
           >
+            <MaterialIcon name="logout" className="text-[1.15rem]" />
             Đăng xuất
           </button>
         </div>

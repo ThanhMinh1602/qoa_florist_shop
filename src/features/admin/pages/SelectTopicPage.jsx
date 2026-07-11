@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { TOPICS } from '../../../constants/topics'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import SelectTopicGridMobile from '../mobile/SelectTopicGridMobile'
 
 function SelectTopicPage() {
@@ -15,11 +16,11 @@ function SelectTopicPage() {
   return (
     <div className="flex flex-1 flex-col p-4 md:p-8">
       <header className="mb-8">
-        <p className="text-sm font-medium text-rose-500">Bước 1 / 2</p>
+        <p className="text-sm font-medium text-rose-500">Thiệp QR nhanh</p>
         <h2 className="mt-1 text-2xl font-semibold text-slate-900">Chọn chủ đề thiệp</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Chọn loại thiệp phù hợp với dịp. Hiện tại chỉ mở chủ đề Sinh nhật; các chủ đề khác sẽ
-          được bổ sung sau.
+          Dùng khi chỉ cần tạo QR dán bó hoa / gửi Zalo — không kèm giao hàng. Cần giao thì dùng
+          Lên đơn giao.
         </p>
       </header>
 
@@ -48,7 +49,7 @@ function SelectTopicPage() {
                   aria-hidden="true"
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-2xl"
                 >
-                  {topic.emoji}
+                  <MaterialIcon name={topic.icon} className="text-2xl text-rose-500" />
                 </span>
 
                 {isDisabled ? (
@@ -66,8 +67,9 @@ function SelectTopicPage() {
               <p className="mt-2 text-sm leading-6 text-slate-500">{topic.description}</p>
 
               {!isDisabled ? (
-                <p className="mt-4 text-sm font-medium text-rose-600 group-hover:text-rose-700">
-                  Chọn chủ đề này →
+                <p className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-rose-600 group-hover:text-rose-700">
+                  Chọn chủ đề này
+                  <MaterialIcon name="arrow_forward" className="text-base" />
                 </p>
               ) : null}
             </button>

@@ -1,4 +1,5 @@
 import BrandLogoCenter from '../../../components/common/BrandLogoCenter'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 
 function CustomSuccessMobile({ customerPhone, onReset }) {
   return (
@@ -6,9 +7,7 @@ function CustomSuccessMobile({ customerPhone, onReset }) {
       <div className="flex flex-1 flex-col items-center justify-center">
         <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white p-6 text-center shadow-xl shadow-rose-100/60">
           <BrandLogoCenter size="md" />
-          <p className="mt-4 text-4xl" aria-hidden="true">
-            ✅
-          </p>
+          <MaterialIcon name="check_circle" className="mt-4 text-5xl text-emerald-500" filled />
           <h1 className="mt-4 text-2xl font-semibold text-slate-900">Đã gửi yêu cầu!</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             QOA Florist đã nhận thiệp và thông tin giao hàng. Shop sẽ liên hệ qua{' '}

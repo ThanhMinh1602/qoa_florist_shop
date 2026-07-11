@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import BirthdayScreen from '../../../components/BirthdayScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import MobileFrame from '../../../components/common/MobileFrame'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { DEFAULT_BIRTHDAY_CARD_FORM } from '../../../constants/cardDefaults'
@@ -55,7 +56,10 @@ function CreateCardPage() {
           to="/admin/create"
           className="mt-4 text-sm font-medium text-rose-600 hover:text-rose-700"
         >
-          ← Quay lại chọn chủ đề
+          <span className="inline-flex items-center gap-1">
+            <MaterialIcon name="arrow_back" className="text-base" />
+            Quay lại chọn chủ đề
+          </span>
         </Link>
       </div>
     )
@@ -72,14 +76,17 @@ function CreateCardPage() {
           to="/admin/create"
           className="text-sm font-medium text-rose-600 transition hover:text-rose-700"
         >
-          ← Quay lại chọn chủ đề
+          <span className="inline-flex items-center gap-1">
+            <MaterialIcon name="arrow_back" className="text-base" />
+            Quay lại chọn chủ đề
+          </span>
         </Link>
-        <p className="mt-3 text-sm font-medium text-rose-500">Bước 2 / 2</p>
+        <p className="mt-3 text-sm font-medium text-rose-500">Thiệp QR nhanh</p>
         <h2 className="mt-1 text-2xl font-semibold text-slate-900">
           Tạo thiệp: {topic.name}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Nhập thông tin bên trái — bản xem trước cập nhật ngay lập tức bên phải.
+          Chỉ tạo QR — không tạo đơn giao. Cần giao hoa thì dùng Lên đơn giao.
         </p>
       </header>
 

@@ -3,7 +3,9 @@ import { submitCustomRequestApi } from '../api/customRequestsApi'
 import BirthdayScreen from '../components/BirthdayScreen'
 import BrandLogo from '../components/common/BrandLogo'
 import BrandLogoCenter from '../components/common/BrandLogoCenter'
+import MaterialIcon from '../components/common/MaterialIcon'
 import MobileFrame from '../components/common/MobileFrame'
+import TopicLabel from '../components/common/TopicLabel'
 import { useIsLgUp } from '../hooks/useMediaQuery'
 import {
   DEFAULT_CARD_STEP,
@@ -92,7 +94,7 @@ function CustomCardPage() {
       <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4 pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white p-6 text-center shadow-xl shadow-rose-100/60 sm:p-8">
           <BrandLogoCenter size="md" />
-          <p className="mt-4 text-4xl" aria-hidden="true">✅</p>
+          <MaterialIcon name="check_circle" className="mt-4 text-5xl text-emerald-500" filled />
           <h1 className="mt-4 text-2xl font-semibold text-slate-900">Đã gửi yêu cầu!</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             QOA Florist đã nhận thiệp và thông tin giao hàng. Shop sẽ liên hệ qua{' '}
@@ -175,7 +177,7 @@ function CustomCardPage() {
                           : 'border-rose-100 bg-white text-slate-600 hover:bg-rose-50/70',
                       ].join(' ')}
                     >
-                      {topic.emoji} {topic.name}
+                      <TopicLabel topic={topic} />
                     </button>
                   ))}
                 </div>
@@ -192,7 +194,10 @@ function CustomCardPage() {
                 onClick={handleContinueToStep2}
                 className="mt-6 rounded-xl bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600"
               >
-                Tiếp tục — Thông tin giao hàng →
+                <span className="inline-flex items-center gap-1">
+                  Tiếp tục — Thông tin giao hàng
+                  <MaterialIcon name="arrow_forward" className="text-base" />
+                </span>
               </button>
             </>
           ) : (
@@ -202,7 +207,10 @@ function CustomCardPage() {
                 onClick={() => setStep(1)}
                 className="text-sm font-medium text-rose-600 transition hover:text-rose-700"
               >
-                ← Quay lại bước 1
+                <span className="inline-flex items-center gap-1">
+                  <MaterialIcon name="arrow_back" className="text-base" />
+                  Quay lại bước 1
+                </span>
               </button>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Bước 2 — Thông tin giao hàng</h3>
               <p className="mt-1 text-sm text-slate-500">

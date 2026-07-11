@@ -4,8 +4,9 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { buildGreetingUrl } from '../../../constants/app'
 import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 
-function CardQrPanel({ card }) {
+function CardQrPanel({ card, embedded = false }) {
   const canvasRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const topic = getTopicById(card.topicId)
@@ -23,21 +24,34 @@ function CardQrPanel({ card }) {
   }
 
   return (
-    <div className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-6">
-      <div className="flex items-start gap-3">
-        <span aria-hidden="true" className="text-xl">
-          ✅
-        </span>
-        <div>
-          <h4 className="text-lg font-semibold text-slate-900">Đã tạo thiệp & mã QR</h4>
-          <p className="mt-1 text-sm text-slate-600">
-            Chủ đề: <span className="font-medium">{topic?.name ?? card.topicId}</span> — Người
-            nhận: <span className="font-medium">{card.recipientName}</span>
-          </p>
+    <div
+      className={
+        embedded
+          ? 'rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4'
+          : 'mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-6'
+      }
+    >
+      {!embedded ? (
+        <div className="flex items-start gap-3">
+          <MaterialIcon name="check_circle" className="text-2xl text-emerald-500" filled />
+          <div>
+            <h4 className="text-lg font-semibold text-slate-900">Đã tạo thiệp & mã QR</h4>
+            <p className="mt-1 text-sm text-slate-600">
+              Chủ đề: <span className="font-medium">{topic?.name ?? card.topicId}</span> — Người
+              nhận: <span className="font-medium">{card.recipientName}</span>
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <h4 className="text-sm font-semibold text-slate-900">Mã QR thiệp</h4>
+      )}
 
-      <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+      <div
+        className={[
+          'flex flex-col items-center gap-4 sm:flex-row sm:items-start',
+          embedded ? 'mt-4' : 'mt-6',
+        ].join(' ')}
+      >
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-rose-100">
           <QRCodeCanvas
             ref={canvasRef}
@@ -82,7 +96,7 @@ function CardQrPanel({ card }) {
               to="/admin/manage"
               className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
             >
-              Xem trong Quản lý
+              Xem trong Đơn hàng
             </Link>
           </div>
         </div>

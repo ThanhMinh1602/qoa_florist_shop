@@ -6,6 +6,7 @@ import AdminSidebar from '../components/AdminSidebar'
 import AdminMobileBottomNav from '../mobile/AdminMobileBottomNav'
 import AdminMobileDrawer from '../mobile/AdminMobileDrawer'
 import BrandLogo from '../../../components/common/BrandLogo'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import NotificationBell from '../components/NotificationBell'
 
 function AdminMobileTopBar({ onOpenMenu }) {
@@ -20,9 +21,7 @@ function AdminMobileTopBar({ onOpenMenu }) {
           className="flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
           aria-label="Mở menu"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-            <path d="M4 7a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2H4Zm0 5a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2H4Zm0 5a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2H4Z" />
-          </svg>
+          <MaterialIcon name="menu" className="text-[1.4rem]" />
         </button>
       </div>
     </header>

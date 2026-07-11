@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { getTopicById } from '../../../constants/topics'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+import TopicLabel from '../../../components/common/TopicLabel'
 
 function formatDate(isoString) {
   if (!isoString) return '—'
@@ -23,9 +25,7 @@ function ManageCardsTableMobile({ cards, onViewQr, onDelete, deletingId }) {
   if (cards.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-4 py-12 text-center">
-        <p className="text-3xl" aria-hidden="true">
-          📭
-        </p>
+        <MaterialIcon name="inbox" className="mx-auto text-4xl text-rose-300" />
         <p className="mt-3 text-sm font-medium text-slate-700">Chưa có thiệp nào phù hợp</p>
         <p className="mt-1 text-sm text-slate-500">Thử đổi bộ lọc hoặc tạo thiệp mới.</p>
       </div>
@@ -46,7 +46,7 @@ function ManageCardsTableMobile({ cards, onViewQr, onDelete, deletingId }) {
               <div className="min-w-0">
                 <p className="text-base font-semibold text-slate-900">{card.recipientName}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {topic?.emoji} {topic?.name ?? card.topicId}
+                  <TopicLabel topic={topic} topicId={card.topicId} />
                 </p>
               </div>
               <p className="shrink-0 text-[11px] text-slate-400">{formatDate(card.createdAt)}</p>

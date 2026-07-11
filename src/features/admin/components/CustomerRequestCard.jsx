@@ -2,6 +2,8 @@ import { SHIPPING_STATUS_LABELS } from '../../../constants/customRequestDefaults
 import { getTopicById } from '../../../constants/topics'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+import TopicLabel from '../../../components/common/TopicLabel'
 import RequestExportButton from './RequestExportButton'
 import RequestQrPanel from './RequestQrPanel'
 import RequestShippingPanel from './RequestShippingPanel'
@@ -63,8 +65,10 @@ function CustomerRequestCard({
             ) : null}
           </span>
 
-          <span className="mt-1 block text-sm text-slate-500">
-            {formatTimeAgo(request.createdAt)} · {topic?.emoji} {topic?.name ?? request.topicId}
+          <span className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+            <span>{formatTimeAgo(request.createdAt)}</span>
+            <span>·</span>
+            {hasCard ? <TopicLabel topic={topic} topicId={request.topicId} /> : <span>Không QR</span>}
           </span>
 
           <div className={[ANIMATION_CLASS, isExpanded ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'].join(' ')}>
@@ -92,9 +96,7 @@ function CustomerRequestCard({
           ].join(' ')}
           aria-hidden="true"
         >
-          <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current">
-            <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" />
-          </svg>
+          <MaterialIcon name="expand_more" className="text-xl" />
         </span>
       </button>
 
@@ -120,7 +122,7 @@ function CustomerRequestCard({
               <RequestQrPanel request={request} />
             ) : (
               <div className="rounded-2xl border border-dashed border-rose-200 px-4 py-8 text-center text-sm text-slate-500">
-                Đơn cũ chưa có mã QR
+                Đơn không kèm thiệp QR
               </div>
             )}
 

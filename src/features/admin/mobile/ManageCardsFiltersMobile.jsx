@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { TOPICS } from '../../../constants/topics'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 
 function ManageCardsFiltersMobile({ filters, onChange, onApply, onReset, isLoading }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -40,9 +41,7 @@ function ManageCardsFiltersMobile({ filters, onChange, onApply, onReset, isLoadi
           ].join(' ')}
           aria-hidden="true"
         >
-          <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current">
-            <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" />
-          </svg>
+          <MaterialIcon name="expand_more" className="text-xl" />
         </span>
       </button>
 
@@ -94,7 +93,7 @@ function ManageCardsFiltersMobile({ filters, onChange, onApply, onReset, isLoadi
                 <option value="">Tất cả</option>
                 {TOPICS.map((topic) => (
                   <option key={topic.id} value={topic.id}>
-                    {topic.emoji} {topic.name}
+                    {topic.name}
                   </option>
                 ))}
               </select>

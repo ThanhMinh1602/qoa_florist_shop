@@ -62,7 +62,7 @@ function ManageCardsFilters({ filters, onChange, onApply, onReset, isLoading }) 
             <option value="">Tất cả</option>
             {TOPICS.map((topic) => (
               <option key={topic.id} value={topic.id}>
-                {topic.emoji} {topic.name}
+                {topic.name}
               </option>
             ))}
           </select>

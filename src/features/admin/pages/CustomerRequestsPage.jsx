@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import {
   fetchCustomRequestsApi,
   updateCustomRequestStatusApi,
 } from '../../../api/notificationsApi'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import CustomerRequestCard from '../components/CustomerRequestCard'
 import CustomerRequestCardMobile from '../mobile/CustomerRequestCardMobile'
 
@@ -86,10 +87,20 @@ function CustomerRequestsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
-        <h2 className="text-2xl font-semibold text-slate-900">Yêu cầu từ khách hàng</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Bấm vào từng đơn để xem chi tiết QR, giao hàng và lên vận chuyển.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Yêu cầu từ khách hàng</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+              Bấm vào từng đơn để xem chi tiết QR, giao hàng và lên vận chuyển.
+            </p>
+          </div>
+          <Link
+            to="/admin/orders/new"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600"
+          >
+            + Lên đơn mới
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 lg:gap-6">
@@ -126,9 +137,7 @@ function CustomerRequestsPage() {
           <p className="text-sm text-slate-500">Đang tải...</p>
         ) : requests.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-            <p className="text-3xl" aria-hidden="true">
-              📭
-            </p>
+            <MaterialIcon name="inbox" className="mx-auto text-4xl text-rose-300" />
             <p className="mt-3 text-sm font-medium text-slate-700">Chưa có yêu cầu nào</p>
           </div>
         ) : (

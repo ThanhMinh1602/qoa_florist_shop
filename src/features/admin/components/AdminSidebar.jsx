@@ -1,12 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import BrandLogo from '../../../components/common/BrandLogo'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useAuth } from '../../../context/AuthContext'
 import { ADMIN_DRAWER_ITEMS, ADMIN_NAV_ITEMS } from '../constants/adminNavItems'
 
-const navItems = [
-  ...ADMIN_NAV_ITEMS,
-  ...ADMIN_DRAWER_ITEMS,
-]
+const navItems = [...ADMIN_NAV_ITEMS, ...ADMIN_DRAWER_ITEMS]
 
 function AdminSidebar() {
   const { logout, username } = useAuth()
@@ -31,9 +29,7 @@ function AdminSidebar() {
               ].join(' ')
             }
           >
-            <span aria-hidden="true" className="text-base">
-              {item.icon}
-            </span>
+            <MaterialIcon name={item.icon} className="text-[1.25rem]" />
             {item.label}
           </NavLink>
         ))}
@@ -48,8 +44,9 @@ function AdminSidebar() {
         <button
           type="button"
           onClick={logout}
-          className="w-full rounded-xl border border-rose-100 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
         >
+          <MaterialIcon name="logout" className="text-[1.15rem]" />
           Đăng xuất
         </button>
       </div>

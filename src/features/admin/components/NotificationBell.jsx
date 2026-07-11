@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useNotifications } from '../../../context/NotificationsContext'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 
@@ -42,7 +43,7 @@ function NotificationBell() {
     }
 
     setIsOpen(false)
-    navigate(`/admin/requests?highlight=${notification.referenceId}`)
+    navigate(`/admin/manage?highlight=${notification.referenceId}`)
   }
 
   async function handleMarkAllRead() {
@@ -64,9 +65,7 @@ function NotificationBell() {
         aria-label="Thông báo"
         aria-expanded={isOpen}
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-          <path d="M12 2a6 6 0 0 0-6 6v3.1l-1.4 2.8A1 1 0 0 0 5.6 15H9v1a3 3 0 0 0 6 0v-1h3.4a1 1 0 0 0 .9-1.5L18 11.1V8a6 6 0 0 0-6-6Zm-1 13v1a1 1 0 0 0 2 0v-1h-2Z" />
-        </svg>
+        <MaterialIcon name="notifications" className="text-[1.4rem]" />
         {unreadCount > 0 ? (
           <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -106,11 +105,8 @@ function NotificationBell() {
                         notification.read ? 'bg-white' : 'bg-rose-50/40',
                       ].join(' ')}
                     >
-                      <span
-                        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-lg"
-                        aria-hidden="true"
-                      >
-                        🌸
+                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                        <MaterialIcon name="local_florist" className="text-[1.25rem]" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start justify-between gap-2">
@@ -147,11 +143,11 @@ function NotificationBell() {
               type="button"
               onClick={() => {
                 setIsOpen(false)
-                navigate('/admin/requests')
+                navigate('/admin/manage')
               }}
               className="w-full rounded-lg py-2 text-center text-xs font-medium text-rose-600 transition hover:bg-rose-50"
             >
-              Xem tất cả yêu cầu khách
+              Xem tất cả đơn hàng
             </button>
           </div>
         </div>

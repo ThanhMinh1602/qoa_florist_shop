@@ -1,4 +1,5 @@
 import { TOPICS } from '../../../constants/topics'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 
 function SelectTopicGridMobile({ onSelectTopic }) {
   return (
@@ -24,7 +25,7 @@ function SelectTopicGridMobile({ onSelectTopic }) {
                 aria-hidden="true"
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-2xl"
               >
-                {topic.emoji}
+                <MaterialIcon name={topic.icon} className="text-2xl text-rose-500" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2">

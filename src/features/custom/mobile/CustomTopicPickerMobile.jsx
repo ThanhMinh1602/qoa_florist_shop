@@ -1,3 +1,5 @@
+import MaterialIcon from '../../../components/common/MaterialIcon'
+
 function CustomTopicPickerMobile({ topics, topicId, onSelect }) {
   return (
     <div className="space-y-2">
@@ -19,7 +21,7 @@ function CustomTopicPickerMobile({ topics, topicId, onSelect }) {
               ].join(' ')}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm">
-                {topic.emoji}
+                <MaterialIcon name={topic.icon} className="text-xl text-rose-500" />
               </span>
               <span className="text-sm font-medium">{topic.name}</span>
             </button>

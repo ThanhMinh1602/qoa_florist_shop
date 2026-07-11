@@ -12,7 +12,7 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const redirectPath = location.state?.from?.pathname || '/admin/create'
+  const redirectPath = location.state?.from?.pathname || '/admin/orders/new'
 
   if (isLoading) {
     return (
