@@ -1,21 +1,35 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import BirthdayScreen from '../../../components/BirthdayScreen'
 import MobileFrame from '../../../components/common/MobileFrame'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+import TopicLabel from '../../../components/common/TopicLabel'
 import { submitCustomRequestApi } from '../../../api/customRequestsApi'
+import { fetchProductsApi } from '../../../api/productsApi'
 import {
   DEFAULT_CARD_STEP,
   DEFAULT_DELIVERY_STEP,
 } from '../../../constants/customRequestDefaults'
 import { TOPICS } from '../../../constants/topics'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
-import MaterialIcon from '../../../components/common/MaterialIcon'
-import TopicLabel from '../../../components/common/TopicLabel'
 import CustomCardStepForm from '../../custom/components/CustomCardStepForm'
 import { ORDER_CREATE_MODES } from '../constants/adminNavItems'
 import AdminDeliveryForm from '../components/AdminDeliveryForm'
 import CreateOrderSuccess from '../components/CreateOrderSuccess'
+import OrderItemsEditor, { calcItemsSubtotal } from '../components/OrderItemsEditor'
+import OrderMoneyFields from '../components/OrderMoneyFields'
 import CreateOrderMobileView from '../mobile/CreateOrderMobileView'
+
+const EMPTY_MONEY = {
+  deposit: '',
+  shippingFee: '',
+  codAmount: '',
+  paidAmount: '',
+  paymentStatus: 'unpaid',
+  paymentNote: '',
+  shipDate: '',
+  subtotalOverride: '',
+}
 
 function OrderModePicker({ mode, onChange }) {
   return (
@@ -56,12 +70,26 @@ function CreateOrderPage() {
   const [topicId, setTopicId] = useState(availableTopics[0]?.id ?? 'birthday')
   const [cardData, setCardData] = useState(DEFAULT_CARD_STEP)
   const [deliveryData, setDeliveryData] = useState(DEFAULT_DELIVERY_STEP)
+  const [products, setProducts] = useState([])
+  const [items, setItems] = useState([])
+  const [money, setMoney] = useState(EMPTY_MONEY)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [savedRequest, setSavedRequest] = useState(null)
   const isLgUp = useIsLgUp()
 
   const withQr = mode === 'delivery_qr'
+  const itemsSubtotal = useMemo(() => calcItemsSubtotal(items), [items])
+  const subtotal =
+    money.subtotalOverride !== '' && money.subtotalOverride !== undefined
+      ? Number(money.subtotalOverride) || 0
+      : itemsSubtotal
+
+  useEffect(() => {
+    fetchProductsApi(true)
+      .then((result) => setProducts(result.data || []))
+      .catch(() => setProducts([]))
+  }, [])
 
   useEffect(() => {
     if (modeParam && ORDER_CREATE_MODES.some((item) => item.id === modeParam)) {
@@ -81,16 +109,27 @@ function CreateOrderPage() {
     setDeliveryData((previous) => ({ ...previous, [field]: value }))
   }, [])
 
+  const handleMoneyChange = useCallback((field, value) => {
+    setError('')
+    setMoney((previous) => {
+      const next = { ...previous, [field]: value }
+      if (field === 'deposit' && !previous.paidAmount) {
+        next.paidAmount = value
+        if (Number(value) > 0 && previous.paymentStatus === 'unpaid') {
+          next.paymentStatus = 'deposit'
+        }
+      }
+      return next
+    })
+  }, [])
+
   function handleModeChange(nextMode) {
     setMode(nextMode)
     setStep(1)
     setError('')
     const next = new URLSearchParams(searchParams)
-    if (nextMode === 'delivery_qr') {
-      next.delete('mode')
-    } else {
-      next.set('mode', nextMode)
-    }
+    if (nextMode === 'delivery_qr') next.delete('mode')
+    else next.set('mode', nextMode)
     setSearchParams(next, { replace: true })
   }
 
@@ -118,7 +157,6 @@ function CreateOrderPage() {
 
   function handleContinueToStep2() {
     if (withQr && !validateCard()) return
-
     setDeliveryData((previous) => ({
       ...previous,
       deliveryRecipientName:
@@ -130,24 +168,27 @@ function CreateOrderPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
-
     if (withQr && !validateCard()) return
     if (!validateDelivery()) return
 
     setIsSubmitting(true)
-
     try {
+      const moneyPayload = {
+        items,
+        subtotal,
+        deposit: Number(money.deposit) || 0,
+        shippingFee: Number(money.shippingFee) || 0,
+        codAmount: Number(money.codAmount) || 0,
+        paidAmount: Number(money.paidAmount) || 0,
+        paymentStatus: money.paymentStatus,
+        paymentNote: money.paymentNote,
+        shipDate: money.shipDate || undefined,
+        deliveryDate: money.shipDate || deliveryData.deliveryDate,
+      }
+
       const payload = withQr
-        ? {
-            withQr: true,
-            topicId,
-            ...cardData,
-            ...deliveryData,
-          }
-        : {
-            withQr: false,
-            ...deliveryData,
-          }
+        ? { withQr: true, topicId, ...cardData, ...deliveryData, ...moneyPayload }
+        : { withQr: false, ...deliveryData, ...moneyPayload }
 
       const result = await submitCustomRequestApi(payload)
       setSavedRequest(result.data)
@@ -163,11 +204,30 @@ function CreateOrderPage() {
     setStep(1)
     setCardData(DEFAULT_CARD_STEP)
     setDeliveryData(DEFAULT_DELIVERY_STEP)
+    setItems([])
+    setMoney(EMPTY_MONEY)
     setSavedRequest(null)
     setError('')
   }
 
   const submitLabel = withQr ? 'Lên đơn & tạo QR' : 'Lên đơn giao'
+  const commerceSection = (
+    <>
+      <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-50 md:p-6">
+        <h3 className="text-lg font-semibold text-slate-900">Sản phẩm</h3>
+        <p className="mt-1 text-sm text-slate-500">Chọn từ catalog giá cost hoặc nhập tùy chỉnh.</p>
+        <div className="mt-4">
+          <OrderItemsEditor products={products} items={items} onChange={setItems} />
+        </div>
+      </section>
+      <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-50 md:p-6">
+        <h3 className="text-lg font-semibold text-slate-900">Tiền & giao</h3>
+        <div className="mt-4">
+          <OrderMoneyFields values={money} onChange={handleMoneyChange} subtotal={itemsSubtotal} />
+        </div>
+      </section>
+    </>
+  )
 
   if (!isLgUp) {
     return (
@@ -179,6 +239,10 @@ function CreateOrderPage() {
         availableTopics={availableTopics}
         cardData={cardData}
         deliveryData={deliveryData}
+        products={products}
+        items={items}
+        money={money}
+        itemsSubtotal={itemsSubtotal}
         error={error}
         isSubmitting={isSubmitting}
         savedRequest={savedRequest}
@@ -186,6 +250,8 @@ function CreateOrderPage() {
         onTopicSelect={setTopicId}
         onCardChange={handleCardChange}
         onDeliveryChange={handleDeliveryChange}
+        onItemsChange={setItems}
+        onMoneyChange={handleMoneyChange}
         onContinue={handleContinueToStep2}
         onBack={() => setStep(1)}
         onSubmit={handleSubmit}
@@ -213,7 +279,7 @@ function CreateOrderPage() {
       <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur md:px-8">
         <h2 className="text-2xl font-semibold text-slate-900">Lên đơn</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Chọn giao hoa thường hoặc kèm thiệp QR cho người nhận.
+          Chọn sản phẩm, tiền (cọc/ship/COD) và tùy chọn thiệp QR.
         </p>
       </header>
 
@@ -232,6 +298,8 @@ function CreateOrderPage() {
             </div>
           </section>
 
+          {commerceSection}
+
           <div
             className={[
               'grid transition-[grid-template-rows] duration-300 ease-out',
@@ -241,9 +309,7 @@ function CreateOrderPage() {
           >
             <div className="min-h-0 overflow-hidden">
               <section className="mb-6 rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
-                <h3 className="text-lg font-semibold text-slate-900">1. Nội dung thiệp QR</h3>
-                <p className="mt-1 text-sm text-slate-500">Thông tin hiển thị khi quét mã QR.</p>
-
+                <h3 className="text-lg font-semibold text-slate-900">Nội dung thiệp QR</h3>
                 <div className="mt-5 mb-6">
                   <span className="mb-1.5 block text-sm font-medium text-slate-700">Chủ đề</span>
                   <div className="flex flex-wrap gap-2">
@@ -265,19 +331,13 @@ function CreateOrderPage() {
                     ))}
                   </div>
                 </div>
-
                 <CustomCardStepForm values={cardData} onChange={handleCardChange} />
               </section>
             </div>
           </div>
 
           <section className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
-            <h3 className="text-lg font-semibold text-slate-900">
-              {withQr ? '2. Thông tin giao hàng' : 'Thông tin giao hàng'}
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Khách đặt và địa chỉ giao — dùng để theo dõi và vận chuyển.
-            </p>
+            <h3 className="text-lg font-semibold text-slate-900">Thông tin giao hàng</h3>
             <div className="mt-6">
               <AdminDeliveryForm values={deliveryData} onChange={handleDeliveryChange} />
             </div>
@@ -301,7 +361,7 @@ function CreateOrderPage() {
         <div
           className={[
             'hidden shrink-0 overflow-hidden lg:block',
-            'transition-[width,opacity,margin] duration-300 ease-out will-change-[width,opacity]',
+            'transition-[width,opacity,margin] duration-300 ease-out',
             withQr ? 'ml-8 w-[360px] opacity-100' : 'pointer-events-none ml-0 w-0 opacity-0',
           ].join(' ')}
           aria-hidden={!withQr}

@@ -1,33 +1,97 @@
+import { useEffect, useMemo, useState } from 'react'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import { SHIPPING_STATUS_LABELS } from '../../../constants/customRequestDefaults'
 import { getTopicById } from '../../../constants/topics'
+import { fetchProductsApi } from '../../../api/productsApi'
+import { updateCustomRequestApi } from '../../../api/notificationsApi'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
+import { formatMoney, toDateInputValue } from '../../../utils/money'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
+import { PAYMENT_STATUS_LABELS } from '../constants/adminNavItems'
+import OrderItemsEditor, { calcItemsSubtotal } from './OrderItemsEditor'
+import OrderMoneyFields from './OrderMoneyFields'
 import RequestExportButton from './RequestExportButton'
 import RequestQrPanel from './RequestQrPanel'
 import RequestShippingPanel from './RequestShippingPanel'
 
-function OrderDetailModal({
-  request,
-  onClose,
-  onStatusChange,
-  onUpdated,
-  isUpdating,
-}) {
+function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdating }) {
   const topic = getTopicById(request.topicId)
   const status = ORDER_STATUS_LABELS[request.status] ?? ORDER_STATUS_LABELS.pending
   const hasCard = Boolean(request.cardId)
+  const payment = PAYMENT_STATUS_LABELS[request.paymentStatus] ?? PAYMENT_STATUS_LABELS.unpaid
+
+  const [products, setProducts] = useState([])
+  const [items, setItems] = useState(request.items || [])
+  const [money, setMoney] = useState({
+    deposit: request.deposit ?? '',
+    shippingFee: request.shippingFee ?? '',
+    codAmount: request.codAmount ?? '',
+    paidAmount: request.paidAmount ?? '',
+    paymentStatus: request.paymentStatus || 'unpaid',
+    paymentNote: request.paymentNote || '',
+    shipDate: toDateInputValue(request.shipDate) || '',
+    subtotalOverride: request.subtotal ?? '',
+  })
+  const [note, setNote] = useState(request.note || '')
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const itemsSubtotal = useMemo(() => calcItemsSubtotal(items), [items])
+  const subtotal =
+    money.subtotalOverride !== '' && money.subtotalOverride !== undefined
+      ? Number(money.subtotalOverride) || 0
+      : itemsSubtotal
+
+  useEffect(() => {
+    fetchProductsApi(true)
+      .then((result) => setProducts(result.data || []))
+      .catch(() => setProducts([]))
+  }, [])
+
+  useEffect(() => {
+    setItems(request.items || [])
+    setMoney({
+      deposit: request.deposit ?? '',
+      shippingFee: request.shippingFee ?? '',
+      codAmount: request.codAmount ?? '',
+      paidAmount: request.paidAmount ?? '',
+      paymentStatus: request.paymentStatus || 'unpaid',
+      paymentNote: request.paymentNote || '',
+      shipDate: toDateInputValue(request.shipDate) || '',
+      subtotalOverride: request.subtotal ?? '',
+    })
+    setNote(request.note || '')
+  }, [request])
+
+  async function handleSaveCommerce() {
+    setIsSaving(true)
+    setError('')
+    try {
+      const result = await updateCustomRequestApi(request.id, {
+        items,
+        subtotal,
+        deposit: Number(money.deposit) || 0,
+        shippingFee: Number(money.shippingFee) || 0,
+        codAmount: Number(money.codAmount) || 0,
+        paidAmount: Number(money.paidAmount) || 0,
+        paymentStatus: money.paymentStatus,
+        paymentNote: money.paymentNote,
+        shipDate: money.shipDate || null,
+        note,
+      })
+      onUpdated?.(result.data)
+    } catch (err) {
+      setError(err.message || 'Không thể lưu.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0"
-        onClick={onClose}
-        aria-label="Đóng"
-      />
+      <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Đóng" />
 
       <div className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-2xl">
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-rose-50 px-4 py-4 sm:px-6">
@@ -47,20 +111,11 @@ function OrderDetailModal({
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${status.className}`}>
                 {status.label}
               </span>
-              {request.shippingStatus ? (
-                <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
-                  {SHIPPING_STATUS_LABELS[request.shippingStatus]}
-                </span>
-              ) : null}
-              <span
-                className={[
-                  'rounded-full px-2.5 py-0.5 text-xs font-medium ring-1',
-                  hasCard
-                    ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-                    : 'bg-slate-100 text-slate-600 ring-slate-200',
-                ].join(' ')}
-              >
-                {hasCard ? 'Có thiệp QR' : 'Không có QR'}
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${payment.className}`}>
+                {payment.label}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                {formatMoney(request.subtotal)}
               </span>
             </div>
           </div>
@@ -91,6 +146,38 @@ function OrderDetailModal({
             </select>
           </div>
 
+          <div className="rounded-2xl border border-rose-100 bg-white p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Sản phẩm & tiền</h4>
+            <div className="mt-3">
+              <OrderItemsEditor products={products} items={items} onChange={setItems} />
+            </div>
+            <div className="mt-4">
+              <OrderMoneyFields
+                values={money}
+                onChange={(field, value) => setMoney((prev) => ({ ...prev, [field]: value }))}
+                subtotal={itemsSubtotal}
+              />
+            </div>
+            <label className="mt-3 block text-sm">
+              <span className="mb-1 block font-medium text-slate-700">Note đơn</span>
+              <textarea
+                rows={2}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+              />
+            </label>
+            {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+            <button
+              type="button"
+              onClick={handleSaveCommerce}
+              disabled={isSaving}
+              className="mt-3 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60"
+            >
+              {isSaving ? 'Đang lưu...' : 'Lưu sản phẩm & tiền'}
+            </button>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             {hasCard ? (
               <RequestQrPanel request={request} />
@@ -110,63 +197,26 @@ function OrderDetailModal({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-400">SĐT giao hàng</dt>
+                  <dt className="text-xs text-slate-400">SĐT</dt>
                   <dd className="text-slate-700">{request.deliveryPhone || '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-400">Địa chỉ</dt>
                   <dd className="leading-6 text-slate-700">{request.deliveryAddress || '—'}</dd>
                 </div>
-                {(request.deliveryDate || request.deliveryTimeSlot) && (
+                {request.shippingStatus ? (
                   <div>
-                    <dt className="text-xs text-slate-400">Thời gian giao</dt>
+                    <dt className="text-xs text-slate-400">VC</dt>
                     <dd className="text-slate-700">
-                      {[request.deliveryDate, request.deliveryTimeSlot].filter(Boolean).join(' · ')}
+                      {SHIPPING_STATUS_LABELS[request.shippingStatus]}
                     </dd>
-                  </div>
-                )}
-                {request.deliveryNote ? (
-                  <div>
-                    <dt className="text-xs text-slate-400">Ghi chú giao hàng</dt>
-                    <dd className="text-slate-600">{request.deliveryNote}</dd>
                   </div>
                 ) : null}
               </dl>
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/30 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Khách đặt & nội dung thiệp</h4>
-              <dl className="mt-3 space-y-2 text-sm">
-                <div>
-                  <dt className="text-xs text-slate-400">SĐT khách</dt>
-                  <dd className="font-medium text-slate-800">{request.customerPhone}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-400">Người gửi thiệp</dt>
-                  <dd className="text-slate-700">{request.senderName || '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-slate-400">Người nhận thiệp</dt>
-                  <dd className="text-slate-700">{request.recipientName || '—'}</dd>
-                </div>
-              </dl>
-              {request.message ? (
-                <>
-                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-rose-400">
-                    Lời chúc
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">{request.message}</p>
-                </>
-              ) : null}
-              {request.note ? (
-                <p className="mt-2 text-xs text-slate-500">Ghi chú shop: {request.note}</p>
-              ) : null}
-            </div>
-
-            <RequestShippingPanel request={request} onUpdated={onUpdated} />
-          </div>
+          <RequestShippingPanel request={request} onUpdated={onUpdated} />
         </div>
       </div>
     </div>

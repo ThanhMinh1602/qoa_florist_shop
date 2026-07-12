@@ -4,6 +4,7 @@ import {
   fetchCustomRequestsApi,
   updateCustomRequestStatusApi,
 } from '../../../api/notificationsApi'
+import { useDialog } from '../../../context/DialogContext'
 import { ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { buildUnifiedManageItems } from '../../../utils/buildUnifiedManageItems'
@@ -12,6 +13,7 @@ import OrderDetailModal from '../components/OrderDetailModal'
 import ManageUnifiedListMobile from '../mobile/ManageUnifiedListMobile'
 
 function AdminManagePage() {
+  const { alert } = useDialog()
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get('highlight')
   const [orders, setOrders] = useState([])
@@ -104,7 +106,11 @@ function AdminManagePage() {
           : current,
       )
     } catch (err) {
-      window.alert(err.message || 'Không thể cập nhật trạng thái.')
+      await alert({
+        title: 'Không thể cập nhật',
+        message: err.message || 'Không thể cập nhật trạng thái.',
+        variant: 'error',
+      })
     } finally {
       setUpdatingId(null)
     }
@@ -112,11 +118,11 @@ function AdminManagePage() {
 
   function handleOrderUpdated(updated) {
     setOrders((items) => items.map((item) => (item.id === updated.id ? updated : item)))
-    setSelectedItem((current) =>
-      current?.kind === 'order' && current.id === updated.id
-        ? { ...current, raw: updated, status: updated.status, shippingStatus: updated.shippingStatus }
-        : current,
-    )
+    setSelectedItem((current) => {
+      if (!(current?.kind === 'order' && current.id === updated.id)) return current
+      const [next] = buildUnifiedManageItems([updated])
+      return next
+    })
   }
 
   const isLoading = isLoadingOrders && unifiedItems.length === 0
@@ -128,7 +134,7 @@ function AdminManagePage() {
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">Đơn hàng</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Đơn giao hoa và đơn kèm thiệp QR. Bấm để xem chi tiết.
+              Theo dõi ship, sản phẩm, cọc/ship/COD và trạng thái làm hàng.
             </p>
           </div>
           <Link

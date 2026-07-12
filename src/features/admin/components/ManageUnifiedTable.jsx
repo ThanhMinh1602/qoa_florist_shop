@@ -1,17 +1,22 @@
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { ORDER_STATUS_LABELS } from '../../../constants/orderStatus'
-import { SHIPPING_STATUS_LABELS } from '../../../constants/customRequestDefaults'
+import { PAYMENT_STATUS_LABELS } from '../constants/adminNavItems'
+import { formatMoney, toDateInputValue } from '../../../utils/money'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 
-function formatDate(isoString) {
-  if (!isoString) return '—'
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(isoString))
+function formatShipDate(value) {
+  if (!value) return '—'
+  if (/^\d{4}-\d{2}-\d{2}/.test(value) || value.includes('T')) {
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(date)
+    }
+  }
+  return String(value)
 }
 
 function TypeBadge({ typeKind, typeLabel, typeIcon }) {
@@ -30,19 +35,15 @@ function TypeBadge({ typeKind, typeLabel, typeIcon }) {
   )
 }
 
-function EmptyState() {
-  return (
-    <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-      <MaterialIcon name="inbox" className="text-4xl text-slate-300" />
-      <p className="mt-3 text-sm font-medium text-slate-700">Chưa có dữ liệu</p>
-      <p className="mt-1 text-sm text-slate-500">Thử đổi bộ lọc hoặc lên đơn mới.</p>
-    </div>
-  )
-}
-
 function ManageUnifiedTable({ items, onSelect }) {
   if (items.length === 0) {
-    return <EmptyState />
+    return (
+      <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
+        <MaterialIcon name="inbox" className="text-4xl text-slate-300" />
+        <p className="mt-3 text-sm font-medium text-slate-700">Chưa có dữ liệu</p>
+        <p className="mt-1 text-sm text-slate-500">Thử đổi bộ lọc hoặc lên đơn mới.</p>
+      </div>
+    )
   }
 
   return (
@@ -51,12 +52,13 @@ function ManageUnifiedTable({ items, onSelect }) {
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3">Mã</th>
-              <th className="px-4 py-3">Khách / Người nhận</th>
-              <th className="px-4 py-3">Chi tiết</th>
-              <th className="px-4 py-3">Loại</th>
-              <th className="px-4 py-3">Trạng thái</th>
-              <th className="px-4 py-3">Ngày tạo</th>
+              <th className="px-3 py-3">Ship</th>
+              <th className="px-3 py-3">Khách</th>
+              <th className="px-3 py-3">Sản phẩm</th>
+              <th className="px-3 py-3">Thu vào</th>
+              <th className="px-3 py-3">Cọc / Ship / COD</th>
+              <th className="px-3 py-3">TT / Trạng thái</th>
+              <th className="px-3 py-3">VĐ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-rose-50">
@@ -64,6 +66,8 @@ function ManageUnifiedTable({ items, onSelect }) {
               const status = item.status
                 ? ORDER_STATUS_LABELS[item.status] ?? ORDER_STATUS_LABELS.pending
                 : null
+              const payment =
+                PAYMENT_STATUS_LABELS[item.paymentStatus] ?? PAYMENT_STATUS_LABELS.unpaid
 
               return (
                 <tr
@@ -71,50 +75,57 @@ function ManageUnifiedTable({ items, onSelect }) {
                   className="cursor-pointer transition hover:bg-rose-50/50"
                   onClick={() => onSelect(item)}
                 >
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-slate-800">
-                    {item.code}
+                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                    <p className="font-medium">{formatShipDate(item.shipDate)}</p>
+                    <p className="font-mono text-[10px] text-slate-400">{item.code}</p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <p className="font-medium text-slate-800">{item.primaryName}</p>
-                    {item.secondaryPhone ? (
-                      <p className="text-xs text-slate-500">{item.secondaryPhone}</p>
+                    <p className="text-xs text-slate-500">{item.secondaryPhone}</p>
+                    <p className="mt-0.5 max-w-[12rem] truncate text-xs text-slate-400">
+                      {item.addressLine}
+                    </p>
+                  </td>
+                  <td className="max-w-[14rem] px-3 py-3 text-slate-700">
+                    <p className="line-clamp-2">{item.productsLine}</p>
+                    {item.raw?.note ? (
+                      <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{item.raw.note}</p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3">
-                    <p className="text-slate-800">{item.deliveryLine}</p>
-                    {item.addressLine ? (
-                      <p className="max-w-[14rem] truncate text-xs text-slate-500">
-                        {item.addressLine}
-                      </p>
-                    ) : null}
+                  <td className="whitespace-nowrap px-3 py-3 font-semibold text-slate-900">
+                    {formatMoney(item.subtotal)}
                   </td>
-                  <td className="px-4 py-3">
-                    <TypeBadge
-                      typeKind={item.typeKind}
-                      typeLabel={item.typeLabel}
-                      typeIcon={item.typeIcon}
-                    />
+                  <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-600">
+                    <p>Cọc {formatMoney(item.deposit)}</p>
+                    <p>Ship {formatMoney(item.shippingFee)}</p>
+                    <p>COD {formatMoney(item.codAmount)}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    {status ? (
-                      <div className="flex flex-col gap-1">
+                  <td className="px-3 py-3">
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${payment.className}`}
+                      >
+                        {payment.label}
+                      </span>
+                      {status ? (
                         <span
-                          className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${status.className}`}
+                          className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${status.className}`}
                         >
                           {status.label}
                         </span>
-                        {item.shippingStatus && item.shippingStatus !== 'pending' ? (
-                          <span className="text-[11px] text-sky-600">
-                            {SHIPPING_STATUS_LABELS[item.shippingStatus]}
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
+                      ) : null}
+                      <TypeBadge
+                        typeKind={item.typeKind}
+                        typeLabel={item.typeLabel}
+                        typeIcon={item.typeIcon}
+                      />
+                    </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-                    <span title={formatDate(item.createdAt)}>{formatTimeAgo(item.createdAt)}</span>
+                  <td className="px-3 py-3 font-mono text-[11px] text-slate-500">
+                    {item.trackingCode || '—'}
+                    <p className="mt-1 font-sans text-[10px] text-slate-400">
+                      {formatTimeAgo(item.createdAt)}
+                    </p>
                   </td>
                 </tr>
               )
@@ -127,4 +138,4 @@ function ManageUnifiedTable({ items, onSelect }) {
 }
 
 export default ManageUnifiedTable
-export { TypeBadge }
+export { TypeBadge, formatShipDate, toDateInputValue }

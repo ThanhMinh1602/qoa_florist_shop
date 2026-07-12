@@ -1,8 +1,9 @@
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { ORDER_STATUS_LABELS } from '../../../constants/orderStatus'
-import { SHIPPING_STATUS_LABELS } from '../../../constants/customRequestDefaults'
+import { PAYMENT_STATUS_LABELS } from '../constants/adminNavItems'
+import { formatMoney } from '../../../utils/money'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
-import { TypeBadge } from '../components/ManageUnifiedTable'
+import { TypeBadge, formatShipDate } from '../components/ManageUnifiedTable'
 
 function ManageUnifiedListMobile({ items, onSelect }) {
   if (items.length === 0) {
@@ -20,6 +21,7 @@ function ManageUnifiedListMobile({ items, onSelect }) {
         const status = item.status
           ? ORDER_STATUS_LABELS[item.status] ?? ORDER_STATUS_LABELS.pending
           : null
+        const payment = PAYMENT_STATUS_LABELS[item.paymentStatus] ?? PAYMENT_STATUS_LABELS.unpaid
 
         return (
           <button
@@ -30,39 +32,37 @@ function ManageUnifiedListMobile({ items, onSelect }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-mono text-[11px] font-bold tracking-wide text-slate-500">
-                  {item.code}
-                </p>
+                <p className="text-xs text-slate-500">Ship {formatShipDate(item.shipDate)}</p>
                 <p className="mt-1 truncate text-base font-semibold text-slate-900">
                   {item.primaryName}
                 </p>
+                <p className="font-mono text-[11px] text-slate-400">{item.code}</p>
               </div>
+              <p className="shrink-0 font-semibold text-rose-700">{formatMoney(item.subtotal)}</p>
+            </div>
+
+            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{item.productsLine}</p>
+            <p className="mt-1 line-clamp-1 text-xs text-slate-500">{item.addressLine}</p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${payment.className}`}
+              >
+                {payment.label}
+              </span>
               {status ? (
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${status.className}`}
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${status.className}`}
                 >
                   {status.label}
                 </span>
               ) : null}
-            </div>
-
-            <p className="mt-2 text-sm text-slate-600">{item.deliveryLine}</p>
-            {item.addressLine ? (
-              <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.addressLine}</p>
-            ) : null}
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
               <TypeBadge
                 typeKind={item.typeKind}
                 typeLabel={item.typeLabel}
                 typeIcon={item.typeIcon}
               />
               <span className="text-xs text-slate-400">{formatTimeAgo(item.createdAt)}</span>
-              {item.shippingStatus && item.shippingStatus !== 'pending' ? (
-                <span className="text-xs text-sky-600">
-                  {SHIPPING_STATUS_LABELS[item.shippingStatus]}
-                </span>
-              ) : null}
             </div>
           </button>
         )

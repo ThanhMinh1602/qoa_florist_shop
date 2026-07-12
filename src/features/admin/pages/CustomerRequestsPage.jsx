@@ -5,11 +5,13 @@ import {
   fetchCustomRequestsApi,
   updateCustomRequestStatusApi,
 } from '../../../api/notificationsApi'
+import { useDialog } from '../../../context/DialogContext'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import CustomerRequestCard from '../components/CustomerRequestCard'
 import CustomerRequestCardMobile from '../mobile/CustomerRequestCardMobile'
 
 function CustomerRequestsPage() {
+  const { alert } = useDialog()
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get('highlight')
   const [requests, setRequests] = useState([])
@@ -74,7 +76,11 @@ function CustomerRequestsPage() {
       const result = await updateCustomRequestStatusApi(id, status)
       setRequests((items) => items.map((item) => (item.id === id ? result.data : item)))
     } catch (err) {
-      window.alert(err.message || 'Không thể cập nhật trạng thái.')
+      await alert({
+        title: 'Không thể cập nhật',
+        message: err.message || 'Không thể cập nhật trạng thái.',
+        variant: 'error',
+      })
     } finally {
       setUpdatingId(null)
     }

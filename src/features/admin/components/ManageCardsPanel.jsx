@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDialog } from '../../../context/DialogContext'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import ManageCardsFilters, { EMPTY_FILTERS } from '../components/ManageCardsFilters'
 import ManageCardsTable, { CardQrModal } from '../components/ManageCardsTable'
@@ -8,6 +9,7 @@ import ManageCardsTableMobile from '../mobile/ManageCardsTableMobile'
 import { useCards } from '../../../context/CardsContext'
 
 function ManageCardsPanel() {
+  const { alert, confirm } = useDialog()
   const { cards, isLoading, error, fetchCards, deleteCard } = useCards()
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS)
@@ -38,9 +40,12 @@ function ManageCardsPanel() {
   }
 
   async function handleDelete(card) {
-    const confirmed = window.confirm(
-      `Xóa thiệp gửi cho "${card.recipientName}"? Hành động này không thể hoàn tác.`,
-    )
+    const confirmed = await confirm({
+      title: 'Xóa thiệp',
+      message: `Xóa thiệp gửi cho “${card.recipientName}”? Hành động này không thể hoàn tác.`,
+      confirmLabel: 'Xóa thiệp',
+      variant: 'danger',
+    })
 
     if (!confirmed) return
 
@@ -49,7 +54,11 @@ function ManageCardsPanel() {
     setDeletingId(null)
 
     if (!result.success) {
-      window.alert(result.message)
+      await alert({
+        title: 'Không thể xóa',
+        message: result.message || 'Không thể xóa thiệp.',
+        variant: 'error',
+      })
     }
   }
 

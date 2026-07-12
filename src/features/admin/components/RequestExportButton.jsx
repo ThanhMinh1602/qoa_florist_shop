@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
+import { useDialog } from '../../../context/DialogContext'
 import { exportElementToPdf } from '../../../utils/exportRequestPdf'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import RequestPrintSheet from './RequestPrintSheet'
 
 function RequestExportButton({ request }) {
+  const { alert } = useDialog()
   const printRef = useRef(null)
   const [isExporting, setIsExporting] = useState(false)
 
@@ -14,7 +16,11 @@ function RequestExportButton({ request }) {
       await new Promise((resolve) => window.setTimeout(resolve, 150))
       await exportElementToPdf(printRef.current, `qoa-vc-${getInvoiceCode(request)}.pdf`)
     } catch (err) {
-      window.alert(err.message || 'Không thể xuất PDF.')
+      await alert({
+        title: 'Xuất PDF thất bại',
+        message: err.message || 'Không thể xuất PDF.',
+        variant: 'error',
+      })
     } finally {
       setIsExporting(false)
     }

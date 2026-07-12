@@ -8,6 +8,8 @@ import CustomTopicPickerMobile from '../../custom/mobile/CustomTopicPickerMobile
 import { ORDER_CREATE_MODES } from '../constants/adminNavItems'
 import AdminDeliveryFormMobile from '../components/AdminDeliveryFormMobile'
 import CreateOrderSuccess from '../components/CreateOrderSuccess'
+import OrderItemsEditor from '../components/OrderItemsEditor'
+import OrderMoneyFields from '../components/OrderMoneyFields'
 
 function OrderModePickerMobile({ mode, onChange }) {
   return (
@@ -43,6 +45,10 @@ function CreateOrderMobileView({
   availableTopics,
   cardData,
   deliveryData,
+  products = [],
+  items = [],
+  money,
+  itemsSubtotal = 0,
   error,
   isSubmitting,
   savedRequest,
@@ -50,6 +56,8 @@ function CreateOrderMobileView({
   onTopicSelect,
   onCardChange,
   onDeliveryChange,
+  onItemsChange,
+  onMoneyChange,
   onContinue,
   onBack,
   onSubmit,
@@ -93,6 +101,27 @@ function CreateOrderMobileView({
           </div>
         </section>
 
+        {showDeliveryFields ? (
+          <div className="mt-4 space-y-4">
+            <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">Sản phẩm</h3>
+              <div className="mt-3">
+                <OrderItemsEditor products={products} items={items} onChange={onItemsChange} />
+              </div>
+            </section>
+            <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">Tiền & giao</h3>
+              <div className="mt-3">
+                <OrderMoneyFields
+                  values={money}
+                  onChange={onMoneyChange}
+                  subtotal={itemsSubtotal}
+                />
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         <div
           className={[
             'grid transition-[grid-template-rows,opacity] duration-300 ease-out',
@@ -123,7 +152,6 @@ function CreateOrderMobileView({
           {showCardFields ? (
             <div>
               <h3 className="text-base font-semibold text-slate-900">Nội dung thiệp QR</h3>
-              <p className="mt-1 text-xs text-slate-500">Hiển thị khi khách quét mã QR.</p>
               <div className="mt-4">
                 <CustomTopicPickerMobile
                   topics={availableTopics}
@@ -152,7 +180,6 @@ function CreateOrderMobileView({
                 </button>
               ) : null}
               <h3 className="text-base font-semibold text-slate-900">Thông tin giao hàng</h3>
-              <p className="mt-1 text-xs text-slate-500">Khách đặt và địa chỉ giao.</p>
               <div className="mt-4">
                 <AdminDeliveryFormMobile values={deliveryData} onChange={onDeliveryChange} />
               </div>
