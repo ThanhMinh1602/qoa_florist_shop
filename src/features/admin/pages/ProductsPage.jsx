@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   activateProductApi,
   createProductApi,
@@ -8,14 +9,17 @@ import {
   fetchProductsApi,
   updateProductApi,
 } from '../../../api/productsApi'
+import { deleteUploadedImageApi, uploadImagesApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
 import { formatMoney } from '../../../utils/money'
+import { resizeImageFiles } from '../../../utils/resizeImage'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 
 const EMPTY_FORM = {
   code: '',
   name: '',
   materials: '',
+  images: [],
   costPrice: '',
   makeMinutes: '',
   listPrice: '',
@@ -37,6 +41,56 @@ function generateProductCode(length = 8) {
   return code
 }
 
+function revokeLocalPreview(image) {
+  if (image?.url?.startsWith('blob:')) {
+    URL.revokeObjectURL(image.url)
+  }
+}
+
+function revokeLocalPreviews(images = []) {
+  for (const image of images) revokeLocalPreview(image)
+}
+
+/** Resize + upload ảnh local; giữ nguyên ảnh đã có trên Cloudinary */
+async function prepareImagesPayload(images = []) {
+  const pending = images.filter((image) => image.file)
+  let uploaded = []
+
+  if (pending.length > 0) {
+    const resized = await resizeImageFiles(
+      pending.map((image) => image.file),
+      { maxWidth: 1600, maxHeight: 1600, quality: 0.82 },
+    )
+    const result = await uploadImagesApi(resized)
+    uploaded = result.data || []
+    if (uploaded.length !== pending.length) {
+      throw new Error('Upload ảnh không đủ số lượng.')
+    }
+  }
+
+  let uploadIndex = 0
+  return images.map((image) => {
+    if (!image.file) {
+      return {
+        id: image.id,
+        url: image.url,
+        publicId: image.publicId || '',
+        isMain: Boolean(image.isMain),
+      }
+    }
+
+    const cloud = uploaded[uploadIndex]
+    uploadIndex += 1
+    revokeLocalPreview(image)
+    return {
+      id: image.id,
+      url: cloud.url,
+      publicId: cloud.publicId,
+      isMain: Boolean(image.isMain),
+    }
+  })
+}
+
 const inputClass =
   'w-full rounded-xl border border-rose-100 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100'
 
@@ -45,6 +99,14 @@ function toForm(product) {
     code: product.code || '',
     name: product.name || '',
     materials: product.materials || '',
+    images: Array.isArray(product.images)
+      ? product.images.map((image) => ({
+          id: image.id,
+          url: image.url,
+          publicId: image.publicId || '',
+          isMain: Boolean(image.isMain),
+        }))
+      : [],
     costPrice: product.costPrice ?? '',
     makeMinutes: product.makeMinutes ?? '',
     listPrice: product.listPrice ?? '',
@@ -52,6 +114,145 @@ function toForm(product) {
     otherCost: product.otherCost ?? '',
     active: product.active !== false,
   }
+}
+
+function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) {
+  const inputRef = useRef(null)
+
+  function handleFilesSelected(event) {
+    const files = Array.from(event.target.files || []).filter((file) =>
+      file.type.startsWith('image/'),
+    )
+    event.target.value = ''
+    if (files.length === 0) return
+
+    const next = [...images]
+    for (const file of files) {
+      next.push({
+        id: crypto.randomUUID(),
+        url: URL.createObjectURL(file),
+        publicId: '',
+        isMain: next.length === 0,
+        file,
+      })
+    }
+    if (next.length > 0 && !next.some((image) => image.isMain)) {
+      next[0].isMain = true
+    }
+    onChange(next)
+  }
+
+  function setMain(imageId) {
+    onChange(
+      images.map((image) => ({
+        ...image,
+        isMain: image.id === imageId,
+      })),
+    )
+  }
+
+  function removeImage(image) {
+    const next = images.filter((item) => item.id !== image.id)
+    if (next.length > 0 && !next.some((item) => item.isMain)) {
+      next[0].isMain = true
+    }
+    onChange(next)
+    revokeLocalPreview(image)
+    if (image.publicId) onRemoveCloudImage?.(image.publicId)
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-slate-700">Hình ảnh sản phẩm</p>
+          <p className="text-xs text-slate-400">
+            Chọn ảnh hiện ngay · resize + Cloudinary khi bấm Lưu
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+        >
+          <MaterialIcon name="add_photo_alternate" className="text-lg" />
+          Thêm ảnh
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFilesSelected}
+        />
+      </div>
+
+      {images.length === 0 ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-rose-200 bg-rose-50/40 px-4 py-8 text-sm text-slate-500 hover:bg-rose-50 disabled:opacity-60"
+        >
+          <MaterialIcon name="imagesmode" className="text-3xl text-rose-300" />
+          Chọn ảnh từ máy — hiện preview ngay
+        </button>
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {images.map((image) => (
+            <li
+              key={image.id}
+              className={[
+                'relative overflow-hidden rounded-xl border bg-slate-50',
+                image.isMain ? 'border-rose-400 ring-2 ring-rose-200' : 'border-rose-100',
+              ].join(' ')}
+            >
+              <img
+                src={image.url}
+                alt=""
+                className="aspect-square w-full object-cover"
+              />
+              {image.isMain ? (
+                <span className="absolute left-2 top-2 rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                  Main
+                </span>
+              ) : null}
+              {image.file ? (
+                <span className="absolute right-2 top-2 rounded-md bg-slate-900/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  Chưa lưu
+                </span>
+              ) : null}
+              <div className="absolute inset-x-0 bottom-0 flex gap-1 bg-gradient-to-t from-black/60 to-transparent p-2 pt-6">
+                {!image.isMain ? (
+                  <button
+                    type="button"
+                    onClick={() => setMain(image.id)}
+                    className="flex-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-white"
+                  >
+                    Đặt main
+                  </button>
+                ) : (
+                  <span className="flex-1 rounded-lg bg-rose-500/90 px-2 py-1 text-center text-[11px] font-medium text-white">
+                    Ảnh chính
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeImage(image)}
+                  className="rounded-lg bg-white/95 px-2 py-1 text-[11px] font-medium text-red-600 hover:bg-white"
+                  aria-label="Xóa ảnh"
+                >
+                  <MaterialIcon name="delete" className="text-sm" />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 function ProductFormDialog({
@@ -62,8 +263,8 @@ function ProductFormDialog({
   onClose,
   onDelete,
   onRegenerateCode,
+  onRemoveCloudImage,
   isEditing,
-  isSaving,
   formError,
   title,
 }) {
@@ -156,6 +357,13 @@ function ProductFormDialog({
               />
             </label>
 
+            <ProductImagesField
+              images={values.images || []}
+              onChange={(next) => onChange('images', next)}
+              onRemoveCloudImage={onRemoveCloudImage}
+              disabled={false}
+            />
+
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 ['costPrice', 'Giá cost'],
@@ -217,10 +425,9 @@ function ProductFormDialog({
           <div className="flex shrink-0 flex-wrap gap-2 border-t border-rose-50 px-4 py-4 sm:px-6">
             <button
               type="submit"
-              disabled={isSaving}
-              className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60"
+              className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
             >
-              {isSaving ? 'Đang lưu...' : 'Lưu vào database'}
+              Lưu vào database
             </button>
             <button
               type="button"
@@ -245,6 +452,18 @@ function ProductFormDialog({
   )
 }
 
+function ProductThumb({ product }) {
+  const src = product.mainImage || product.images?.find((image) => image.isMain)?.url || product.images?.[0]?.url
+  if (!src) {
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-300">
+        <MaterialIcon name="image" className="text-lg" />
+      </div>
+    )
+  }
+  return <img src={src} alt="" className="h-10 w-10 rounded-lg object-cover" />
+}
+
 function ProductsPage() {
   const { alert, confirm } = useDialog()
   const [products, setProducts] = useState([])
@@ -252,11 +471,13 @@ function ProductsPage() {
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const [isBusy, setIsBusy] = useState(false)
+  const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [search, setSearch] = useState('')
   const isLgUp = useIsLgUp()
+  const removedPublicIdsRef = useRef([])
 
   const load = useCallback(async () => {
     setIsLoading(true)
@@ -283,11 +504,17 @@ function ProductsPage() {
     )
   }, [products, search])
 
-  function closeForm() {
+  function dismissFormUi() {
     setShowForm(false)
     setEditingId(null)
     setForm(EMPTY_FORM)
     setFormError('')
+  }
+
+  function closeForm() {
+    revokeLocalPreviews(form.images)
+    removedPublicIdsRef.current = []
+    dismissFormUi()
   }
 
   function handleChange(field, value) {
@@ -295,14 +522,27 @@ function ProductsPage() {
     setForm((previous) => ({ ...previous, [field]: value }))
   }
 
+  function queueRemovedCloudImage(publicId) {
+    if (!publicId) return
+    if (!removedPublicIdsRef.current.includes(publicId)) {
+      removedPublicIdsRef.current.push(publicId)
+    }
+  }
+
   function openCreate() {
+    if (isBusy) return
+    revokeLocalPreviews(form.images)
+    removedPublicIdsRef.current = []
     setEditingId(null)
-    setForm({ ...EMPTY_FORM, code: generateProductCode() })
+    setForm({ ...EMPTY_FORM, images: [], code: generateProductCode() })
     setFormError('')
     setShowForm(true)
   }
 
   function openEdit(product) {
+    if (isBusy) return
+    revokeLocalPreviews(form.images)
+    removedPublicIdsRef.current = []
     setEditingId(product.id)
     setForm(toForm(product))
     setFormError('')
@@ -315,25 +555,47 @@ function ProductsPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setIsSaving(true)
-    setFormError('')
+    if (isBusy) return
+
     const wasEdit = Boolean(editingId)
+    const productId = editingId
+    const snapshot = {
+      ...form,
+      images: [...(form.images || [])],
+    }
+    const toDelete = [...removedPublicIdsRef.current]
+    removedPublicIdsRef.current = []
+
+    // Đóng modal trước — resize/upload chạy lúc loading
+    dismissFormUi()
+    setBusyMessage(wasEdit ? 'Đang cập nhật sản phẩm...' : 'Đang thêm sản phẩm...')
+    setIsBusy(true)
+    // Cho overlay Lottie mount + paint trước khi resize chặn main thread
+    await new Promise((resolve) => setTimeout(resolve, 80))
+
     try {
+      const images = await prepareImagesPayload(snapshot.images)
       const payload = {
-        ...form,
-        costPrice: Number(form.costPrice) || 0,
-        makeMinutes: Number(form.makeMinutes) || 0,
-        listPrice: Number(form.listPrice) || 0,
-        sellPrice: Number(form.sellPrice) || 0,
-        otherCost: Number(form.otherCost) || 0,
+        ...snapshot,
+        images,
+        costPrice: Number(snapshot.costPrice) || 0,
+        makeMinutes: Number(snapshot.makeMinutes) || 0,
+        listPrice: Number(snapshot.listPrice) || 0,
+        sellPrice: Number(snapshot.sellPrice) || 0,
+        otherCost: Number(snapshot.otherCost) || 0,
       }
-      if (editingId) {
-        await updateProductApi(editingId, payload)
+
+      if (productId) {
+        await updateProductApi(productId, payload)
       } else {
         await createProductApi(payload)
       }
-      closeForm()
+
+      await Promise.all(
+        toDelete.map((publicId) => deleteUploadedImageApi(publicId).catch(() => null)),
+      )
       await load()
+      setIsBusy(false)
       await alert({
         title: wasEdit ? 'Đã cập nhật' : 'Đã thêm sản phẩm',
         message: wasEdit
@@ -342,13 +604,18 @@ function ProductsPage() {
         variant: 'success',
       })
     } catch (err) {
-      setFormError(err.message || 'Không thể lưu sản phẩm.')
-    } finally {
-      setIsSaving(false)
+      revokeLocalPreviews(snapshot.images)
+      setIsBusy(false)
+      await alert({
+        title: wasEdit ? 'Không thể cập nhật' : 'Không thể thêm sản phẩm',
+        message: err.message || 'Không thể lưu sản phẩm.',
+        variant: 'error',
+      })
     }
   }
 
   async function handleDeactivate(product) {
+    if (isBusy) return
     const ok = await confirm({
       title: 'Ngừng bán sản phẩm',
       message: `Ngừng bán “${product.name}”? Sản phẩm vẫn còn trong database.`,
@@ -369,6 +636,7 @@ function ProductsPage() {
   }
 
   async function handleActivate(product) {
+    if (isBusy) return
     try {
       await activateProductApi(product.id)
       await load()
@@ -382,6 +650,7 @@ function ProductsPage() {
   }
 
   async function handleDelete(product) {
+    if (isBusy) return
     const ok = await confirm({
       title: 'Xóa sản phẩm',
       message: `Xóa hẳn “${product.name}” khỏi database?\nThao tác này không hoàn tác được.`,
@@ -389,16 +658,25 @@ function ProductsPage() {
       variant: 'danger',
     })
     if (!ok) return
+
+    if (editingId === product.id || showForm) {
+      closeForm()
+    }
+
+    setBusyMessage('Đang xóa sản phẩm...')
+    setIsBusy(true)
+    await new Promise((resolve) => setTimeout(resolve, 80))
     try {
       await deleteProductApi(product.id)
-      if (editingId === product.id) closeForm()
       await load()
+      setIsBusy(false)
       await alert({
         title: 'Đã xóa',
         message: `“${product.name}” đã được xóa khỏi database.`,
         variant: 'success',
       })
     } catch (err) {
+      setIsBusy(false)
       await alert({
         title: 'Không thể xóa',
         message: err.message || 'Không thể xóa.',
@@ -456,6 +734,7 @@ function ProductsPage() {
               <table className="min-w-full text-left text-sm">
                 <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
+                    <th className="px-4 py-3">Ảnh</th>
                     <th className="px-4 py-3">Mã</th>
                     <th className="px-4 py-3">Tên / NL</th>
                     <th className="px-4 py-3">Cost</th>
@@ -468,6 +747,9 @@ function ProductsPage() {
                 <tbody className="divide-y divide-rose-50">
                   {filtered.map((product) => (
                     <tr key={product.id} className={!product.active ? 'opacity-50' : ''}>
+                      <td className="px-4 py-3">
+                        <ProductThumb product={product} />
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">
                         {product.code}
                       </td>
@@ -535,17 +817,22 @@ function ProductsPage() {
                 ].join(' ')}
               >
                 <button type="button" onClick={() => openEdit(product)} className="w-full text-left">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-mono text-[11px] font-bold text-slate-500">{product.code}</p>
-                      <p className="mt-1 font-semibold text-slate-900">{product.name}</p>
+                  <div className="flex items-start gap-3">
+                    <ProductThumb product={product} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-mono text-[11px] font-bold text-slate-500">{product.code}</p>
+                          <p className="mt-1 font-semibold text-slate-900">{product.name}</p>
+                        </div>
+                        <p className="font-semibold text-rose-700">{formatMoney(product.sellPrice)}</p>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
+                        {!product.active ? ' · Đã ngừng bán' : ''}
+                      </p>
                     </div>
-                    <p className="font-semibold text-rose-700">{formatMoney(product.sellPrice)}</p>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
-                    {!product.active ? ' · Đã ngừng bán' : ''}
-                  </p>
                 </button>
                 <div className="mt-3 flex gap-3 border-t border-rose-50 pt-3">
                   <button
@@ -593,6 +880,7 @@ function ProductsPage() {
         onSubmit={handleSubmit}
         onClose={closeForm}
         onRegenerateCode={regenerateCode}
+        onRemoveCloudImage={queueRemovedCloudImage}
         isEditing={Boolean(editingId)}
         onDelete={
           editingId
@@ -602,10 +890,11 @@ function ProductsPage() {
               }
             : undefined
         }
-        isSaving={isSaving}
         formError={formError}
         title={editingId ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}
       />
+
+      <LoadingOverlay open={isBusy} message={busyMessage} />
     </div>
   )
 }
