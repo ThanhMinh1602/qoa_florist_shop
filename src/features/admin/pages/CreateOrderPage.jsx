@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import BirthdayScreen from '../../../components/BirthdayScreen'
+import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
 import MobileFrame from '../../../components/common/MobileFrame'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
@@ -368,7 +368,8 @@ function CreateOrderPage() {
         >
           <div className="w-[360px] lg:sticky lg:top-6">
             <MobileFrame label="Xem trước thiệp QR">
-              <BirthdayScreen
+              <TopicGreetingScreen
+                topicId={topicId}
                 preview
                 autoStart
                 senderName={cardData.senderName}

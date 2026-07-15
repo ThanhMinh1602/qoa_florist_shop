@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import BirthdayScreen from '../components/BirthdayScreen'
+import TopicGreetingScreen from '../components/TopicGreetingScreen'
 import BrandLogoCenter from '../components/common/BrandLogoCenter'
 import { fetchCardById } from '../api/cardsApi'
 import { useIsLgUp } from '../hooks/useMediaQuery'
@@ -81,7 +81,8 @@ function GreetingPage() {
   }
 
   return (
-    <BirthdayScreen
+    <TopicGreetingScreen
+      topicId={card.topicId}
       senderName={card.senderName}
       recipientName={card.recipientName}
       message={card.message}

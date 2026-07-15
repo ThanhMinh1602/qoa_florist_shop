@@ -30,36 +30,47 @@ export function CardsProvider({ children }) {
     }
   }, [])
 
-  const createCard = useCallback(async ({ topicId, senderName, recipientName, phone, message }) => {
-    const trimmedRecipient = recipientName?.trim()
-    const trimmedMessage = message?.trim()
+  const createCard = useCallback(
+    async ({ topicId, label, senderName, recipientName, phone, message }) => {
+      const trimmedLabel = label?.trim()
+      const trimmedRecipient = recipientName?.trim()
+      const trimmedMessage = message?.trim()
 
-    if (!topicId || !trimmedRecipient || !trimmedMessage) {
-      return {
-        success: false,
-        message: 'Vui lòng nhập đầy đủ tên người nhận và lời chúc.',
+      if (!topicId) {
+        return { success: false, message: 'Vui lòng chọn chủ đề thiệp.' }
       }
-    }
+      if (!trimmedLabel) {
+        return { success: false, message: 'Vui lòng nhập tên gợi nhớ cho QR.' }
+      }
+      if (!trimmedRecipient || !trimmedMessage) {
+        return {
+          success: false,
+          message: 'Vui lòng nhập đầy đủ tên người nhận và lời nhắn theo chủ đề.',
+        }
+      }
 
-    setError('')
+      setError('')
 
-    try {
-      const result = await createCardApi({
-        topicId,
-        senderName,
-        recipientName,
-        phone,
-        message,
-      })
+      try {
+        const result = await createCardApi({
+          topicId,
+          label: trimmedLabel,
+          senderName,
+          recipientName: trimmedRecipient,
+          phone,
+          message: trimmedMessage,
+        })
 
-      setCards((previous) => [result.data, ...previous])
-      return { success: true, card: result.data }
-    } catch (err) {
-      const message = err.message || 'Không thể tạo thiệp.'
-      setError(message)
-      return { success: false, message }
-    }
-  }, [])
+        setCards((previous) => [result.data, ...previous])
+        return { success: true, card: result.data }
+      } catch (err) {
+        const message = err.message || 'Không thể tạo thiệp.'
+        setError(message)
+        return { success: false, message }
+      }
+    },
+    [],
+  )
 
   const deleteCard = useCallback(async (id) => {
     setError('')

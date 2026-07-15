@@ -8,7 +8,10 @@ function AdminMobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-rose-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       aria-label="Điều hướng chính"
     >
-      <div className="grid grid-cols-4">
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${ADMIN_NAV_ITEMS.length}, minmax(0, 1fr))` }}
+      >
         {ADMIN_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -16,7 +19,7 @@ function AdminMobileBottomNav() {
             end={Boolean(item.end)}
             className={({ isActive }) =>
               [
-                'flex flex-col items-center gap-1 px-1 py-2.5 text-[10px] font-medium transition-colors',
+                'flex flex-col items-center gap-0.5 px-0.5 py-2 text-[9px] font-medium transition-colors sm:text-[10px]',
                 isActive ? 'text-rose-700' : 'text-slate-500',
               ].join(' ')
             }

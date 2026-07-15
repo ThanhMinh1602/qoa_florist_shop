@@ -7,6 +7,13 @@ export const TOPICS = [
     available: true,
   },
   {
+    id: 'galaxy_love',
+    name: 'Ngân hà yêu thương',
+    description: 'Ngân hà 3D hồng phát sáng — trái tim particle giữa vũ trụ tình yêu.',
+    icon: 'auto_awesome',
+    available: true,
+  },
+  {
     id: 'valentine',
     name: 'Valentine',
     description: 'Gửi lời yêu thương ngọt ngào trong ngày Valentine.',

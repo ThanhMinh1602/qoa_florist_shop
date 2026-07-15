@@ -1,4 +1,4 @@
-import BirthdayScreen from '../../../components/BirthdayScreen'
+import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import MobileFrame from '../../../components/common/MobileFrame'
 import MobileStepIndicator from '../../../components/mobile/MobileStepIndicator'
@@ -132,7 +132,8 @@ function CreateOrderMobileView({
           <div className="min-h-0 overflow-hidden">
             <CollapsiblePreview label="Xem trước thiệp QR" defaultOpen={false}>
               <MobileFrame label="Xem trước thiệp QR">
-                <BirthdayScreen
+                <TopicGreetingScreen
+                  topicId={topicId}
                   preview
                   autoStart
                   senderName={cardData.senderName}

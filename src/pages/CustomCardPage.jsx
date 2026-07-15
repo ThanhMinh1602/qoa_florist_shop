@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { submitCustomRequestApi } from '../api/customRequestsApi'
-import BirthdayScreen from '../components/BirthdayScreen'
+import TopicGreetingScreen from '../components/TopicGreetingScreen'
 import BrandLogo from '../components/common/BrandLogo'
 import BrandLogoCenter from '../components/common/BrandLogoCenter'
 import MaterialIcon from '../components/common/MaterialIcon'
@@ -238,7 +238,8 @@ function CustomCardPage() {
 
         <section className="lg:sticky lg:top-6">
           <MobileFrame label="Xem trước thiệp QR">
-            <BirthdayScreen
+            <TopicGreetingScreen
+              topicId={topicId}
               preview
               autoStart
               senderName={cardData.senderName}

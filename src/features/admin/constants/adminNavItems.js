@@ -13,6 +13,19 @@ export const ADMIN_NAV_ITEMS = [
     icon: 'edit_note',
   },
   {
+    to: '/admin/qr/new',
+    label: 'Tạo QR',
+    shortLabel: 'Tạo QR',
+    icon: 'qr_code_2',
+  },
+  {
+    to: '/admin/qr',
+    label: 'Danh sách QR',
+    shortLabel: 'QR',
+    icon: 'list_alt',
+    end: true,
+  },
+  {
     to: '/admin/manage',
     label: 'Đơn hàng',
     shortLabel: 'Đơn',

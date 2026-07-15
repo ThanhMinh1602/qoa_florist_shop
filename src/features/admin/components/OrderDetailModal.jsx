@@ -7,6 +7,7 @@ import { updateCustomRequestApi } from '../../../api/notificationsApi'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
+import { buildZaloChatUrlToCustomer, openZaloChatWithCustomer } from '../../../utils/zalo'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
 import { PAYMENT_STATUS_LABELS } from '../constants/adminNavItems'
@@ -131,6 +132,17 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-end gap-2">
+            {request.customerPhone ? (
+              <button
+                type="button"
+                onClick={() => openZaloChatWithCustomer(request)}
+                className="inline-flex items-center gap-1 rounded-xl bg-[#0068FF] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0054cc]"
+                title={buildZaloChatUrlToCustomer(request)}
+              >
+                <MaterialIcon name="chat" className="text-lg" />
+                Chat Zalo khách
+              </button>
+            ) : null}
             <RequestExportButton request={request} />
             <select
               value={request.status === 'reviewed' ? 'arranging' : request.status}

@@ -1,0 +1,191 @@
+.galaxy-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000;
+}
+
+.galaxy-screen--preview {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.galaxy-screen canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Bold white floating love texts — like reference */
+.galaxy-love-text {
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0.25rem;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: #ffffff;
+  text-transform: none;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.95),
+    0 0 24px rgba(255, 120, 180, 0.65),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  white-space: nowrap;
+  transform: scale(1);
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1),
+    text-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+
+.galaxy-love-text:hover {
+  transform: scale(1.1);
+  filter: brightness(1.08);
+  text-shadow:
+    0 0 14px #fff,
+    0 0 32px rgba(255, 80, 160, 0.95),
+    0 0 48px rgba(255, 42, 133, 0.55);
+}
+
+.galaxy-love-text__heart {
+  display: block;
+  margin: 0 auto 0.05rem;
+  font-size: 0.7rem;
+  color: #ff7eb9;
+  text-shadow: 0 0 10px rgba(255, 80, 160, 0.9);
+}
+
+/* Polaroid-style floating photos */
+.galaxy-photo-card {
+  display: block;
+  width: 72px;
+  height: 72px;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(255, 120, 180, 0.25);
+  cursor: pointer;
+  overflow: hidden;
+  transform: rotate(var(--tilt, -6deg)) scale(1);
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1),
+    box-shadow 0.25s ease;
+}
+
+.galaxy-photo-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.galaxy-photo-card:hover {
+  transform: rotate(var(--tilt, -6deg)) scale(1.1);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(255, 100, 170, 0.45);
+}
+
+.galaxy-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.galaxy-popup-card {
+  width: min(100%, 22rem);
+  border-radius: 1.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.55rem 1.4rem 1.3rem;
+  box-shadow:
+    0 24px 60px rgba(255, 42, 133, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+}
+
+.galaxy-popup-eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 220, 230, 0.7);
+}
+
+.galaxy-popup-title {
+  margin: 0.55rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255, 100, 170, 0.5);
+}
+
+.galaxy-popup-body {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(255, 240, 245, 0.88);
+}
+
+.galaxy-popup-close {
+  margin-top: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 42, 133, 0.85);
+  padding: 0.62rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.galaxy-popup-close:hover {
+  filter: brightness(1.08);
+  transform: scale(1.04);
+}
+
+.galaxy-hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 10;
+  margin: 0;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 220, 230, 0.5);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .galaxy-love-text {
+    font-size: 0.85rem;
+  }
+
+  .galaxy-photo-card {
+    width: 58px;
+    height: 58px;
+  }
+}

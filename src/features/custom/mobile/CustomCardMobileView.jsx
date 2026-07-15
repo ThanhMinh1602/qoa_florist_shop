@@ -1,4 +1,4 @@
-import BirthdayScreen from '../../../components/BirthdayScreen'
+import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import MobileFrame from '../../../components/common/MobileFrame'
 import MaterialIcon from '../../../components/common/MaterialIcon'
@@ -29,7 +29,8 @@ function CustomCardMobileView({
       <div className="flex-1 px-4 py-4 pb-28">
         <CollapsiblePreview label="Xem trước thiệp QR" defaultOpen={step === 1}>
           <MobileFrame label="Xem trước thiệp QR">
-            <BirthdayScreen
+            <TopicGreetingScreen
+              topicId={topicId}
               preview
               autoStart
               senderName={cardData.senderName}

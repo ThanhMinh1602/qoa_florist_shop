@@ -37,6 +37,12 @@ function CardQrPanel({ card, embedded = false }) {
           <div>
             <h4 className="text-lg font-semibold text-slate-900">Đã tạo thiệp & mã QR</h4>
             <p className="mt-1 text-sm text-slate-600">
+              {card.label ? (
+                <>
+                  <span className="font-medium">{card.label}</span>
+                  {' · '}
+                </>
+              ) : null}
               Chủ đề: <span className="font-medium">{topic?.name ?? card.topicId}</span> — Người
               nhận: <span className="font-medium">{card.recipientName}</span>
             </p>
@@ -93,10 +99,10 @@ function CardQrPanel({ card, embedded = false }) {
               Tải ảnh QR
             </button>
             <Link
-              to="/admin/manage"
+              to="/admin/qr"
               className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
             >
-              Xem trong Đơn hàng
+              Danh sách QR
             </Link>
           </div>
         </div>
