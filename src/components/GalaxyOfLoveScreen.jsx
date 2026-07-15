@@ -36,11 +36,12 @@ function galaxyColor(t) {
   return [color.r, color.g, color.b]
 }
 
-function doubleBeatScale(time, bpm = 70) {
-  const cycle = (time * (bpm / 60)) % 1
-  const lub = Math.exp(-(((cycle - 0.06) / 0.035) ** 2))
-  const dub = Math.exp(-(((cycle - 0.22) / 0.03) ** 2)) * 0.7
-  return 1 + (lub + dub) * 0.11
+/** Nhịp tim đều: thu → phóng mượt (sine), không giật lub-dub */
+function heartPulseScale(time, period = 2.6) {
+  // 0…1 smooth — thu sâu (0.76) rồi phóng đều (1.14)
+  const u = (Math.sin((time / period) * Math.PI * 2) + 1) * 0.5
+  const eased = u * u * (3 - 2 * u)
+  return 0.76 + eased * 0.38
 }
 
 function heartCurve(t, scale = 0.12) {
@@ -79,8 +80,17 @@ function MouseParallax({ children, strength = 0.22 }) {
   return <group ref={group}>{children}</group>
 }
 
-/** Flat glowing spiral disc — matches screenshot galaxy plane */
-function GalaxyDisc({ count = 4200 }) {
+/** Box-Muller ≈ Gaussian — làm đốm loan mềm, hết cảm giác góc cạnh */
+function gaussian() {
+  let u = 0
+  let v = 0
+  while (u === 0) u = Math.random()
+  while (v === 0) v = Math.random()
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * v)
+}
+
+/** Soft glowing spiral disc — cánh xoắn rõ, loan nhẹ quanh cánh */
+function GalaxyDisc({ count = 16000 }) {
   const pointsRef = useRef(null)
   const materialRef = useRef(null)
 
@@ -88,40 +98,78 @@ function GalaxyDisc({ count = 4200 }) {
     const positions = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
     const arms = 3
-    const perArm = Math.floor(count * 0.72 / arms)
+    const armCount = Math.floor(count * 0.84)
+    const mistCount = Math.floor(count * 0.04)
+    const haloCount = Math.floor(count * 0.03)
 
     let i = 0
-    for (let arm = 0; arm < arms; arm += 1) {
-      for (let p = 0; p < perArm; p += 1) {
-        const t = p / perArm
-        const radius = 0.2 + Math.pow(t, 0.85) * 11
-        const angle =
-          arm * ((Math.PI * 2) / arms) + Math.log(radius + 1.1) * 2.15 + t * 0.55
-        const spread = 0.08 + t * 1.35
-        positions[i * 3] = Math.cos(angle) * radius + (Math.random() - 0.5) * spread
-        // Very flat disc
-        positions[i * 3 + 1] = (Math.random() - 0.5) * (0.08 + t * 0.22)
-        positions[i * 3 + 2] = Math.sin(angle) * radius + (Math.random() - 0.5) * spread
-        const [r, g, b] = galaxyColor(t)
-        colors[i * 3] = r
-        colors[i * 3 + 1] = g
-        colors[i * 3 + 2] = b
-        i += 1
-      }
+
+    for (let n = 0; n < armCount; n += 1) {
+      const arm = n % arms
+      const t = Math.random()
+      const radius = 0.22 + Math.pow(t, 0.82) * 11.2
+      // Twist mạnh hơn → vòng xoáy đọc rõ
+      const twist = Math.log(radius + 1.0) * 2.55
+      const baseAngle = arm * ((Math.PI * 2) / arms) + twist + t * 0.25
+      // Cánh hẹp — ít loang
+      const armWidth = 0.07 + t * 0.28
+      const along = gaussian() * armWidth
+      const radial = gaussian() * armWidth * 0.15
+      const angle = baseAngle + along / Math.max(radius, 0.5)
+      const r = Math.max(0.08, radius + radial)
+      positions[i * 3] = Math.cos(angle) * r
+      positions[i * 3 + 1] = gaussian() * (0.05 + t * 0.14)
+      positions[i * 3 + 2] = Math.sin(angle) * r
+      const [cr, cg, cb] = galaxyColor(t)
+      const onSpine = Math.exp(-(along * along) / (armWidth * armWidth * 0.4 + 0.02))
+      const bright = 0.85 + onSpine * 0.65
+      colors[i * 3] = cr * bright
+      colors[i * 3 + 1] = cg * bright
+      colors[i * 3 + 2] = cb * bright
+      i += 1
     }
 
-    // Dense bright core cloud
+    for (let n = 0; n < mistCount; n += 1) {
+      const t = Math.random()
+      const radius = 0.5 + Math.pow(Math.random(), 0.65) * 9.5
+      const angle = Math.random() * Math.PI * 2
+      positions[i * 3] = Math.cos(angle) * radius + gaussian() * 0.35
+      positions[i * 3 + 1] = gaussian() * 0.1
+      positions[i * 3 + 2] = Math.sin(angle) * radius + gaussian() * 0.35
+      const [cr, cg, cb] = galaxyColor(0.25 + t * 0.55)
+      const dim = 0.18 + Math.random() * 0.15
+      colors[i * 3] = cr * dim
+      colors[i * 3 + 1] = cg * dim
+      colors[i * 3 + 2] = cb * dim
+      i += 1
+    }
+
+    for (let n = 0; n < haloCount; n += 1) {
+      const t = 0.75 + Math.random() * 0.25
+      const radius = 10 + Math.random() * 4
+      const angle = Math.random() * Math.PI * 2
+      positions[i * 3] = Math.cos(angle) * radius + gaussian() * 0.8
+      positions[i * 3 + 1] = gaussian() * 0.22
+      positions[i * 3 + 2] = Math.sin(angle) * radius + gaussian() * 0.8
+      const [cr, cg, cb] = galaxyColor(t)
+      const dim = 0.2 + Math.random() * 0.2
+      colors[i * 3] = cr * dim
+      colors[i * 3 + 1] = cg * dim
+      colors[i * 3 + 2] = cb * dim
+      i += 1
+    }
+
     while (i < count) {
-      const t = Math.random() * 0.25
-      const radius = Math.random() ** 1.6 * 2.2
+      const t = Math.random() * 0.2
+      const radius = Math.abs(gaussian()) * 0.55 + Math.random() ** 2.2 * 1.7
       const angle = Math.random() * Math.PI * 2
       positions[i * 3] = Math.cos(angle) * radius
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 0.15
+      positions[i * 3 + 1] = gaussian() * 0.1
       positions[i * 3 + 2] = Math.sin(angle) * radius
-      const [r, g, b] = galaxyColor(t * 0.4)
-      colors[i * 3] = r * 1.2
-      colors[i * 3 + 1] = g * 1.2
-      colors[i * 3 + 2] = b * 1.2
+      const [cr, cg, cb] = galaxyColor(t * 0.28)
+      colors[i * 3] = cr * 1.35
+      colors[i * 3 + 1] = cg * 1.35
+      colors[i * 3 + 2] = cb * 1.35
       i += 1
     }
 
@@ -131,13 +179,13 @@ function GalaxyDisc({ count = 4200 }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 36 },
+      uSize: { value: 22 },
     }),
     [],
   )
 
   useFrame(({ clock }, delta) => {
-    if (pointsRef.current) pointsRef.current.rotation.y += delta * 0.035
+    if (pointsRef.current) pointsRef.current.rotation.y += delta * 0.032
     if (materialRef.current) materialRef.current.uniforms.uTime.value = clock.elapsedTime
   })
 
@@ -162,10 +210,11 @@ function GalaxyDisc({ count = 4200 }) {
           uniform float uSize;
           void main() {
             vColor = color;
-            float phase = position.x * 11.0 + position.z * 8.3;
-            vTwinkle = 0.55 + 0.45 * sin(uTime * 2.2 + phase) * sin(uTime * 0.9 + phase * 0.5);
+            float phase = position.x * 7.0 + position.z * 5.5;
+            vTwinkle = 0.62 + 0.38 * sin(uTime * 1.6 + phase) * sin(uTime * 0.7 + phase * 0.4);
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = uSize * (0.6 + vTwinkle * 0.55) * (1.0 / max(0.15, -mvPosition.z));
+            float sizeJitter = 0.5 + fract(sin(phase) * 43758.5453) * 0.55;
+            gl_PointSize = uSize * sizeJitter * (0.55 + vTwinkle * 0.5) * (1.0 / max(0.18, -mvPosition.z));
             gl_Position = projectionMatrix * mvPosition;
           }
         `}
@@ -176,8 +225,9 @@ function GalaxyDisc({ count = 4200 }) {
             vec2 uv = gl_PointCoord - 0.5;
             float d = length(uv);
             if (d > 0.5) discard;
-            float glow = smoothstep(0.5, 0.05, d);
-            gl_FragColor = vec4(vColor * (0.85 + vTwinkle * 0.6), glow * (0.5 + vTwinkle * 0.5));
+            float glow = exp(-d * d * 10.5);
+            glow *= smoothstep(0.5, 0.14, d);
+            gl_FragColor = vec4(vColor * (0.85 + vTwinkle * 0.5), glow * (0.48 + vTwinkle * 0.42));
           }
         `}
       />
@@ -185,45 +235,64 @@ function GalaxyDisc({ count = 4200 }) {
   )
 }
 
-/** Hollow particle heart OUTLINE floating above galaxy core */
-function ParticleHeartOutline({ count = 2800 }) {
+/** Soft particle heart — nét vừa phải + hơi loan mềm */
+function ParticleHeartOutline({ count = 5600 }) {
   const groupRef = useRef(null)
   const materialRef = useRef(null)
   const lightRef = useRef(null)
 
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3)
-    for (let i = 0; i < count; i += 1) {
-      const t = (i / count) * Math.PI * 2
-      const [hx, hy] = heartCurve(t, 0.135)
-      // Outline thickness only — not filled volume
-      const nx = -Math.sin(t)
-      const ny = Math.cos(t)
-      const thickness = (Math.random() - 0.5) * 0.14
-      arr[i * 3] = hx + nx * thickness * 0.08 + (Math.random() - 0.5) * 0.04
-      arr[i * 3 + 1] = hy + ny * thickness * 0.08 + (Math.random() - 0.5) * 0.04
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 0.18
+    const scale = 0.14
+    const rim = Math.floor(count * 0.78)
+    const bloom = count - rim
+
+    for (let i = 0; i < rim; i += 1) {
+      const t = Math.random() * Math.PI * 2
+      const [hx, hy] = heartCurve(t, scale)
+      const next = heartCurve(t + 0.015, scale)
+      const tx = next[0] - hx
+      const ty = next[1] - hy
+      const len = Math.hypot(tx, ty) || 1
+      const nx = -ty / len
+      const ny = tx / len
+      const width = 0.025 + Math.random() * 0.045
+      const offset = gaussian() * width
+      arr[i * 3] = hx + nx * offset
+      arr[i * 3 + 1] = hy + ny * offset
+      arr[i * 3 + 2] = gaussian() * 0.12
     }
+
+    for (let i = 0; i < bloom; i += 1) {
+      const t = Math.random() * Math.PI * 2
+      const [hx, hy] = heartCurve(t, scale)
+      const falloff = Math.pow(Math.random(), 0.7)
+      const spread = 0.03 + falloff * 0.14
+      arr[(rim + i) * 3] = hx + gaussian() * spread
+      arr[(rim + i) * 3 + 1] = hy + gaussian() * spread
+      arr[(rim + i) * 3 + 2] = gaussian() * 0.14
+    }
+
     return arr
   }, [count])
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 28 },
+      uSize: { value: 16 },
     }),
     [],
   )
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return
-    const beat = doubleBeatScale(clock.elapsedTime, 72)
+    const beat = heartPulseScale(clock.elapsedTime, 2.6)
     groupRef.current.scale.setScalar(beat)
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value = clock.elapsedTime
-      materialRef.current.uniforms.uSize.value = 26 + (beat - 1) * 40
+      materialRef.current.uniforms.uSize.value = 14 + Math.abs(beat - 1) * 55
     }
-    if (lightRef.current) lightRef.current.intensity = 2 + (beat - 1) * 14
+    if (lightRef.current) lightRef.current.intensity = 1.8 + Math.max(0, beat - 1) * 14
   })
 
   return (
@@ -241,30 +310,36 @@ function ParticleHeartOutline({ count = 2800 }) {
           uniforms={uniforms}
           vertexShader={`
             varying float vTwinkle;
+            varying float vSoft;
             uniform float uTime;
             uniform float uSize;
             void main() {
-              float phase = position.x * 9.0 + position.y * 14.0;
-              vTwinkle = 0.65 + 0.35 * sin(uTime * 3.0 + phase);
+              float phase = position.x * 8.0 + position.y * 11.0;
+              vTwinkle = 0.68 + 0.32 * sin(uTime * 2.2 + phase);
+              vSoft = fract(sin(phase * 12.9898) * 43758.5453);
               vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-              gl_PointSize = uSize * vTwinkle * (1.0 / max(0.2, -mvPosition.z));
+              float sizeJitter = 0.5 + vSoft * 0.85;
+              gl_PointSize = uSize * sizeJitter * vTwinkle * (1.0 / max(0.2, -mvPosition.z));
               gl_Position = projectionMatrix * mvPosition;
             }
           `}
           fragmentShader={`
             varying float vTwinkle;
+            varying float vSoft;
             void main() {
               vec2 uv = gl_PointCoord - 0.5;
               float d = length(uv);
               if (d > 0.5) discard;
-              float glow = smoothstep(0.5, 0.0, d);
-              vec3 col = mix(vec3(1.0, 0.75, 0.88), vec3(1.0), vTwinkle);
-              gl_FragColor = vec4(col, glow * 0.95);
+              float glow = exp(-d * d * 7.2);
+              glow *= smoothstep(0.5, 0.06, d);
+              vec3 col = mix(vec3(1.0, 0.72, 0.88), vec3(1.0), vTwinkle * 0.55);
+              float alpha = glow * (0.32 + vTwinkle * 0.35) * (0.55 + vSoft * 0.35);
+              gl_FragColor = vec4(col, alpha);
             }
           `}
         />
       </points>
-      <pointLight ref={lightRef} color="#ff9ec8" intensity={2.4} distance={12} />
+      <pointLight ref={lightRef} color="#ff9ec8" intensity={2.1} distance={12} />
     </group>
   )
 }
