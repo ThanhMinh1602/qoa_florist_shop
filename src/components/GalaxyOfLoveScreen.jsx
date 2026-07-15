@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
@@ -68,6 +68,112 @@ function pointInPolygon(x, y, pts) {
     if (intersect) inside = !inside
   }
   return inside
+}
+
+function wrapCanvasLines(ctx, text, maxWidth) {
+  const paragraphs = String(text || '')
+    .trim()
+    .split(/\n+/)
+  const lines = []
+  paragraphs.forEach((para) => {
+    const words = para.split(/\s+/).filter(Boolean)
+    if (words.length === 0) {
+      lines.push('')
+      return
+    }
+    let line = words[0]
+    for (let i = 1; i < words.length; i += 1) {
+      const test = `${line} ${words[i]}`
+      if (ctx.measureText(test).width <= maxWidth) line = test
+      else {
+        lines.push(line)
+        line = words[i]
+      }
+    }
+    lines.push(line)
+  })
+  return lines.slice(0, 6)
+}
+
+/**
+ * Sample chữ từ canvas → cloud particle 3D nét (nhiều lớp Z như extrude).
+ */
+function sampleSharpTextParticles(text, options = {}) {
+  const {
+    fontSize = 110,
+    maxWidth = 920,
+    lineHeight = 1.18,
+    depthLayers = 9,
+    depth = 0.32,
+    worldWidth = 7.2,
+    step = 2,
+  } = options
+
+  const display =
+    String(text || '').trim() || 'I love you'
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  ctx.font = `700 ${fontSize}px "Segoe UI", "Be Vietnam Pro", system-ui, sans-serif`
+  const lines = wrapCanvasLines(ctx, display, maxWidth)
+  const padX = 48
+  const padY = 40
+  const textH = lines.length * fontSize * lineHeight
+  let textW = 0
+  lines.forEach((line) => {
+    textW = Math.max(textW, ctx.measureText(line).width)
+  })
+  canvas.width = Math.ceil(textW + padX * 2)
+  canvas.height = Math.ceil(textH + padY * 2)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = '#000'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.font = `700 ${fontSize}px "Segoe UI", "Be Vietnam Pro", system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#fff'
+  ctx.imageSmoothingEnabled = false
+  const startY = padY + (fontSize * lineHeight) / 2
+  lines.forEach((line, index) => {
+    ctx.fillText(line, canvas.width / 2, startY + index * fontSize * lineHeight)
+  })
+
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  // Adaptive step — giữ mật độ cao nhưng không quá nặng
+  let sampleStep = step
+  let ink = 0
+  for (let y = 0; y < height; y += 4) {
+    for (let x = 0; x < width; x += 4) {
+      if (data[(y * width + x) * 4] > 180) ink += 1
+    }
+  }
+  const estimate = (ink * 16 * depthLayers) / (sampleStep * sampleStep)
+  if (estimate > 90000) sampleStep = 3
+  if (estimate > 140000) sampleStep = 4
+
+  const scale = worldWidth / width
+  const targets = []
+  for (let y = 0; y < height; y += sampleStep) {
+    for (let x = 0; x < width; x += sampleStep) {
+      const a = data[(y * width + x) * 4]
+      if (a < 180) continue
+      const wx = (x - width / 2) * scale
+      const wy = -(y - height / 2) * scale
+      for (let layer = 0; layer < depthLayers; layer += 1) {
+        const t = depthLayers === 1 ? 0.5 : layer / (depthLayers - 1)
+        const wz = (t - 0.5) * 2 * depth
+        const edge = Math.min(t, 1 - t) * 2
+        const brightness = 0.55 + edge * 0.35 + (a / 255) * 0.18
+        targets.push(wx, wy, wz, brightness)
+      }
+    }
+  }
+
+  return {
+    targets: new Float32Array(targets),
+    particleCount: targets.length / 4,
+    worldWidth,
+    worldHeight: height * scale,
+  }
 }
 
 function MouseParallax({ children, strength = 0.22 }) {
@@ -247,11 +353,15 @@ function GalaxyDisc({ count = 52000, spinSpeedRef }) {
   )
 }
 
-/** Trái tim 3D — đốm phủ đều bề mặt trước/sau/viền, hình mềm */
-function ParticleHeartOutline({ count = 32000 }) {
+/** Trái tim 3D — đốm phủ bề mặt; có thể nổ tung */
+function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) {
   const groupRef = useRef(null)
   const materialRef = useRef(null)
   const lightRef = useRef(null)
+  const pointsRef = useRef(null)
+  const velocitiesRef = useRef(null)
+  const explodeT = useRef(0)
+  const doneRef = useRef(false)
 
   const { positions, colors } = useMemo(() => {
     const positions = new Float32Array(count * 3)
@@ -275,7 +385,6 @@ function ParticleHeartOutline({ count = 32000 }) {
 
     const edgeCount = Math.floor(count * 0.18)
     const faceCount = count - edgeCount
-
     let i = 0
 
     for (let n = 0; n < edgeCount; n += 1) {
@@ -307,20 +416,15 @@ function ParticleHeartOutline({ count = 32000 }) {
       const x = minX + Math.random() * (maxX - minX)
       const y = minY + Math.random() * (maxY - minY)
       if (!pointInPolygon(x, y, poly)) continue
-
       const dx = (x - cx) / rx
       const dy = (y - cy) / ry
       const r2 = Math.min(1, dx * dx * 0.85 + dy * dy * 0.85)
       const halfZ = 0.58 * Math.sqrt(Math.max(0.05, 1 - r2 * 0.92))
       const face = Math.random() < 0.5 ? 1 : -1
-      const z = face * halfZ + gaussian() * 0.025
-
       positions[i * 3] = x + gaussian() * 0.012
       positions[i * 3 + 1] = y + gaussian() * 0.012
-      positions[i * 3 + 2] = z
-
-      const edgeFade = 0.75 + (1 - r2) * 0.55
-      const bright = (1.15 + Math.random() * 0.35) * edgeFade
+      positions[i * 3 + 2] = face * halfZ + gaussian() * 0.025
+      const bright = (1.15 + Math.random() * 0.35) * (0.75 + (1 - r2) * 0.55)
       colors[i * 3] = bright
       colors[i * 3 + 1] = 0.28 * bright
       colors[i * 3 + 2] = 0.52 * bright
@@ -340,6 +444,19 @@ function ParticleHeartOutline({ count = 32000 }) {
       i += 1
     }
 
+    const vels = new Float32Array(count * 3)
+    for (let n = 0; n < count; n += 1) {
+      const px = positions[n * 3]
+      const py = positions[n * 3 + 1]
+      const pz = positions[n * 3 + 2]
+      const len = Math.hypot(px, py, pz) || 1
+      const speed = 2.8 + Math.random() * 5.5
+      vels[n * 3] = (px / len) * speed + (Math.random() - 0.5) * 1.2
+      vels[n * 3 + 1] = (py / len) * speed + (Math.random() - 0.5) * 1.2 + 1.5
+      vels[n * 3 + 2] = (pz / len) * speed + (Math.random() - 0.5) * 1.2
+    }
+    velocitiesRef.current = vels
+
     return { positions, colors }
   }, [count])
 
@@ -347,27 +464,57 @@ function ParticleHeartOutline({ count = 32000 }) {
     () => ({
       uTime: { value: 0 },
       uSize: { value: 13 },
+      uFade: { value: 1 },
     }),
     [],
   )
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
-    const beat = heartPulseScale(clock.elapsedTime, 2.6)
-    groupRef.current.scale.setScalar(beat)
-    groupRef.current.rotation.y = 1.08 + Math.sin(clock.elapsedTime * 0.35) * 0.12
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = clock.elapsedTime
-      materialRef.current.uniforms.uSize.value = 12 + Math.abs(beat - 1) * 42
+    if (!exploding) {
+      const beat = heartPulseScale(clock.elapsedTime, 2.6)
+      groupRef.current.scale.setScalar(beat)
+      groupRef.current.rotation.y = 1.08 + Math.sin(clock.elapsedTime * 0.35) * 0.12
+      if (materialRef.current) {
+        materialRef.current.uniforms.uTime.value = clock.elapsedTime
+        materialRef.current.uniforms.uSize.value = 12 + Math.abs(beat - 1) * 42
+        materialRef.current.uniforms.uFade.value = 1
+      }
+      if (lightRef.current) lightRef.current.intensity = 3.0 + Math.max(0, beat - 1) * 12
+      return
     }
-    if (lightRef.current) {
-      lightRef.current.intensity = 3.0 + Math.max(0, beat - 1) * 12
+
+    explodeT.current += delta
+    const t = explodeT.current
+    const fade = Math.max(0, 1 - t / 1.35)
+    if (materialRef.current) {
+      materialRef.current.uniforms.uFade.value = fade
+      materialRef.current.uniforms.uSize.value = 13 + t * 8
+    }
+    if (lightRef.current) lightRef.current.intensity = 3 * fade
+
+    const posAttr = pointsRef.current?.geometry?.attributes?.position
+    const vels = velocitiesRef.current
+    if (posAttr && vels) {
+      const arr = posAttr.array
+      for (let n = 0; n < count; n += 1) {
+        arr[n * 3] += vels[n * 3] * delta
+        arr[n * 3 + 1] += vels[n * 3 + 1] * delta
+        arr[n * 3 + 2] += vels[n * 3 + 2] * delta
+        vels[n * 3 + 1] -= 1.8 * delta
+      }
+      posAttr.needsUpdate = true
+    }
+
+    if (t >= 1.35 && !doneRef.current) {
+      doneRef.current = true
+      onExploded?.()
     }
   })
 
   return (
     <group ref={groupRef} position={[0, 3.45, 0]}>
-      <points>
+      <points ref={pointsRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
           <bufferAttribute attach="attributes-color" args={[colors, 3]} />
@@ -385,8 +532,9 @@ function ParticleHeartOutline({ count = 32000 }) {
             varying float vTwinkle;
             uniform float uTime;
             uniform float uSize;
+            uniform float uFade;
             void main() {
-              vColor = color;
+              vColor = color * uFade;
               float phase = position.x * 8.0 + position.y * 11.0 + position.z * 6.0;
               vTwinkle = 0.78 + 0.22 * sin(uTime * 2.0 + phase);
               vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
@@ -412,6 +560,138 @@ function ParticleHeartOutline({ count = 32000 }) {
         />
       </points>
       <pointLight ref={lightRef} color="#ff4fa0" intensity={3.2} distance={16} />
+    </group>
+  )
+}
+
+/** Chữ lời nhắn 3D từ đốm — nét, hình thành sau khi tim nổ */
+function ParticleMessageText({ text, active, onBounds }) {
+  const groupRef = useRef(null)
+  const pointsRef = useRef(null)
+  const materialRef = useRef(null)
+  const progress = useRef(0)
+
+  const cloud = useMemo(() => {
+    if (typeof document === 'undefined') {
+      return { targets: new Float32Array(0), particleCount: 0, worldWidth: 7.4, worldHeight: 2 }
+    }
+    return sampleSharpTextParticles(text, {
+      fontSize: 108,
+      maxWidth: 980,
+      depthLayers: 10,
+      depth: 0.36,
+      worldWidth: 7.4,
+      step: 2,
+    })
+  }, [text])
+
+  useEffect(() => {
+    if (!active || !cloud.particleCount) return
+    onBounds?.({ worldWidth: cloud.worldWidth, worldHeight: cloud.worldHeight })
+  }, [active, cloud, onBounds])
+
+  const { positions, colors, starts } = useMemo(() => {
+    const n = cloud.particleCount
+    const positions = new Float32Array(n * 3)
+    const colors = new Float32Array(n * 3)
+    const starts = new Float32Array(n * 3)
+    const targets = cloud.targets
+    for (let i = 0; i < n; i += 1) {
+      const bright = targets[i * 4 + 3]
+      starts[i * 3] = (Math.random() - 0.5) * 0.8
+      starts[i * 3 + 1] = (Math.random() - 0.5) * 0.8
+      starts[i * 3 + 2] = (Math.random() - 0.5) * 0.8
+      positions[i * 3] = starts[i * 3]
+      positions[i * 3 + 1] = starts[i * 3 + 1]
+      positions[i * 3 + 2] = starts[i * 3 + 2]
+      colors[i * 3] = 0.72 * bright
+      colors[i * 3 + 1] = 0.38 * bright
+      colors[i * 3 + 2] = 0.55 * bright
+    }
+    return { positions, colors, starts }
+  }, [cloud])
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uSize: { value: 8.5 },
+      uOpacity: { value: 0 },
+    }),
+    [],
+  )
+
+  useFrame(({ clock }, delta) => {
+    if (!active || !pointsRef.current) return
+    progress.current = Math.min(1, progress.current + delta * 0.85)
+    const p = progress.current
+    const e = 1 - Math.pow(1 - p, 3)
+    const posAttr = pointsRef.current.geometry.attributes.position
+    const arr = posAttr.array
+    const targets = cloud.targets
+    for (let i = 0; i < cloud.particleCount; i += 1) {
+      arr[i * 3] = starts[i * 3] + (targets[i * 4] - starts[i * 3]) * e
+      arr[i * 3 + 1] = starts[i * 3 + 1] + (targets[i * 4 + 1] - starts[i * 3 + 1]) * e
+      arr[i * 3 + 2] = starts[i * 3 + 2] + (targets[i * 4 + 2] - starts[i * 3 + 2]) * e
+    }
+    posAttr.needsUpdate = true
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = clock.elapsedTime
+      materialRef.current.uniforms.uOpacity.value = Math.min(0.72, p * 0.95)
+    }
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.25) * 0.08
+    }
+  })
+
+  if (!active || cloud.particleCount === 0) return null
+
+  return (
+    <group ref={groupRef} position={[0, 3.35, 0]}>
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={materialRef}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+          uniforms={uniforms}
+          vertexShader={`
+            attribute vec3 color;
+            varying vec3 vColor;
+            varying float vAlpha;
+            uniform float uTime;
+            uniform float uSize;
+            uniform float uOpacity;
+            void main() {
+              vColor = color;
+              vAlpha = uOpacity;
+              vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+              // Size gần như đều — chữ nét, không nhòe
+              gl_PointSize = uSize * (1.0 / max(0.25, -mvPosition.z));
+              gl_Position = projectionMatrix * mvPosition;
+            }
+          `}
+          fragmentShader={`
+            varying vec3 vColor;
+            varying float vAlpha;
+            void main() {
+              vec2 uv = gl_PointCoord - 0.5;
+              float d = length(uv);
+              if (d > 0.5) discard;
+              // Vòng glow hẹp — cạnh chữ sắc
+              float core = smoothstep(0.5, 0.12, d);
+              float glow = exp(-d * d * 14.0);
+              float alpha = mix(glow * 0.28, core, 0.72) * vAlpha * 0.85;
+              gl_FragColor = vec4(vColor * 0.92, alpha);
+            }
+          `}
+        />
+      </points>
+      <pointLight color="#ff8ec8" intensity={2.2} distance={18} />
     </group>
   )
 }
@@ -549,10 +829,119 @@ function GalaxyIntro({ spinSpeedRef, onComplete }) {
   return null
 }
 
-function Scene({ labels, onSelectLabel }) {
+/** Zoom out rõ + góc nhìn chữ nằm trọn màn hình */
+function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
+  const { camera } = useThree()
+  const started = useRef(false)
+  const finished = useRef(false)
+  const startPos = useRef(new THREE.Vector3())
+  const startLook = useRef(new THREE.Vector3())
+  const endPos = useRef(new THREE.Vector3(0, 3.5, 20))
+  const endLook = useRef(new THREE.Vector3(0, 3.35, 0))
+  const endDist = useRef(20)
+  const progress = useRef(0)
+
+  useEffect(() => {
+    if (!active) {
+      started.current = false
+      finished.current = false
+      progress.current = 0
+    }
+  }, [active])
+
+  useFrame((_, delta) => {
+    if (!active || finished.current) return
+
+    endLook.current.set(0, 3.35, 0)
+
+    if (!started.current) {
+      started.current = true
+      startPos.current.copy(camera.position)
+      if (controlsRef.current) startLook.current.copy(controlsRef.current.target)
+      else startLook.current.set(0, 3.45, 0)
+      progress.current = 0
+
+      const w = textBounds?.worldWidth || 7.4
+      const h = textBounds?.worldHeight || 2.4
+      const halfFov = THREE.MathUtils.degToRad(42 / 2)
+      const fitDist = Math.max(
+        (w * 0.62) / Math.tan(halfFov),
+        (h * 0.78) / Math.tan(halfFov),
+      )
+      const startDist = startPos.current.distanceTo(endLook.current)
+      // Luôn kéo xa hơn góc focus trước đó — zoom out rõ ràng
+      const dist = Math.max(fitDist * 1.28, startDist * 1.45, startDist + 5.5, 18)
+      endDist.current = THREE.MathUtils.clamp(dist, 18, 28)
+      // Trước mặt chữ (+Z), hơi cao nhẹ
+      endPos.current.set(0, 3.55, endDist.current)
+    } else if (textBounds?.worldWidth && progress.current < 0.35) {
+      // Cập nhật nhẹ khi bounds chữ sẵn sàng (vẫn trong nửa đầu anim)
+      const w = textBounds.worldWidth
+      const h = textBounds.worldHeight || 2.4
+      const halfFov = THREE.MathUtils.degToRad(42 / 2)
+      const fitDist = Math.max(
+        (w * 0.62) / Math.tan(halfFov),
+        (h * 0.78) / Math.tan(halfFov),
+      )
+      const startDist = startPos.current.distanceTo(endLook.current)
+      const dist = Math.max(fitDist * 1.28, startDist * 1.45, startDist + 5.5, 18)
+      endDist.current = THREE.MathUtils.clamp(dist, 18, 28)
+      endPos.current.set(0, 3.55, endDist.current)
+    }
+
+    progress.current = Math.min(1, progress.current + delta / 1.5)
+    const e = 1 - Math.pow(1 - progress.current, 3)
+    camera.position.lerpVectors(startPos.current, endPos.current, e)
+    const look = startLook.current.clone().lerp(endLook.current, e)
+    camera.lookAt(look)
+    if (controlsRef.current) {
+      controlsRef.current.target.copy(look)
+      controlsRef.current.update()
+    }
+
+    if (progress.current >= 1 && !finished.current) {
+      finished.current = true
+      camera.position.copy(endPos.current)
+      camera.lookAt(endLook.current)
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(endLook.current)
+        controlsRef.current.minDistance = Math.max(10, endDist.current * 0.65)
+        controlsRef.current.maxDistance = Math.max(32, endDist.current * 1.7)
+        controlsRef.current.update()
+      }
+      onSettled?.()
+    }
+  })
+
+  return null
+}
+
+function Scene({ labels, message, onSelectLabel }) {
   const [introDone, setIntroDone] = useState(false)
+  const [heartExploding, setHeartExploding] = useState(false)
+  const [heartGone, setHeartGone] = useState(false)
+  const [showMessage, setShowMessage] = useState(false)
+  const [viewSettled, setViewSettled] = useState(false)
+  const [textBounds, setTextBounds] = useState(null)
   const spinSpeedRef = useRef(INTRO_SPIN_START)
   const controlsRef = useRef(null)
+
+  const revealText = useMemo(() => {
+    const trimmed = message?.trim()
+    return trimmed || 'I love you'
+  }, [message])
+
+  const handleTextBounds = useCallback((bounds) => {
+    setTextBounds(bounds)
+  }, [])
+
+  useEffect(() => {
+    if (!introDone) return undefined
+    setHeartExploding(true)
+    setShowMessage(true)
+    setViewSettled(false)
+    return undefined
+  }, [introDone])
 
   const handleIntroComplete = () => {
     const controls = controlsRef.current
@@ -563,20 +952,39 @@ function Scene({ labels, onSelectLabel }) {
     setIntroDone(true)
   }
 
+  const handleHeartExploded = () => {
+    setHeartGone(true)
+  }
+
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <fog attach="fog" args={['#000000', 32, 100]} />
+      <fog attach="fog" args={['#000000', 32, 110]} />
       <ambientLight intensity={0.15} />
       <Stars radius={140} depth={80} count={14000} factor={2.4} saturation={0} fade speed={0.32} />
 
       <GalaxyIntro spinSpeedRef={spinSpeedRef} onComplete={handleIntroComplete} />
+      <TextViewCamera
+        active={showMessage}
+        controlsRef={controlsRef}
+        textBounds={textBounds}
+        onSettled={() => setViewSettled(true)}
+      />
 
-      <MouseParallax strength={introDone ? 0.18 : 0}>
+      <MouseParallax strength={introDone && viewSettled ? 0.12 : 0}>
         <group>
           <GalaxyDisc spinSpeedRef={spinSpeedRef} />
-          <ParticleHeartOutline />
-          <FloatingDecor labels={labels} onSelect={onSelectLabel} />
+          {!heartGone ? (
+            <ParticleHeartOutline exploding={heartExploding} onExploded={handleHeartExploded} />
+          ) : null}
+          <ParticleMessageText
+            text={revealText}
+            active={showMessage}
+            onBounds={handleTextBounds}
+          />
+          {!showMessage ? (
+            <FloatingDecor labels={labels} onSelect={onSelectLabel} />
+          ) : null}
           <pointLight position={[0, 0.2, 0]} color="#ffffff" intensity={1.8} distance={6} />
           <pointLight position={[0, 3.2, 0]} color="#ff7eb9" intensity={1.2} distance={8} />
         </group>
@@ -584,13 +992,12 @@ function Scene({ labels, onSelectLabel }) {
 
       <OrbitControls
         ref={controlsRef}
-        enabled={introDone}
+        enabled={introDone && viewSettled}
         enablePan={false}
-        minDistance={10}
-        maxDistance={36}
-        target={[0, 3.45, 0]}
-        autoRotate={introDone}
-        autoRotateSpeed={0.12}
+        minDistance={8}
+        maxDistance={40}
+        target={[0, 3.35, 0]}
+        autoRotate={false}
         enableDamping
         dampingFactor={0.08}
         maxPolarAngle={Math.PI * 0.58}
@@ -667,7 +1074,7 @@ function GalaxyOfLoveScreen({
         }}
       >
         <Suspense fallback={null}>
-          <Scene labels={labels} onSelectLabel={setSelected} />
+          <Scene labels={labels} message={message} onSelectLabel={setSelected} />
         </Suspense>
       </Canvas>
 
@@ -679,7 +1086,7 @@ function GalaxyOfLoveScreen({
       />
 
       {!preview ? (
-        <p className="galaxy-hint">Kéo để xoay · di chuột parallax · chạm chữ</p>
+        <p className="galaxy-hint">Kéo để xoay · chờ trái tim nổ ra lời nhắn</p>
       ) : null}
     </div>
   )
