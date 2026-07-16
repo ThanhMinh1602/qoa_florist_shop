@@ -107,6 +107,7 @@ function sampleSharpTextParticles(text, options = {}) {
     depth = 0.32,
     worldWidth = 7.2,
     step = 2,
+    maxParticles = 120000,
   } = options
 
   const display =
@@ -138,7 +139,7 @@ function sampleSharpTextParticles(text, options = {}) {
   })
 
   const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  // Adaptive step — giữ mật độ cao nhưng không quá nặng
+  // Adaptive step — ưu tiên mật độ cao; chỉ thưa khi vượt maxParticles
   let sampleStep = step
   let ink = 0
   for (let y = 0; y < height; y += 4) {
@@ -147,8 +148,8 @@ function sampleSharpTextParticles(text, options = {}) {
     }
   }
   const estimate = (ink * 16 * depthLayers) / (sampleStep * sampleStep)
-  if (estimate > 90000) sampleStep = 3
-  if (estimate > 140000) sampleStep = 4
+  if (estimate > maxParticles * 1.15) sampleStep = Math.max(sampleStep, 2)
+  if (estimate > maxParticles * 1.8) sampleStep = Math.max(sampleStep, 3)
 
   const scale = worldWidth / width
   const targets = []
@@ -353,6 +354,106 @@ function GalaxyDisc({ count = 52000, spinSpeedRef }) {
   )
 }
 
+/** Đốm sáng lấp lánh quanh không gian — vừa đủ để nhìn lung linh */
+function SpaceSparkles({ count = 3200 }) {
+  const materialRef = useRef(null)
+
+  const { positions, colors, phases } = useMemo(() => {
+    const positions = new Float32Array(count * 3)
+    const colors = new Float32Array(count * 3)
+    const phases = new Float32Array(count)
+
+    for (let i = 0; i < count; i += 1) {
+      const u = Math.random()
+      const radius = 8 + Math.pow(u, 0.55) * 72
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
+      positions[i * 3 + 1] = radius * Math.cos(phi) * 0.72
+      positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta)
+
+      const tint = Math.random()
+      const bright = 0.45 + Math.random() * 0.75
+      if (tint < 0.55) {
+        colors[i * 3] = bright
+        colors[i * 3 + 1] = bright * 0.96
+        colors[i * 3 + 2] = bright
+      } else if (tint < 0.82) {
+        colors[i * 3] = bright
+        colors[i * 3 + 1] = bright * 0.55
+        colors[i * 3 + 2] = bright * 0.78
+      } else {
+        colors[i * 3] = bright * 0.7
+        colors[i * 3 + 1] = bright * 0.82
+        colors[i * 3 + 2] = bright
+      }
+      phases[i] = Math.random() * Math.PI * 2
+    }
+
+    return { positions, colors, phases }
+  }, [count])
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uSize: { value: 9 },
+    }),
+    [],
+  )
+
+  useFrame(({ clock }) => {
+    if (materialRef.current) materialRef.current.uniforms.uTime.value = clock.elapsedTime
+  })
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        <bufferAttribute attach="attributes-aPhase" args={[phases, 1]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={materialRef}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+        uniforms={uniforms}
+        vertexShader={`
+          attribute vec3 color;
+          attribute float aPhase;
+          varying vec3 vColor;
+          varying float vTwinkle;
+          uniform float uTime;
+          uniform float uSize;
+          void main() {
+            vColor = color;
+            float tw = sin(uTime * (1.1 + fract(aPhase * 0.37) * 1.8) + aPhase);
+            vTwinkle = smoothstep(-0.2, 1.0, tw);
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            float pop = 0.35 + vTwinkle * 1.1;
+            gl_PointSize = uSize * pop * (1.0 / max(0.35, -mvPosition.z));
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `}
+        fragmentShader={`
+          varying vec3 vColor;
+          varying float vTwinkle;
+          void main() {
+            vec2 uv = gl_PointCoord - 0.5;
+            float d = length(uv);
+            if (d > 0.5) discard;
+            float core = smoothstep(0.5, 0.08, d);
+            float glow = exp(-d * d * 16.0);
+            float alpha = (glow * 0.35 + core * 0.65) * (0.15 + vTwinkle * 0.75);
+            gl_FragColor = vec4(vColor * (0.7 + vTwinkle * 0.55), alpha);
+          }
+        `}
+      />
+    </points>
+  )
+}
+
 /** Trái tim 3D — đốm phủ bề mặt; có thể nổ tung */
 function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) {
   const groupRef = useRef(null)
@@ -472,7 +573,7 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
     if (!exploding) {
-      const beat = heartPulseScale(clock.elapsedTime, 2.6)
+      const beat = heartPulseScale(clock.elapsedTime, HEART_BEAT_PERIOD)
       groupRef.current.scale.setScalar(beat)
       groupRef.current.rotation.y = 1.08 + Math.sin(clock.elapsedTime * 0.35) * 0.12
       if (materialRef.current) {
@@ -604,12 +705,13 @@ function ParticleMessageText({ phrases, active, onBounds }) {
     }
     return phraseList.map((text) =>
       sampleSharpTextParticles(text, {
-        fontSize: 108,
+        fontSize: 112,
         maxWidth: 980,
-        depthLayers: 6,
-        depth: 0.22,
+        depthLayers: 8,
+        depth: 0.2,
         worldWidth: 7.4,
-        step: 2,
+        step: 1,
+        maxParticles: 160000,
       }),
     )
   }, [phraseList])
@@ -646,7 +748,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 8.5 },
+      uSize: { value: 4.2 },
       uOpacity: { value: 0 },
     }),
     [],
@@ -672,9 +774,9 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       const arr = colorAttr.array
       for (let i = 0; i < maxCount; i += 1) {
         const bright = targets[i * 4 + 3]
-        arr[i * 3] = 0.72 * bright
-        arr[i * 3 + 1] = 0.38 * bright
-        arr[i * 3 + 2] = 0.55 * bright
+        arr[i * 3] = 0.46 * bright
+        arr[i * 3 + 1] = 0.25 * bright
+        arr[i * 3 + 2] = 0.36 * bright
       }
       colorAttr.needsUpdate = true
     }
@@ -739,14 +841,14 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       }
       posAttr.needsUpdate = true
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = Math.min(0.72, progressRef.current * 0.95)
+        materialRef.current.uniforms.uOpacity.value = Math.min(0.48, progressRef.current * 0.62)
       }
       if (progressRef.current >= 1) {
         if (isLast) {
           // Cụm cuối: giữ nguyên, không nổ
           phaseRef.current = 'hold'
           holdRef.current = 0
-          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.72
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.48
         } else {
           phaseRef.current = 'hold'
           holdRef.current = 0
@@ -754,7 +856,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         }
       }
     } else if (phase === 'hold') {
-      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.72
+      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.48
       // Cụm cuối đứng yên — không nổ
       if (!isLast) {
         holdRef.current += delta
@@ -776,8 +878,8 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         posAttr.needsUpdate = true
       }
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = 0.72 * fade
-        materialRef.current.uniforms.uSize.value = 8.5 + progressRef.current * 10
+        materialRef.current.uniforms.uOpacity.value = 0.48 * fade
+        materialRef.current.uniforms.uSize.value = 4.2 + progressRef.current * 6
       }
 
       if (progressRef.current >= 1) {
@@ -797,7 +899,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         phaseRef.current = 'gather'
         progressRef.current = 0
         holdRef.current = 0
-        if (materialRef.current) materialRef.current.uniforms.uSize.value = 8.5
+        if (materialRef.current) materialRef.current.uniforms.uSize.value = 4.2
       }
     }
 
@@ -852,16 +954,16 @@ function ParticleMessageText({ phrases, active, onBounds }) {
             void main() {
               vec2 uv = gl_PointCoord - 0.5;
               float d = length(uv);
-              if (d > 0.5) discard;
-              float core = smoothstep(0.5, 0.12, d);
-              float glow = exp(-d * d * 14.0);
-              float alpha = mix(glow * 0.28, core, 0.72) * vAlpha * 0.85;
-              gl_FragColor = vec4(vColor * 0.92, alpha);
+              if (d > 0.42) discard;
+              float core = smoothstep(0.42, 0.06, d);
+              float glow = exp(-d * d * 28.0);
+              float alpha = mix(glow * 0.12, core, 0.9) * vAlpha * 0.74;
+              gl_FragColor = vec4(vColor * 0.74, alpha);
             }
           `}
         />
       </points>
-      <pointLight color="#ff8ec8" intensity={2.2} distance={18} />
+      <pointLight color="#ff8ec8" intensity={1.1} distance={18} />
     </group>
   )
 }
@@ -951,6 +1053,10 @@ function SceneFX() {
 const INTRO_SPIN_START = 2.6
 const INTRO_SPIN_END = 0.032
 const INTRO_DURATION = 3.6
+/** Sau khi camera dừng: trái tim đập thêm vài nhịp rồi mới nổ */
+const HEART_BEAT_PERIOD = 1.55
+const HEART_BEATS_BEFORE_EXPLODE = 2
+const HEART_FOCUS_HOLD = HEART_BEAT_PERIOD * HEART_BEATS_BEFORE_EXPLODE
 
 /**
  * Intro quỹ đạo cầu — góc / bán kính đổi ĐỀU theo thời gian.
@@ -1035,13 +1141,13 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
       const h = textBounds?.worldHeight || 2.4
       const halfFov = THREE.MathUtils.degToRad(42 / 2)
       const fitDist = Math.max(
-        (w * 0.62) / Math.tan(halfFov),
-        (h * 0.78) / Math.tan(halfFov),
+        (w * 1.05) / Math.tan(halfFov),
+        (h * 1.28) / Math.tan(halfFov),
       )
       const startDist = startPos.current.distanceTo(endLook.current)
-      // Luôn kéo xa hơn góc focus trước đó — zoom out rõ ràng
-      const dist = Math.max(fitDist * 1.28, startDist * 1.45, startDist + 5.5, 18)
-      endDist.current = THREE.MathUtils.clamp(dist, 18, 28)
+      // Zoom out xa để chữ lời chúc nhỏ lại trên khung hình
+      const dist = Math.max(fitDist * 2.25, startDist * 2.25, startDist + 16, 36)
+      endDist.current = THREE.MathUtils.clamp(dist, 36, 52)
       // Trước mặt chữ (+Z), hơi cao nhẹ
       endPos.current.set(0, 3.55, endDist.current)
     } else if (textBounds?.worldWidth && progress.current < 0.35) {
@@ -1050,16 +1156,16 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
       const h = textBounds.worldHeight || 2.4
       const halfFov = THREE.MathUtils.degToRad(42 / 2)
       const fitDist = Math.max(
-        (w * 0.62) / Math.tan(halfFov),
-        (h * 0.78) / Math.tan(halfFov),
+        (w * 1.05) / Math.tan(halfFov),
+        (h * 1.28) / Math.tan(halfFov),
       )
       const startDist = startPos.current.distanceTo(endLook.current)
-      const dist = Math.max(fitDist * 1.28, startDist * 1.45, startDist + 5.5, 18)
-      endDist.current = THREE.MathUtils.clamp(dist, 18, 28)
+      const dist = Math.max(fitDist * 2.25, startDist * 2.25, startDist + 16, 36)
+      endDist.current = THREE.MathUtils.clamp(dist, 36, 52)
       endPos.current.set(0, 3.55, endDist.current)
     }
 
-    progress.current = Math.min(1, progress.current + delta / 1.5)
+    progress.current = Math.min(1, progress.current + delta / 2.2)
     const e = 1 - Math.pow(1 - progress.current, 3)
     camera.position.lerpVectors(startPos.current, endPos.current, e)
     const look = startLook.current.clone().lerp(endLook.current, e)
@@ -1075,8 +1181,8 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
       camera.lookAt(endLook.current)
       if (controlsRef.current) {
         controlsRef.current.target.copy(endLook.current)
-        controlsRef.current.minDistance = Math.max(10, endDist.current * 0.65)
-        controlsRef.current.maxDistance = Math.max(32, endDist.current * 1.7)
+        controlsRef.current.minDistance = Math.max(16, endDist.current * 0.55)
+        controlsRef.current.maxDistance = Math.max(60, endDist.current * 1.85)
         controlsRef.current.update()
       }
       onSettled?.()
@@ -1100,14 +1206,6 @@ function Scene({ labels, messages, onSelectLabel }) {
     setTextBounds(bounds)
   }, [])
 
-  useEffect(() => {
-    if (!introDone) return undefined
-    setHeartExploding(true)
-    setShowMessage(true)
-    setViewSettled(false)
-    return undefined
-  }, [introDone])
-
   const handleIntroComplete = () => {
     const controls = controlsRef.current
     if (controls) {
@@ -1116,6 +1214,16 @@ function Scene({ labels, messages, onSelectLabel }) {
     }
     setIntroDone(true)
   }
+
+  useEffect(() => {
+    if (!introDone || heartExploding) return undefined
+    const timer = window.setTimeout(() => {
+      setHeartExploding(true)
+      setShowMessage(true)
+      setViewSettled(false)
+    }, HEART_FOCUS_HOLD * 1000)
+    return () => window.clearTimeout(timer)
+  }, [introDone, heartExploding])
 
   const handleHeartExploded = () => {
     setHeartGone(true)
@@ -1126,11 +1234,12 @@ function Scene({ labels, messages, onSelectLabel }) {
       <color attach="background" args={['#000000']} />
       <fog attach="fog" args={['#000000', 32, 110]} />
       <ambientLight intensity={0.15} />
-      <Stars radius={140} depth={80} count={14000} factor={2.4} saturation={0} fade speed={0.32} />
+      <Stars radius={140} depth={80} count={18000} factor={2.55} saturation={0} fade speed={0.38} />
+      <SpaceSparkles count={3200} />
 
       <GalaxyIntro spinSpeedRef={spinSpeedRef} onComplete={handleIntroComplete} />
       <TextViewCamera
-        active={showMessage}
+        active={heartExploding}
         controlsRef={controlsRef}
         textBounds={textBounds}
         onSettled={() => setViewSettled(true)}
@@ -1162,7 +1271,7 @@ function Scene({ labels, messages, onSelectLabel }) {
         enabled={introDone && viewSettled}
         enablePan={false}
         minDistance={8}
-        maxDistance={40}
+        maxDistance={60}
         target={[0, 3.35, 0]}
         autoRotate={false}
         enableDamping
