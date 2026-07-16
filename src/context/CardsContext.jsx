@@ -31,14 +31,53 @@ export function CardsProvider({ children }) {
   }, [])
 
   const createCard = useCallback(
-    async ({ topicId, label, senderName, recipientName, phone, message }) => {
+    async ({ topicId, label, senderName, recipientName, phone, message, keywords, messages }) => {
       const trimmedLabel = label?.trim()
-      const trimmedRecipient = recipientName?.trim()
-      const trimmedMessage = message?.trim()
 
       if (!topicId) {
         return { success: false, message: 'Vui lòng chọn chủ đề thiệp.' }
       }
+
+      if (topicId === 'galaxy_love') {
+        if (!trimmedLabel) {
+          return { success: false, message: 'Vui lòng nhập tên khách hàng.' }
+        }
+        const kw = (Array.isArray(keywords) ? keywords : [])
+          .map((item) => String(item ?? '').trim())
+          .filter(Boolean)
+          .slice(0, 6)
+        const msgs = (Array.isArray(messages) ? messages : [])
+          .map((item) => String(item ?? '').trim())
+          .filter(Boolean)
+          .slice(0, 10)
+        if (kw.length === 0) {
+          return { success: false, message: 'Nhập ít nhất 1 keyword (tối đa 6).' }
+        }
+        if (msgs.length === 0) {
+          return { success: false, message: 'Nhập ít nhất 1 lời nhắn (tối đa 10).' }
+        }
+
+        setError('')
+        try {
+          const result = await createCardApi({
+            topicId,
+            label: trimmedLabel,
+            keywords: kw,
+            messages: msgs,
+            phone,
+          })
+          setCards((previous) => [result.data, ...previous])
+          return { success: true, card: result.data }
+        } catch (err) {
+          const errMessage = err.message || 'Không thể tạo thiệp.'
+          setError(errMessage)
+          return { success: false, message: errMessage }
+        }
+      }
+
+      const trimmedRecipient = recipientName?.trim()
+      const trimmedMessage = message?.trim()
+
       if (!trimmedLabel) {
         return { success: false, message: 'Vui lòng nhập tên gợi nhớ cho QR.' }
       }
@@ -64,9 +103,9 @@ export function CardsProvider({ children }) {
         setCards((previous) => [result.data, ...previous])
         return { success: true, card: result.data }
       } catch (err) {
-        const message = err.message || 'Không thể tạo thiệp.'
-        setError(message)
-        return { success: false, message }
+        const errMessage = err.message || 'Không thể tạo thiệp.'
+        setError(errMessage)
+        return { success: false, message: errMessage }
       }
     },
     [],

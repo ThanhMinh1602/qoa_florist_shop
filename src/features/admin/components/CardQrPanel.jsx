@@ -43,8 +43,18 @@ function CardQrPanel({ card, embedded = false }) {
                   {' · '}
                 </>
               ) : null}
-              Chủ đề: <span className="font-medium">{topic?.name ?? card.topicId}</span> — Người
-              nhận: <span className="font-medium">{card.recipientName}</span>
+              Chủ đề: <span className="font-medium">{topic?.name ?? card.topicId}</span>
+              {card.topicId === 'galaxy_love' ? (
+                <>
+                  {' — '}
+                  {(card.keywords || []).filter(Boolean).slice(0, 3).join(' · ') || 'Galaxy'}
+                </>
+              ) : (
+                <>
+                  {' — Người nhận: '}
+                  <span className="font-medium">{card.recipientName}</span>
+                </>
+              )}
             </p>
           </div>
         </div>

@@ -156,6 +156,8 @@ function CreateQrPage() {
                 senderName={formData.senderName}
                 recipientName={formData.recipientName}
                 message={formData.message}
+                keywords={formData.keywords}
+                messages={formData.messages}
               />
             </MobileFrame>
           </section>
@@ -169,6 +171,8 @@ function CreateQrPage() {
                 senderName={formData.senderName}
                 recipientName={formData.recipientName}
                 message={formData.message}
+                keywords={formData.keywords}
+                messages={formData.messages}
               />
             </MobileFrame>
           </CollapsiblePreview>

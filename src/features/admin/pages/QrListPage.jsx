@@ -47,7 +47,7 @@ function QrListPage() {
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">Danh sách QR</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Các thiệp QR đã tạo — tìm theo tên gợi nhớ, người nhận hoặc lời nhắn.
+              Các thiệp QR đã tạo — tìm theo tên khách / gợi nhớ, keyword hoặc lời nhắn.
             </p>
           </div>
           <Link
@@ -66,7 +66,7 @@ function QrListPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm tên gợi nhớ, người nhận..."
+            placeholder="Tìm tên khách, keyword, lời nhắn..."
             className="w-full max-w-md rounded-xl border border-rose-100 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100"
           />
         </div>
@@ -92,9 +92,9 @@ function QrListPage() {
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-4 py-3">Tên gợi nhớ</th>
+                      <th className="px-4 py-3">Tên khách / gợi nhớ</th>
                       <th className="px-4 py-3">Chủ đề</th>
-                      <th className="px-4 py-3">Người nhận</th>
+                      <th className="px-4 py-3">Nội dung</th>
                       <th className="px-4 py-3">Tạo</th>
                       <th className="px-4 py-3" />
                     </tr>
@@ -117,7 +117,13 @@ function QrListPage() {
                         <td className="px-4 py-3">
                           <TopicLabel topicId={card.topicId} />
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{card.recipientName}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {card.topicId === 'galaxy_love'
+                            ? (card.keywords || []).filter(Boolean).slice(0, 3).join(' · ') ||
+                              (card.messages || [])[0] ||
+                              '—'
+                            : card.recipientName}
+                        </td>
                         <td className="whitespace-nowrap px-4 py-3 text-slate-500">
                           {formatTimeAgo(card.createdAt)}
                         </td>
@@ -154,8 +160,12 @@ function QrListPage() {
                           {card.label || '(Chưa đặt tên)'}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          <TopicLabel topicId={card.topicId} /> · {card.recipientName} ·{' '}
-                          {formatTimeAgo(card.createdAt)}
+                          <TopicLabel topicId={card.topicId} /> ·{' '}
+                          {card.topicId === 'galaxy_love'
+                            ? (card.keywords || []).filter(Boolean).slice(0, 2).join(' · ') ||
+                              card.label
+                            : card.recipientName}{' '}
+                          · {formatTimeAgo(card.createdAt)}
                         </p>
                       </button>
                       <div className="mt-2 flex gap-3">

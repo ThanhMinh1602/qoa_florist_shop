@@ -564,52 +564,84 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
   )
 }
 
-/** Chữ lời nhắn 3D từ đốm — nét, hình thành sau khi tim nổ */
-function ParticleMessageText({ text, active, onBounds }) {
+/** Thời gian giữ chữ trước khi nổ — tối thiểu 2s, thêm theo độ dài cụm từ */
+function phraseHoldSeconds(text) {
+  const len = String(text || '').replace(/\s+/g, '').length
+  return THREE.MathUtils.clamp(2 + len * 0.08, 2, 5.5)
+}
+
+/** Chữ lời nhắn 3D — tuần tự: gom → giữ (theo độ dài) → nổ → gom cụm tiếp; cụm cuối gom rồi biến mất */
+function ParticleMessageText({ phrases, active, onBounds }) {
   const groupRef = useRef(null)
   const pointsRef = useRef(null)
   const materialRef = useRef(null)
-  const progress = useRef(0)
+  const phaseRef = useRef('gather') // gather | hold | explode | gone
+  const phraseIndexRef = useRef(0)
+  const progressRef = useRef(0)
+  const holdRef = useRef(0)
+  const holdDurationRef = useRef(2)
+  const startsRef = useRef(null)
+  const velocitiesRef = useRef(null)
+  const targetsRef = useRef(null)
+  const initializedRef = useRef(false)
 
-  const cloud = useMemo(() => {
+  const phraseList = useMemo(() => {
+    const list = (Array.isArray(phrases) ? phrases : [])
+      .map((item) => String(item ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 10)
+    return list.length ? list : ['I love you']
+  }, [phrases])
+
+  const clouds = useMemo(() => {
     if (typeof document === 'undefined') {
-      return { targets: new Float32Array(0), particleCount: 0, worldWidth: 7.4, worldHeight: 2 }
+      return phraseList.map(() => ({
+        targets: new Float32Array(0),
+        particleCount: 0,
+        worldWidth: 7.4,
+        worldHeight: 2,
+      }))
     }
-    return sampleSharpTextParticles(text, {
-      fontSize: 108,
-      maxWidth: 980,
-      depthLayers: 10,
-      depth: 0.36,
-      worldWidth: 7.4,
-      step: 2,
-    })
-  }, [text])
+    return phraseList.map((text) =>
+      sampleSharpTextParticles(text, {
+        fontSize: 108,
+        maxWidth: 980,
+        depthLayers: 6,
+        depth: 0.22,
+        worldWidth: 7.4,
+        step: 2,
+      }),
+    )
+  }, [phraseList])
 
-  useEffect(() => {
-    if (!active || !cloud.particleCount) return
-    onBounds?.({ worldWidth: cloud.worldWidth, worldHeight: cloud.worldHeight })
-  }, [active, cloud, onBounds])
+  const maxCount = useMemo(
+    () => Math.max(1, ...clouds.map((cloud) => cloud.particleCount || 0)),
+    [clouds],
+  )
 
-  const { positions, colors, starts } = useMemo(() => {
-    const n = cloud.particleCount
-    const positions = new Float32Array(n * 3)
-    const colors = new Float32Array(n * 3)
-    const starts = new Float32Array(n * 3)
-    const targets = cloud.targets
-    for (let i = 0; i < n; i += 1) {
-      const bright = targets[i * 4 + 3]
-      starts[i * 3] = (Math.random() - 0.5) * 0.8
-      starts[i * 3 + 1] = (Math.random() - 0.5) * 0.8
-      starts[i * 3 + 2] = (Math.random() - 0.5) * 0.8
+  const { positions, colors } = useMemo(() => {
+    const positions = new Float32Array(maxCount * 3)
+    const colors = new Float32Array(maxCount * 3)
+    const starts = new Float32Array(maxCount * 3)
+    for (let i = 0; i < maxCount; i += 1) {
+      starts[i * 3] = (Math.random() - 0.5) * 10
+      starts[i * 3 + 1] = (Math.random() - 0.5) * 6
+      starts[i * 3 + 2] = (Math.random() - 0.5) * 8
       positions[i * 3] = starts[i * 3]
       positions[i * 3 + 1] = starts[i * 3 + 1]
       positions[i * 3 + 2] = starts[i * 3 + 2]
-      colors[i * 3] = 0.72 * bright
-      colors[i * 3 + 1] = 0.38 * bright
-      colors[i * 3 + 2] = 0.55 * bright
+      colors[i * 3] = 0.72
+      colors[i * 3 + 1] = 0.38
+      colors[i * 3 + 2] = 0.55
     }
-    return { positions, colors, starts }
-  }, [cloud])
+    startsRef.current = starts
+    initializedRef.current = false
+    phraseIndexRef.current = 0
+    phaseRef.current = 'gather'
+    progressRef.current = 0
+    holdRef.current = 0
+    return { positions, colors }
+  }, [maxCount, clouds])
 
   const uniforms = useMemo(
     () => ({
@@ -620,37 +652,177 @@ function ParticleMessageText({ text, active, onBounds }) {
     [],
   )
 
-  useFrame(({ clock }, delta) => {
-    if (!active || !pointsRef.current) return
-    progress.current = Math.min(1, progress.current + delta * 0.85)
-    const p = progress.current
-    const e = 1 - Math.pow(1 - p, 3)
+  function loadTargets(index) {
+    const cloud = clouds[index]
+    if (!cloud?.particleCount) return
+    const targets = new Float32Array(maxCount * 4)
+    const src = cloud.targets
+    const n = cloud.particleCount
+    for (let i = 0; i < maxCount; i += 1) {
+      const j = i % n
+      targets[i * 4] = src[j * 4]
+      targets[i * 4 + 1] = src[j * 4 + 1]
+      targets[i * 4 + 2] = src[j * 4 + 2]
+      targets[i * 4 + 3] = src[j * 4 + 3]
+    }
+    targetsRef.current = targets
+
+    const colorAttr = pointsRef.current?.geometry?.attributes?.color
+    if (colorAttr) {
+      const arr = colorAttr.array
+      for (let i = 0; i < maxCount; i += 1) {
+        const bright = targets[i * 4 + 3]
+        arr[i * 3] = 0.72 * bright
+        arr[i * 3 + 1] = 0.38 * bright
+        arr[i * 3 + 2] = 0.55 * bright
+      }
+      colorAttr.needsUpdate = true
+    }
+
+    onBounds?.({ worldWidth: cloud.worldWidth, worldHeight: cloud.worldHeight })
+  }
+
+  function beginExplode(arr) {
+    const vels = new Float32Array(maxCount * 3)
+    for (let i = 0; i < maxCount; i += 1) {
+      const px = arr[i * 3]
+      const py = arr[i * 3 + 1]
+      const pz = arr[i * 3 + 2]
+      const len = Math.hypot(px, py, pz) || 1
+      const speed = 2.2 + Math.random() * 4.2
+      vels[i * 3] = (px / len) * speed + (Math.random() - 0.5) * 1.4
+      vels[i * 3 + 1] = (py / len) * speed + (Math.random() - 0.5) * 1.4 + 0.8
+      vels[i * 3 + 2] = (pz / len) * speed + (Math.random() - 0.5) * 1.4
+    }
+    velocitiesRef.current = vels
+    phaseRef.current = 'explode'
+    progressRef.current = 0
+  }
+
+  useEffect(() => {
+    if (!active) {
+      initializedRef.current = false
+      phraseIndexRef.current = 0
+      phaseRef.current = 'gather'
+      progressRef.current = 0
+      holdRef.current = 0
+    }
+  }, [active, clouds])
+
+  useFrame(({ camera, clock }, delta) => {
+    if (!active || !pointsRef.current || phaseRef.current === 'gone') return
+
+    if (!initializedRef.current) {
+      loadTargets(0)
+      initializedRef.current = true
+      phaseRef.current = 'gather'
+      progressRef.current = 0
+      holdRef.current = 0
+    }
+
     const posAttr = pointsRef.current.geometry.attributes.position
     const arr = posAttr.array
-    const targets = cloud.targets
-    for (let i = 0; i < cloud.particleCount; i += 1) {
-      arr[i * 3] = starts[i * 3] + (targets[i * 4] - starts[i * 3]) * e
-      arr[i * 3 + 1] = starts[i * 3 + 1] + (targets[i * 4 + 1] - starts[i * 3 + 1]) * e
-      arr[i * 3 + 2] = starts[i * 3 + 2] + (targets[i * 4 + 2] - starts[i * 3 + 2]) * e
+    const starts = startsRef.current
+    const targets = targetsRef.current
+    if (!starts || !targets) return
+
+    const phase = phaseRef.current
+    const isLast = phraseIndexRef.current >= phraseList.length - 1
+
+    if (phase === 'gather') {
+      progressRef.current = Math.min(1, progressRef.current + delta * 0.95)
+      const e = 1 - Math.pow(1 - progressRef.current, 3)
+      for (let i = 0; i < maxCount; i += 1) {
+        arr[i * 3] = starts[i * 3] + (targets[i * 4] - starts[i * 3]) * e
+        arr[i * 3 + 1] = starts[i * 3 + 1] + (targets[i * 4 + 1] - starts[i * 3 + 1]) * e
+        arr[i * 3 + 2] = starts[i * 3 + 2] + (targets[i * 4 + 2] - starts[i * 3 + 2]) * e
+      }
+      posAttr.needsUpdate = true
+      if (materialRef.current) {
+        materialRef.current.uniforms.uOpacity.value = Math.min(0.72, progressRef.current * 0.95)
+      }
+      if (progressRef.current >= 1) {
+        if (isLast) {
+          // Cụm cuối: giữ nguyên, không nổ
+          phaseRef.current = 'hold'
+          holdRef.current = 0
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.72
+        } else {
+          phaseRef.current = 'hold'
+          holdRef.current = 0
+          holdDurationRef.current = phraseHoldSeconds(phraseList[phraseIndexRef.current])
+        }
+      }
+    } else if (phase === 'hold') {
+      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.72
+      // Cụm cuối đứng yên — không nổ
+      if (!isLast) {
+        holdRef.current += delta
+        if (holdRef.current >= holdDurationRef.current) {
+          beginExplode(arr)
+        }
+      }
+    } else if (phase === 'explode') {
+      progressRef.current = Math.min(1, progressRef.current + delta / 0.85)
+      const fade = Math.max(0, 1 - progressRef.current)
+      const vels = velocitiesRef.current
+      if (vels) {
+        for (let i = 0; i < maxCount; i += 1) {
+          arr[i * 3] += vels[i * 3] * delta
+          arr[i * 3 + 1] += vels[i * 3 + 1] * delta
+          arr[i * 3 + 2] += vels[i * 3 + 2] * delta
+          vels[i * 3 + 1] -= 1.6 * delta
+        }
+        posAttr.needsUpdate = true
+      }
+      if (materialRef.current) {
+        materialRef.current.uniforms.uOpacity.value = 0.72 * fade
+        materialRef.current.uniforms.uSize.value = 8.5 + progressRef.current * 10
+      }
+
+      if (progressRef.current >= 1) {
+        if (isLast) {
+          phaseRef.current = 'gone'
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0
+          return
+        }
+        // Gom thành cụm tiếp theo từ vị trí đang nổ
+        for (let i = 0; i < maxCount; i += 1) {
+          starts[i * 3] = arr[i * 3]
+          starts[i * 3 + 1] = arr[i * 3 + 1]
+          starts[i * 3 + 2] = arr[i * 3 + 2]
+        }
+        phraseIndexRef.current += 1
+        loadTargets(phraseIndexRef.current)
+        phaseRef.current = 'gather'
+        progressRef.current = 0
+        holdRef.current = 0
+        if (materialRef.current) materialRef.current.uniforms.uSize.value = 8.5
+      }
     }
-    posAttr.needsUpdate = true
+
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value = clock.elapsedTime
-      materialRef.current.uniforms.uOpacity.value = Math.min(0.72, p * 0.95)
     }
+
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.25) * 0.08
+      const { x, y, z } = groupRef.current.position
+      const dx = camera.position.x - x
+      const dz = camera.position.z - z
+      if (dx * dx + dz * dz > 0.0001) {
+        groupRef.current.rotation.set(0, Math.atan2(dx, dz), 0)
+      }
     }
   })
 
-  if (!active || cloud.particleCount === 0) return null
+  if (!active || maxCount === 0) return null
 
   return (
     <group ref={groupRef} position={[0, 3.35, 0]}>
       <points ref={pointsRef}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} count={maxCount} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} count={maxCount} />
         </bufferGeometry>
         <shaderMaterial
           ref={materialRef}
@@ -670,7 +842,6 @@ function ParticleMessageText({ text, active, onBounds }) {
               vColor = color;
               vAlpha = uOpacity;
               vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-              // Size gần như đều — chữ nét, không nhòe
               gl_PointSize = uSize * (1.0 / max(0.25, -mvPosition.z));
               gl_Position = projectionMatrix * mvPosition;
             }
@@ -682,7 +853,6 @@ function ParticleMessageText({ text, active, onBounds }) {
               vec2 uv = gl_PointCoord - 0.5;
               float d = length(uv);
               if (d > 0.5) discard;
-              // Vòng glow hẹp — cạnh chữ sắc
               float core = smoothstep(0.5, 0.12, d);
               float glow = exp(-d * d * 14.0);
               float alpha = mix(glow * 0.28, core, 0.72) * vAlpha * 0.85;
@@ -758,9 +928,9 @@ function FloatingDecor({ labels, onSelect }) {
 
   return (
     <group ref={orbitRef}>
-      {textItems.map((item) => (
+      {textItems.map((item, index) => (
         <FloatingLoveText
-          key={item.text}
+          key={`${item.text}-${index}`}
           text={item.text}
           position={item.position}
           onSelect={onSelect}
@@ -916,7 +1086,7 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
   return null
 }
 
-function Scene({ labels, message, onSelectLabel }) {
+function Scene({ labels, messages, onSelectLabel }) {
   const [introDone, setIntroDone] = useState(false)
   const [heartExploding, setHeartExploding] = useState(false)
   const [heartGone, setHeartGone] = useState(false)
@@ -925,11 +1095,6 @@ function Scene({ labels, message, onSelectLabel }) {
   const [textBounds, setTextBounds] = useState(null)
   const spinSpeedRef = useRef(INTRO_SPIN_START)
   const controlsRef = useRef(null)
-
-  const revealText = useMemo(() => {
-    const trimmed = message?.trim()
-    return trimmed || 'I love you'
-  }, [message])
 
   const handleTextBounds = useCallback((bounds) => {
     setTextBounds(bounds)
@@ -977,11 +1142,6 @@ function Scene({ labels, message, onSelectLabel }) {
           {!heartGone ? (
             <ParticleHeartOutline exploding={heartExploding} onExploded={handleHeartExploded} />
           ) : null}
-          <ParticleMessageText
-            text={revealText}
-            active={showMessage}
-            onBounds={handleTextBounds}
-          />
           {!showMessage ? (
             <FloatingDecor labels={labels} onSelect={onSelectLabel} />
           ) : null}
@@ -989,6 +1149,13 @@ function Scene({ labels, message, onSelectLabel }) {
           <pointLight position={[0, 3.2, 0]} color="#ff7eb9" intensity={1.2} distance={8} />
         </group>
       </MouseParallax>
+
+      {/* Ngoài parallax — chữ billboard theo camera, đọc rõ mọi góc */}
+      <ParticleMessageText
+        phrases={messages}
+        active={showMessage}
+        onBounds={handleTextBounds}
+      />
 
       <OrbitControls
         ref={controlsRef}
@@ -1044,24 +1211,40 @@ function PopupCard({ open, title, message, onClose }) {
 
 function GalaxyOfLoveScreen({
   preview = false,
-  senderName = '',
-  recipientName = '',
+  keywords = [],
+  messages = [],
   message = '',
 }) {
   const [selected, setSelected] = useState(null)
 
   const labels = useMemo(() => {
-    const list = [...LOVE_LABELS]
-    if (recipientName?.trim()) list.unshift(recipientName.trim().toUpperCase())
-    if (senderName?.trim()) list.push(`♥ ${senderName.trim()}`)
-    return [...new Set(list)].slice(0, 7)
-  }, [recipientName, senderName])
+    const fromKeywords = (Array.isArray(keywords) ? keywords : [])
+      .map((item) => String(item ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+    if (fromKeywords.length) return fromKeywords
+    return LOVE_LABELS
+  }, [keywords])
 
-  const popupMessage =
-    message?.trim() ||
-    (selected
-      ? `Một góc ngân hà này dành riêng cho “${selected}”.`
-      : 'Chạm chữ đang bay quanh ngân hà.')
+  const phraseMessages = useMemo(() => {
+    const fromList = (Array.isArray(messages) ? messages : [])
+      .map((item) => String(item ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 10)
+    if (fromList.length) return fromList
+    if (typeof message === 'string' && message.trim()) {
+      return message
+        .split(/\n+/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 10)
+    }
+    return ['I love you']
+  }, [messages, message])
+
+  const popupMessage = selected
+    ? `“${selected}” — một góc ngân hà dành riêng cho bạn.`
+    : 'Chạm chữ đang bay quanh ngân hà.'
 
   return (
     <div className={preview ? 'galaxy-screen galaxy-screen--preview' : 'galaxy-screen'}>
@@ -1074,7 +1257,7 @@ function GalaxyOfLoveScreen({
         }}
       >
         <Suspense fallback={null}>
-          <Scene labels={labels} message={message} onSelectLabel={setSelected} />
+          <Scene labels={labels} messages={phraseMessages} onSelectLabel={setSelected} />
         </Suspense>
       </Canvas>
 

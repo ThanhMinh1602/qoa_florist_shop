@@ -86,6 +86,8 @@ function GreetingPage() {
       senderName={card.senderName}
       recipientName={card.recipientName}
       message={card.message}
+      keywords={card.keywords}
+      messages={card.messages}
     />
   )
 }
