@@ -6,7 +6,7 @@ import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 
-function CardQrPanel({ card, embedded = false }) {
+function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
   const canvasRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const topic = getTopicById(card.topicId)
@@ -68,11 +68,11 @@ function CardQrPanel({ card, embedded = false }) {
           embedded ? 'mt-4' : 'mt-6',
         ].join(' ')}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-rose-100">
+        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-rose-100 sm:p-5">
           <QRCodeCanvas
             ref={canvasRef}
             value={greetingUrl}
-            size={200}
+            size={qrSize}
             level="M"
             includeMargin
             bgColor="#ffffff"
@@ -108,12 +108,14 @@ function CardQrPanel({ card, embedded = false }) {
             >
               Tải ảnh QR
             </button>
-            <Link
-              to="/admin/qr"
-              className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
-            >
-              Danh sách QR
-            </Link>
+            {!embedded ? (
+              <Link
+                to="/admin/qr"
+                className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+              >
+                Danh sách QR
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>

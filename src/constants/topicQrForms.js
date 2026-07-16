@@ -33,6 +33,39 @@ export function countBracketPhrases(value) {
   return [...str.matchAll(/\[[^\]]*\]/g)].length
 }
 
+/** Mảng cụm từ → chuỗi [a][b] để điền form */
+export function phrasesToBracket(value) {
+  const items = normalizePhraseList(value, 99)
+  if (items.length === 0) return '[]'
+  return items.map((item) => `[${item}]`).join('')
+}
+
+/** Card từ API → giá trị form theo chủ đề */
+export function cardToFormValues(card) {
+  if (!card) return getEmptyFormValues('birthday')
+  if (card.topicId === 'galaxy_love') {
+    const messages =
+      Array.isArray(card.messages) && card.messages.length > 0
+        ? card.messages
+        : card.message
+          ? [card.message]
+          : []
+    return {
+      label: card.label || '',
+      keywords: phrasesToBracket(card.keywords),
+      messages: phrasesToBracket(messages),
+      phone: card.phone || '',
+    }
+  }
+  return {
+    label: card.label || '',
+    senderName: card.senderName || '',
+    recipientName: card.recipientName || '',
+    phone: card.phone || '',
+    message: card.message || '',
+  }
+}
+
 export const TOPIC_QR_FORMS = {
   birthday: {
     title: 'Thiệp sinh nhật',

@@ -4,6 +4,7 @@ import {
   deleteCardApi,
   fetchCardById as fetchCardByIdApi,
   fetchCards as fetchCardsApi,
+  updateCardApi,
 } from '../api/cardsApi'
 import { normalizePhraseList } from '../constants/topicQrForms'
 
@@ -106,6 +107,81 @@ export function CardsProvider({ children }) {
     [],
   )
 
+  const updateCard = useCallback(
+    async (id, { topicId, label, senderName, recipientName, phone, message, keywords, messages }) => {
+      if (!id) {
+        return { success: false, message: 'Thiếu mã thiệp.' }
+      }
+
+      const resolvedTopic = topicId || 'birthday'
+      const trimmedLabel = label?.trim()
+
+      if (resolvedTopic === 'galaxy_love') {
+        if (!trimmedLabel) {
+          return { success: false, message: 'Vui lòng nhập tên khách hàng.' }
+        }
+        const kw = normalizePhraseList(keywords, 6)
+        const msgs = normalizePhraseList(messages, 10)
+        if (kw.length === 0) {
+          return { success: false, message: 'Nhập ít nhất 1 keyword (tối đa 6).' }
+        }
+        if (msgs.length === 0) {
+          return { success: false, message: 'Nhập ít nhất 1 lời nhắn (tối đa 10).' }
+        }
+
+        setError('')
+        try {
+          const result = await updateCardApi(id, {
+            topicId: resolvedTopic,
+            label: trimmedLabel,
+            keywords: kw,
+            messages: msgs,
+            phone: phone?.trim() ?? '',
+          })
+          setCards((previous) =>
+            previous.map((card) => (card.id === id ? result.data : card)),
+          )
+          return { success: true, card: result.data }
+        } catch (err) {
+          const errMessage = err.message || 'Không thể cập nhật thiệp.'
+          setError(errMessage)
+          return { success: false, message: errMessage }
+        }
+      }
+
+      const trimmedRecipient = recipientName?.trim()
+      const trimmedMessage = message?.trim()
+      if (!trimmedLabel) {
+        return { success: false, message: 'Vui lòng nhập tên gợi nhớ cho QR.' }
+      }
+      if (!trimmedRecipient || !trimmedMessage) {
+        return {
+          success: false,
+          message: 'Vui lòng nhập đầy đủ tên người nhận và lời nhắn theo chủ đề.',
+        }
+      }
+
+      setError('')
+      try {
+        const result = await updateCardApi(id, {
+          topicId: resolvedTopic,
+          label: trimmedLabel,
+          senderName: senderName?.trim() ?? '',
+          recipientName: trimmedRecipient,
+          phone: phone?.trim() ?? '',
+          message: trimmedMessage,
+        })
+        setCards((previous) => previous.map((card) => (card.id === id ? result.data : card)))
+        return { success: true, card: result.data }
+      } catch (err) {
+        const errMessage = err.message || 'Không thể cập nhật thiệp.'
+        setError(errMessage)
+        return { success: false, message: errMessage }
+      }
+    },
+    [],
+  )
+
   const deleteCard = useCallback(async (id) => {
     setError('')
 
@@ -149,11 +225,22 @@ export function CardsProvider({ children }) {
       error,
       fetchCards,
       createCard,
+      updateCard,
       deleteCard,
       getCardById,
       fetchCardById,
     }),
-    [cards, isLoading, error, fetchCards, createCard, deleteCard, getCardById, fetchCardById],
+    [
+      cards,
+      isLoading,
+      error,
+      fetchCards,
+      createCard,
+      updateCard,
+      deleteCard,
+      getCardById,
+      fetchCardById,
+    ],
   )
 
   return <CardsContext.Provider value={value}>{children}</CardsContext.Provider>

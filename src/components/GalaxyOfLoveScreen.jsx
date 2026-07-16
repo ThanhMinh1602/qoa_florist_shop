@@ -4,6 +4,7 @@ import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { AnimatePresence, motion } from 'framer-motion'
 import * as THREE from 'three'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import './GalaxyOfLoveScreen.css'
 
 const WHITE = new THREE.Color('#ffffff')
@@ -163,7 +164,7 @@ function sampleSharpTextParticles(text, options = {}) {
         const t = depthLayers === 1 ? 0.5 : layer / (depthLayers - 1)
         const wz = (t - 0.5) * 2 * depth
         const edge = Math.min(t, 1 - t) * 2
-        const brightness = 0.72 + edge * 0.18 + (a / 255) * 0.22
+        const brightness = 0.58 + edge * 0.12 + (a / 255) * 0.16
         targets.push(wx, wy, wz, brightness)
       }
     }
@@ -685,6 +686,9 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   const velocitiesRef = useRef(null)
   const targetsRef = useRef(null)
   const initializedRef = useRef(false)
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const textWorldWidth = isMobile ? 5.4 : 7.4
+  const groupScale = isMobile ? 0.78 : 1
 
   const phraseList = useMemo(() => {
     const list = (Array.isArray(phrases) ? phrases : [])
@@ -699,22 +703,22 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       return phraseList.map(() => ({
         targets: new Float32Array(0),
         particleCount: 0,
-        worldWidth: 7.4,
+        worldWidth: textWorldWidth,
         worldHeight: 2,
       }))
     }
     return phraseList.map((text) =>
       sampleSharpTextParticles(text, {
-        fontSize: 156,
-        maxWidth: 1280,
-        depthLayers: 3,
-        depth: 0.07,
-        worldWidth: 7.4,
+        fontSize: isMobile ? 100 : 112,
+        maxWidth: isMobile ? 820 : 980,
+        depthLayers: 8,
+        depth: 0.2,
+        worldWidth: textWorldWidth,
         step: 1,
-        maxParticles: 200000,
+        maxParticles: 160000,
       }),
     )
-  }, [phraseList])
+  }, [phraseList, textWorldWidth, isMobile])
 
   const maxCount = useMemo(
     () => Math.max(1, ...clouds.map((cloud) => cloud.particleCount || 0)),
@@ -748,7 +752,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 3.1 },
+      uSize: { value: 2.4 },
       uOpacity: { value: 0 },
     }),
     [],
@@ -774,14 +778,17 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       const arr = colorAttr.array
       for (let i = 0; i < maxCount; i += 1) {
         const bright = targets[i * 4 + 3]
-        arr[i * 3] = 0.88 * bright
-        arr[i * 3 + 1] = 0.58 * bright
-        arr[i * 3 + 2] = 0.72 * bright
+        arr[i * 3] = 0.2 * bright
+        arr[i * 3 + 1] = 0.1 * bright
+        arr[i * 3 + 2] = 0.15 * bright
       }
       colorAttr.needsUpdate = true
     }
 
-    onBounds?.({ worldWidth: cloud.worldWidth, worldHeight: cloud.worldHeight })
+    onBounds?.({
+      worldWidth: cloud.worldWidth * groupScale,
+      worldHeight: cloud.worldHeight * groupScale,
+    })
   }
 
   function beginExplode(arr) {
@@ -841,14 +848,13 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       }
       posAttr.needsUpdate = true
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = Math.min(0.95, progressRef.current * 1.05)
+        materialRef.current.uniforms.uOpacity.value = Math.min(0.22, progressRef.current * 0.3)
       }
       if (progressRef.current >= 1) {
         if (isLast) {
-          // Cụm cuối: giữ nguyên, không nổ
           phaseRef.current = 'hold'
           holdRef.current = 0
-          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.95
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.22
         } else {
           phaseRef.current = 'hold'
           holdRef.current = 0
@@ -856,8 +862,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         }
       }
     } else if (phase === 'hold') {
-      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.95
-      // Cụm cuối đứng yên — không nổ
+      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.22
       if (!isLast) {
         holdRef.current += delta
         if (holdRef.current >= holdDurationRef.current) {
@@ -878,8 +883,8 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         posAttr.needsUpdate = true
       }
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = 0.95 * fade
-        materialRef.current.uniforms.uSize.value = 3.1 + progressRef.current * 5
+        materialRef.current.uniforms.uOpacity.value = 0.22 * fade
+        materialRef.current.uniforms.uSize.value = 2.4 + progressRef.current * 4
       }
 
       if (progressRef.current >= 1) {
@@ -888,7 +893,6 @@ function ParticleMessageText({ phrases, active, onBounds }) {
           if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0
           return
         }
-        // Gom thành cụm tiếp theo từ vị trí đang nổ
         for (let i = 0; i < maxCount; i += 1) {
           starts[i * 3] = arr[i * 3]
           starts[i * 3 + 1] = arr[i * 3 + 1]
@@ -899,7 +903,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         phaseRef.current = 'gather'
         progressRef.current = 0
         holdRef.current = 0
-        if (materialRef.current) materialRef.current.uniforms.uSize.value = 3.1
+        if (materialRef.current) materialRef.current.uniforms.uSize.value = 2.4
       }
     }
 
@@ -920,7 +924,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   if (!active || maxCount === 0) return null
 
   return (
-    <group ref={groupRef} position={[0, 3.35, 0]}>
+    <group ref={groupRef} position={[0, 3.35, 0]} scale={groupScale}>
       <points ref={pointsRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[positions, 3]} count={maxCount} />
@@ -930,7 +934,8 @@ function ParticleMessageText({ phrases, active, onBounds }) {
           ref={materialRef}
           transparent
           depthWrite={false}
-          blending={THREE.NormalBlending}
+          fog={false}
+          blending={THREE.AdditiveBlending}
           toneMapped={false}
           uniforms={uniforms}
           vertexShader={`
@@ -944,8 +949,9 @@ function ParticleMessageText({ phrases, active, onBounds }) {
               vColor = color;
               vAlpha = uOpacity;
               vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-              // Scale theo khoảng cách — chữ giữ nét khi zoom xa
-              gl_PointSize = uSize * (85.0 / max(8.0, -mvPosition.z));
+              // Scale theo khoảng cách — mobile/zoom xa vẫn thấy đốm
+              float dist = max(12.0, -mvPosition.z);
+              gl_PointSize = clamp(uSize * (160.0 / dist), 1.6, 5.2);
               gl_Position = projectionMatrix * mvPosition;
             }
           `}
@@ -955,15 +961,16 @@ function ParticleMessageText({ phrases, active, onBounds }) {
             void main() {
               vec2 uv = gl_PointCoord - 0.5;
               float d = length(uv);
-              // Đĩa cứng, gần như không glow — cạnh chữ rõ
               if (d > 0.48) discard;
-              float alpha = smoothstep(0.48, 0.18, d) * vAlpha;
-              gl_FragColor = vec4(vColor, alpha);
+              float core = smoothstep(0.48, 0.14, d);
+              float glow = exp(-d * d * 28.0);
+              float alpha = mix(glow * 0.06, core, 0.9) * vAlpha * 0.5;
+              gl_FragColor = vec4(vColor * 0.48, alpha);
             }
           `}
         />
       </points>
-      <pointLight color="#ff8ec8" intensity={0.55} distance={18} />
+      <pointLight color="#ff8ec8" intensity={0.16} distance={14} />
     </group>
   )
 }
@@ -1045,7 +1052,7 @@ function FloatingDecor({ labels, onSelect }) {
 function SceneFX() {
   return (
     <EffectComposer multisampling={0}>
-      <Bloom luminanceThreshold={0.82} intensity={1.35} mipmapBlur radius={0.55} />
+      <Bloom luminanceThreshold={0.88} intensity={0.7} mipmapBlur radius={0.4} />
     </EffectComposer>
   )
 }
@@ -1232,7 +1239,7 @@ function Scene({ labels, messages, onSelectLabel }) {
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <fog attach="fog" args={['#000000', 32, 110]} />
+      <fog attach="fog" args={['#000000', 48, 130]} />
       <ambientLight intensity={0.15} />
       <Stars radius={140} depth={80} count={18000} factor={2.55} saturation={0} fade speed={0.38} />
       <SpaceSparkles count={3200} />
@@ -1358,7 +1365,7 @@ function GalaxyOfLoveScreen({
   return (
     <div className={preview ? 'galaxy-screen galaxy-screen--preview' : 'galaxy-screen'}>
       <Canvas
-        dpr={[1, 1.75]}
+        dpr={[1, 2]}
         camera={{ position: [0, 48, 4.8], fov: 42, near: 0.1, far: 160 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         onCreated={({ camera }) => {
