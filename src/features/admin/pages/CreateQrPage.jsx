@@ -5,7 +5,7 @@ import MobileFrame from '../../../components/common/MobileFrame'
 import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import { TOPICS } from '../../../constants/topics'
-import { getEmptyFormValues, getTopicQrForm } from '../../../constants/topicQrForms'
+import { getEmptyFormValues, getTopicQrForm, normalizePhraseList } from '../../../constants/topicQrForms'
 import { useCards } from '../../../context/CardsContext'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import CardQrPanel from '../components/CardQrPanel'
@@ -156,8 +156,8 @@ function CreateQrPage() {
                 senderName={formData.senderName}
                 recipientName={formData.recipientName}
                 message={formData.message}
-                keywords={formData.keywords}
-                messages={formData.messages}
+                keywords={normalizePhraseList(formData.keywords, 6)}
+                messages={normalizePhraseList(formData.messages, 10)}
               />
             </MobileFrame>
           </section>
@@ -171,8 +171,8 @@ function CreateQrPage() {
                 senderName={formData.senderName}
                 recipientName={formData.recipientName}
                 message={formData.message}
-                keywords={formData.keywords}
-                messages={formData.messages}
+                keywords={normalizePhraseList(formData.keywords, 6)}
+                messages={normalizePhraseList(formData.messages, 10)}
               />
             </MobileFrame>
           </CollapsiblePreview>

@@ -156,14 +156,14 @@ function sampleSharpTextParticles(text, options = {}) {
   for (let y = 0; y < height; y += sampleStep) {
     for (let x = 0; x < width; x += sampleStep) {
       const a = data[(y * width + x) * 4]
-      if (a < 180) continue
+      if (a < 200) continue
       const wx = (x - width / 2) * scale
       const wy = -(y - height / 2) * scale
       for (let layer = 0; layer < depthLayers; layer += 1) {
         const t = depthLayers === 1 ? 0.5 : layer / (depthLayers - 1)
         const wz = (t - 0.5) * 2 * depth
         const edge = Math.min(t, 1 - t) * 2
-        const brightness = 0.55 + edge * 0.35 + (a / 255) * 0.18
+        const brightness = 0.72 + edge * 0.18 + (a / 255) * 0.22
         targets.push(wx, wy, wz, brightness)
       }
     }
@@ -705,13 +705,13 @@ function ParticleMessageText({ phrases, active, onBounds }) {
     }
     return phraseList.map((text) =>
       sampleSharpTextParticles(text, {
-        fontSize: 112,
-        maxWidth: 980,
-        depthLayers: 8,
-        depth: 0.2,
+        fontSize: 156,
+        maxWidth: 1280,
+        depthLayers: 3,
+        depth: 0.07,
         worldWidth: 7.4,
         step: 1,
-        maxParticles: 160000,
+        maxParticles: 200000,
       }),
     )
   }, [phraseList])
@@ -748,7 +748,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 4.2 },
+      uSize: { value: 3.1 },
       uOpacity: { value: 0 },
     }),
     [],
@@ -774,9 +774,9 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       const arr = colorAttr.array
       for (let i = 0; i < maxCount; i += 1) {
         const bright = targets[i * 4 + 3]
-        arr[i * 3] = 0.46 * bright
-        arr[i * 3 + 1] = 0.25 * bright
-        arr[i * 3 + 2] = 0.36 * bright
+        arr[i * 3] = 0.88 * bright
+        arr[i * 3 + 1] = 0.58 * bright
+        arr[i * 3 + 2] = 0.72 * bright
       }
       colorAttr.needsUpdate = true
     }
@@ -841,14 +841,14 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       }
       posAttr.needsUpdate = true
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = Math.min(0.48, progressRef.current * 0.62)
+        materialRef.current.uniforms.uOpacity.value = Math.min(0.95, progressRef.current * 1.05)
       }
       if (progressRef.current >= 1) {
         if (isLast) {
           // Cụm cuối: giữ nguyên, không nổ
           phaseRef.current = 'hold'
           holdRef.current = 0
-          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.48
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.95
         } else {
           phaseRef.current = 'hold'
           holdRef.current = 0
@@ -856,7 +856,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         }
       }
     } else if (phase === 'hold') {
-      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.48
+      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.95
       // Cụm cuối đứng yên — không nổ
       if (!isLast) {
         holdRef.current += delta
@@ -878,8 +878,8 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         posAttr.needsUpdate = true
       }
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = 0.48 * fade
-        materialRef.current.uniforms.uSize.value = 4.2 + progressRef.current * 6
+        materialRef.current.uniforms.uOpacity.value = 0.95 * fade
+        materialRef.current.uniforms.uSize.value = 3.1 + progressRef.current * 5
       }
 
       if (progressRef.current >= 1) {
@@ -899,7 +899,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         phaseRef.current = 'gather'
         progressRef.current = 0
         holdRef.current = 0
-        if (materialRef.current) materialRef.current.uniforms.uSize.value = 4.2
+        if (materialRef.current) materialRef.current.uniforms.uSize.value = 3.1
       }
     }
 
@@ -930,7 +930,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
           ref={materialRef}
           transparent
           depthWrite={false}
-          blending={THREE.AdditiveBlending}
+          blending={THREE.NormalBlending}
           toneMapped={false}
           uniforms={uniforms}
           vertexShader={`
@@ -944,7 +944,8 @@ function ParticleMessageText({ phrases, active, onBounds }) {
               vColor = color;
               vAlpha = uOpacity;
               vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-              gl_PointSize = uSize * (1.0 / max(0.25, -mvPosition.z));
+              // Scale theo khoảng cách — chữ giữ nét khi zoom xa
+              gl_PointSize = uSize * (85.0 / max(8.0, -mvPosition.z));
               gl_Position = projectionMatrix * mvPosition;
             }
           `}
@@ -954,16 +955,15 @@ function ParticleMessageText({ phrases, active, onBounds }) {
             void main() {
               vec2 uv = gl_PointCoord - 0.5;
               float d = length(uv);
-              if (d > 0.42) discard;
-              float core = smoothstep(0.42, 0.06, d);
-              float glow = exp(-d * d * 28.0);
-              float alpha = mix(glow * 0.12, core, 0.9) * vAlpha * 0.74;
-              gl_FragColor = vec4(vColor * 0.74, alpha);
+              // Đĩa cứng, gần như không glow — cạnh chữ rõ
+              if (d > 0.48) discard;
+              float alpha = smoothstep(0.48, 0.18, d) * vAlpha;
+              gl_FragColor = vec4(vColor, alpha);
             }
           `}
         />
       </points>
-      <pointLight color="#ff8ec8" intensity={1.1} distance={18} />
+      <pointLight color="#ff8ec8" intensity={0.55} distance={18} />
     </group>
   )
 }
@@ -1045,7 +1045,7 @@ function FloatingDecor({ labels, onSelect }) {
 function SceneFX() {
   return (
     <EffectComposer multisampling={0}>
-      <Bloom luminanceThreshold={0.7} intensity={1.85} mipmapBlur radius={0.72} />
+      <Bloom luminanceThreshold={0.82} intensity={1.35} mipmapBlur radius={0.55} />
     </EffectComposer>
   )
 }
@@ -1082,7 +1082,7 @@ function GalaxyIntro({ spinSpeedRef, onComplete }) {
     const polar = THREE.MathUtils.lerp(0.1, 0.98, t)
     const azimuth = THREE.MathUtils.lerp(-0.2, 1.08, t)
     // Giữ khoảng cách như trước — không zoom sâu thêm
-    const radius = THREE.MathUtils.lerp(48, 16.5, t)
+    const radius = THREE.MathUtils.lerp(48, 20.5, t)
     // Hướng nhìn vào trái tim để thấy trọn hình
     const lookY = THREE.MathUtils.lerp(0.05, 3.45, t)
 

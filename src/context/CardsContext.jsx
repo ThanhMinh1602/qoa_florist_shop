@@ -5,6 +5,7 @@ import {
   fetchCardById as fetchCardByIdApi,
   fetchCards as fetchCardsApi,
 } from '../api/cardsApi'
+import { normalizePhraseList } from '../constants/topicQrForms'
 
 const CardsContext = createContext(null)
 
@@ -42,14 +43,8 @@ export function CardsProvider({ children }) {
         if (!trimmedLabel) {
           return { success: false, message: 'Vui lòng nhập tên khách hàng.' }
         }
-        const kw = (Array.isArray(keywords) ? keywords : [])
-          .map((item) => String(item ?? '').trim())
-          .filter(Boolean)
-          .slice(0, 6)
-        const msgs = (Array.isArray(messages) ? messages : [])
-          .map((item) => String(item ?? '').trim())
-          .filter(Boolean)
-          .slice(0, 10)
+        const kw = normalizePhraseList(keywords, 6)
+        const msgs = normalizePhraseList(messages, 10)
         if (kw.length === 0) {
           return { success: false, message: 'Nhập ít nhất 1 keyword (tối đa 6).' }
         }

@@ -3,15 +3,34 @@
  * Thêm topic mới → khai báo fields tương ứng tại đây.
  */
 
-/** Chuẩn hoá list cụm từ từ mảng hoặc chuỗi xuống dòng */
+/**
+ * Chuẩn hoá list cụm từ từ:
+ * - mảng string
+ * - chuỗi dạng [cụm 1][cụm 2]
+ * - chuỗi xuống dòng (fallback)
+ */
 export function normalizePhraseList(value, max = 10) {
-  let items = []
   if (Array.isArray(value)) {
-    items = value.map((item) => String(item ?? '').trim())
-  } else if (typeof value === 'string') {
-    items = value.split(/\n+/).map((item) => item.trim())
+    return value.map((item) => String(item ?? '').trim()).filter(Boolean).slice(0, max)
   }
-  return items.filter(Boolean).slice(0, max)
+
+  const str = String(value ?? '')
+  const bracketMatches = [...str.matchAll(/\[([^\]]*)\]/g)].map((match) => match[1].trim())
+  if (bracketMatches.length > 0) {
+    return bracketMatches.filter(Boolean).slice(0, max)
+  }
+
+  return str
+    .split(/\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, max)
+}
+
+/** Đếm số cặp [] trong chuỗi nhập */
+export function countBracketPhrases(value) {
+  const str = String(value ?? '')
+  return [...str.matchAll(/\[[^\]]*\]/g)].length
 }
 
 export const TOPIC_QR_FORMS = {
@@ -68,8 +87,8 @@ export const TOPIC_QR_FORMS = {
     hint: 'Galaxy 3D + trái tim particle. Keyword bay quanh ngân hà; lời nhắn hiện tuần tự sau khi tim nổ.',
     defaults: {
       label: '',
-      keywords: [''],
-      messages: [''],
+      keywords: '[]',
+      messages: '[]',
       phone: '',
     },
     fields: [
@@ -86,8 +105,8 @@ export const TOPIC_QR_FORMS = {
         required: true,
         type: 'phraseList',
         maxItems: 6,
-        placeholder: 'VD: I LOVE YOU',
-        help: 'Tối đa 6 cụm từ — hiện dạng chữ bay quanh galaxy.',
+        placeholder: '[I LOVE YOU][MY LOVE]',
+        help: 'Mỗi cụm trong một cặp dấu [ ]. Enter hoặc bấm “Thêm cụm từ” để tạo cặp mới. Tối đa 6 cụm.',
       },
       {
         name: 'messages',
@@ -95,8 +114,8 @@ export const TOPIC_QR_FORMS = {
         required: true,
         type: 'phraseList',
         maxItems: 10,
-        placeholder: 'VD: Một góc ngân hà này dành riêng cho em',
-        help: 'Tối đa 10 cụm từ — mỗi cụm giữ tối thiểu ~2 giây (lâu hơn nếu dài) rồi nổ ra gom thành cụm tiếp. Cụm cuối hiện và giữ nguyên, không nổ.',
+        placeholder: '[Cụm 1][Cụm 2]',
+        help: 'Mỗi cụm trong một cặp dấu [ ]. Enter hoặc bấm “Thêm cụm từ” để tạo cặp mới. Tối đa 10 cụm — mỗi cụm giữ ~2 giây rồi chuyển tiếp. Cụm cuối giữ nguyên, không nổ.',
       },
       {
         name: 'phone',
@@ -118,9 +137,5 @@ export function getEmptyFormValues(topicId) {
   if (!config) {
     return { label: '', senderName: '', recipientName: '', phone: '', message: '' }
   }
-  return {
-    ...config.defaults,
-    keywords: config.defaults.keywords ? [...config.defaults.keywords] : undefined,
-    messages: config.defaults.messages ? [...config.defaults.messages] : undefined,
-  }
+  return { ...config.defaults }
 }

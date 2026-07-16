@@ -1,29 +1,34 @@
+import { useRef } from 'react'
+import { countBracketPhrases } from '../../../constants/topicQrForms'
+
 const fieldClassName =
   'w-full rounded-xl border border-rose-100 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-rose-300 focus:ring-2 focus:ring-rose-100'
 
+/** Nhập cụm từ dạng [cụm 1][cụm 2] — nút thêm tạo cặp [] và đặt cursor vào giữa */
 function PhraseListField({ field, values, onChange }) {
-  const items = Array.isArray(values[field.name]) ? values[field.name] : ['']
+  const inputRef = useRef(null)
   const maxItems = field.maxItems || 6
+  const raw = String(values[field.name] ?? '')
+  const phraseCount = countBracketPhrases(raw)
 
-  function updateItem(index, value) {
-    const next = items.map((item, i) => (i === index ? value : item))
+  function insertNewBracketPair() {
+    if (phraseCount >= maxItems) return
+    const el = inputRef.current
+    const next = `${raw}[]`
     onChange(field.name, next)
+
+    requestAnimationFrame(() => {
+      if (!el) return
+      const cursor = next.length - 1
+      el.focus()
+      el.setSelectionRange(cursor, cursor)
+    })
   }
 
-  function addItem() {
-    if (items.length >= maxItems) return
-    onChange(field.name, [...items, ''])
-  }
-
-  function removeItem(index) {
-    if (items.length <= 1) {
-      onChange(field.name, [''])
-      return
-    }
-    onChange(
-      field.name,
-      items.filter((_, i) => i !== index),
-    )
+  function handleKeyDown(event) {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    insertNewBracketPair()
   }
 
   return (
@@ -32,39 +37,29 @@ function PhraseListField({ field, values, onChange }) {
         {field.label}
         {field.required ? <span className="text-rose-500"> *</span> : null}
       </span>
-      <div className="space-y-2">
-        {items.map((item, index) => (
-          <div key={`${field.name}-${index}`} className="flex gap-2">
-            <input
-              type="text"
-              value={item}
-              onChange={(event) => updateItem(index, event.target.value)}
-              className={fieldClassName}
-              placeholder={field.placeholder}
-              required={field.required && index === 0}
-            />
-            <button
-              type="button"
-              onClick={() => removeItem(index)}
-              className="shrink-0 rounded-xl border border-rose-100 px-3 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600"
-              aria-label="Xóa cụm từ"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+      <textarea
+        ref={inputRef}
+        value={raw}
+        onChange={(event) => onChange(field.name, event.target.value)}
+        onKeyDown={handleKeyDown}
+        className={[fieldClassName, 'min-h-24 resize-y font-mono leading-6'].join(' ')}
+        placeholder={field.placeholder}
+        required={field.required}
+        spellCheck={false}
+      />
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {phraseCount < maxItems ? (
+          <button
+            type="button"
+            onClick={insertNewBracketPair}
+            className="text-sm font-medium text-rose-600 hover:text-rose-700"
+          >
+            + Thêm cụm từ ({phraseCount}/{maxItems})
+          </button>
+        ) : (
+          <span className="text-xs text-slate-400">Đã đạt tối đa {maxItems} cụm từ.</span>
+        )}
       </div>
-      {items.length < maxItems ? (
-        <button
-          type="button"
-          onClick={addItem}
-          className="mt-2 text-sm font-medium text-rose-600 hover:text-rose-700"
-        >
-          + Thêm cụm từ ({items.length}/{maxItems})
-        </button>
-      ) : (
-        <span className="mt-2 block text-xs text-slate-400">Đã đạt tối đa {maxItems} cụm từ.</span>
-      )}
       {field.help ? <span className="mt-1.5 block text-xs text-slate-400">{field.help}</span> : null}
     </div>
   )
