@@ -506,8 +506,8 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
       positions[i * 3 + 2] = u * halfZ + gaussian() * 0.02
       const bright = 1.4 + Math.random() * 0.35
       colors[i * 3] = bright
-      colors[i * 3 + 1] = 0.3 * bright
-      colors[i * 3 + 2] = 0.55 * bright
+      colors[i * 3 + 1] = 0.12 * bright
+      colors[i * 3 + 2] = 0.12 * bright
       i += 1
     }
 
@@ -528,8 +528,8 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
       positions[i * 3 + 2] = face * halfZ + gaussian() * 0.025
       const bright = (1.15 + Math.random() * 0.35) * (0.75 + (1 - r2) * 0.55)
       colors[i * 3] = bright
-      colors[i * 3 + 1] = 0.28 * bright
-      colors[i * 3 + 2] = 0.52 * bright
+      colors[i * 3 + 1] = 0.1 * bright
+      colors[i * 3 + 2] = 0.1 * bright
       i += 1
       placed += 1
     }
@@ -541,8 +541,8 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
       positions[i * 3 + 1] = hy + gaussian() * 0.03
       positions[i * 3 + 2] = (Math.random() - 0.5) * 0.9
       colors[i * 3] = 1.2
-      colors[i * 3 + 1] = 0.3
-      colors[i * 3 + 2] = 0.55
+      colors[i * 3 + 1] = 0.14
+      colors[i * 3 + 2] = 0.14
       i += 1
     }
 
@@ -661,7 +661,7 @@ function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) 
           `}
         />
       </points>
-      <pointLight ref={lightRef} color="#ff4fa0" intensity={3.2} distance={16} />
+      <pointLight ref={lightRef} color="#ff2233" intensity={3.2} distance={16} />
     </group>
   )
 }

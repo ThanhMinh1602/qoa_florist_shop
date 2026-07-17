@@ -14,6 +14,10 @@ import TopicQrForm from '../components/TopicQrForm'
 function CreateQrPage() {
   const availableTopics = useMemo(() => TOPICS.filter((topic) => topic.available), [])
   const [topicId, setTopicId] = useState(availableTopics[0]?.id ?? 'birthday')
+  const selectedTopic = useMemo(
+    () => availableTopics.find((topic) => topic.id === topicId),
+    [availableTopics, topicId],
+  )
   const formConfig = getTopicQrForm(topicId)
   const [formData, setFormData] = useState(() => getEmptyFormValues(topicId))
   const [savedCard, setSavedCard] = useState(null)
@@ -76,33 +80,30 @@ function CreateQrPage() {
         <div className="space-y-4">
           <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
             <h3 className="text-sm font-semibold text-slate-900">1. Chọn chủ đề</h3>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {availableTopics.map((topic) => {
-                const active = topic.id === topicId
-                return (
-                  <button
-                    key={topic.id}
-                    type="button"
-                    onClick={() => handleTopicSelect(topic.id)}
-                    className={[
-                      'rounded-2xl border px-4 py-3 text-left transition',
-                      active
-                        ? 'border-rose-400 bg-rose-50 ring-2 ring-rose-100'
-                        : 'border-rose-100 hover:border-rose-200 hover:bg-rose-50/50',
-                    ].join(' ')}
-                  >
-                    <span className="flex items-center gap-2">
-                      <MaterialIcon
-                        name={topic.icon}
-                        className={active ? 'text-rose-600' : 'text-slate-400'}
-                      />
-                      <span className="font-semibold text-slate-900">{topic.name}</span>
-                    </span>
-                    <p className="mt-1 text-xs text-slate-500">{topic.description}</p>
-                  </button>
-                )
-              })}
+            <div className="relative mt-3">
+              <MaterialIcon
+                name={selectedTopic?.icon ?? 'category'}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-rose-500"
+              />
+              <select
+                value={topicId}
+                onChange={(event) => handleTopicSelect(event.target.value)}
+                className="w-full appearance-none rounded-xl border border-rose-200 bg-white py-3 pl-11 pr-10 text-sm font-medium text-slate-800 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              >
+                {availableTopics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.name}
+                  </option>
+                ))}
+              </select>
+              <MaterialIcon
+                name="expand_more"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
             </div>
+            {selectedTopic?.description ? (
+              <p className="mt-2 text-xs text-slate-500">{selectedTopic.description}</p>
+            ) : null}
           </section>
 
           {formConfig ? (

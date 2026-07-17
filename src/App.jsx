@@ -7,7 +7,6 @@ import CashbookPage from './features/admin/pages/CashbookPage'
 import ChangePasswordPage from './features/admin/pages/ChangePasswordPage'
 import CreateOrderPage from './features/admin/pages/CreateOrderPage'
 import CreateQrPage from './features/admin/pages/CreateQrPage'
-import DashboardPage from './features/admin/pages/DashboardPage'
 import LoginPage from './features/admin/pages/LoginPage'
 import ProductsPage from './features/admin/pages/ProductsPage'
 import QrListPage from './features/admin/pages/QrListPage'
@@ -44,7 +43,7 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<DashboardPage />} />
+          <Route index element={<Navigate to="/admin/qr" replace />} />
           <Route path="orders/new" element={<CreateOrderPage />} />
           <Route path="qr/new" element={<CreateQrPage />} />
           <Route path="qr" element={<QrListPage />} />

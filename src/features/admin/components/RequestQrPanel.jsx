@@ -20,7 +20,9 @@ function RequestQrPanel({ request }) {
   }
 
   function handleDownloadQr() {
-    downloadQrImage(canvasRef.current, `qoa-qr-${request.cardId}.png`)
+    const name = request.label || request.recipientName || ''
+    const slug = name ? name.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') : request.cardId
+    downloadQrImage(canvasRef.current, `qoa-qr-${slug || request.cardId}.png`, name)
   }
 
   return (

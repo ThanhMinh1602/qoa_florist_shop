@@ -1,18 +1,5 @@
 export const ADMIN_NAV_ITEMS = [
   {
-    to: '/admin',
-    label: 'Dashboard',
-    shortLabel: 'Home',
-    icon: 'dashboard',
-    end: true,
-  },
-  {
-    to: '/admin/orders/new',
-    label: 'Lên đơn',
-    shortLabel: 'Lên đơn',
-    icon: 'edit_note',
-  },
-  {
     to: '/admin/qr/new',
     label: 'Tạo QR',
     shortLabel: 'Tạo QR',
@@ -25,26 +12,9 @@ export const ADMIN_NAV_ITEMS = [
     icon: 'list_alt',
     end: true,
   },
-  {
-    to: '/admin/manage',
-    label: 'Đơn hàng',
-    shortLabel: 'Đơn',
-    icon: 'receipt_long',
-  },
-  {
-    to: '/admin/cashbook',
-    label: 'Thu chi',
-    shortLabel: 'Thu chi',
-    icon: 'account_balance_wallet',
-  },
 ]
 
 export const ADMIN_DRAWER_ITEMS = [
-  {
-    to: '/admin/products',
-    label: 'Sản phẩm',
-    icon: 'inventory_2',
-  },
   {
     to: '/admin/change-password',
     label: 'Đổi mật khẩu',
