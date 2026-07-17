@@ -33,7 +33,7 @@ export function CardsProvider({ children }) {
   }, [])
 
   const createCard = useCallback(
-    async ({ topicId, label, senderName, recipientName, phone, message, keywords, messages }) => {
+    async ({ topicId, label, senderName, recipientName, phone, message, keywords, messages, music }) => {
       const trimmedLabel = label?.trim()
 
       if (!topicId) {
@@ -60,6 +60,7 @@ export function CardsProvider({ children }) {
             label: trimmedLabel,
             keywords: kw,
             messages: msgs,
+            music: String(music ?? '').trim(),
             phone,
           })
           setCards((previous) => [result.data, ...previous])
@@ -108,7 +109,7 @@ export function CardsProvider({ children }) {
   )
 
   const updateCard = useCallback(
-    async (id, { topicId, label, senderName, recipientName, phone, message, keywords, messages }) => {
+    async (id, { topicId, label, senderName, recipientName, phone, message, keywords, messages, music }) => {
       if (!id) {
         return { success: false, message: 'Thiếu mã thiệp.' }
       }
@@ -136,6 +137,7 @@ export function CardsProvider({ children }) {
             label: trimmedLabel,
             keywords: kw,
             messages: msgs,
+            music: String(music ?? '').trim(),
             phone: phone?.trim() ?? '',
           })
           setCards((previous) =>

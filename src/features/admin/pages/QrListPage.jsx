@@ -4,6 +4,7 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
 import { getTopicById } from '../../../constants/topics'
 import { cardToFormValues, getTopicQrForm } from '../../../constants/topicQrForms'
+import { getMusicName } from '../../../constants/galaxyMusic'
 import { useCards } from '../../../context/CardsContext'
 import { useDialog } from '../../../context/DialogContext'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
@@ -150,6 +151,14 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
                       </dt>
                       <dd className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-slate-700">
                         {(card.messages || []).filter(Boolean).join('\n') || card.message || '—'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        Nhạc nền
+                      </dt>
+                      <dd className="mt-1 text-base text-slate-700">
+                        {getMusicName(card.music) || '—'}
                       </dd>
                     </div>
                   </>

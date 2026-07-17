@@ -88,6 +88,7 @@ function GreetingPage() {
       message={card.message}
       keywords={card.keywords}
       messages={card.messages}
+      music={card.music}
     />
   )
 }

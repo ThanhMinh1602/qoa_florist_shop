@@ -54,6 +54,7 @@ export function cardToFormValues(card) {
       label: card.label || '',
       keywords: phrasesToBracket(card.keywords),
       messages: phrasesToBracket(messages),
+      music: card.music || '',
       phone: card.phone || '',
     }
   }
@@ -122,6 +123,7 @@ export const TOPIC_QR_FORMS = {
       label: '',
       keywords: '[]',
       messages: '[]',
+      music: '',
       phone: '',
     },
     fields: [
@@ -149,6 +151,13 @@ export const TOPIC_QR_FORMS = {
         maxItems: 10,
         placeholder: '[Cụm 1][Cụm 2]',
         help: 'Mỗi cụm trong một cặp dấu [ ]. Enter hoặc bấm “Thêm cụm từ” để tạo cặp mới. Tối đa 10 cụm — mỗi cụm giữ ~2 giây rồi chuyển tiếp. Cụm cuối giữ nguyên, không nổ.',
+      },
+      {
+        name: 'music',
+        label: 'Nhạc nền',
+        required: false,
+        type: 'music',
+        help: 'Chọn một bài — nghe thử trước khi lưu. Nhạc sẽ phát cùng lúc mở thiệp ngân hà.',
       },
       {
         name: 'phone',

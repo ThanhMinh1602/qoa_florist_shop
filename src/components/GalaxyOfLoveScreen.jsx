@@ -5,6 +5,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { AnimatePresence, motion } from 'framer-motion'
 import * as THREE from 'three'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { getMusicUrl } from '../constants/galaxyMusic'
 import './GalaxyOfLoveScreen.css'
 
 const WHITE = new THREE.Color('#ffffff')
@@ -103,19 +104,22 @@ function sampleSharpTextParticles(text, options = {}) {
   const {
     fontSize = 110,
     maxWidth = 920,
-    lineHeight = 1.18,
+    lineHeight = 1.28,
     depthLayers = 9,
     depth = 0.32,
     worldWidth = 7.2,
     step = 2,
     maxParticles = 120000,
+    fontFamily = '"Dancing Script", "Segoe Script", "Segoe UI", cursive',
+    fontWeight = 700,
   } = options
 
+  const fontSpec = `${fontWeight} ${fontSize}px ${fontFamily}`
   const display =
     String(text || '').trim() || 'I love you'
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
-  ctx.font = `700 ${fontSize}px "Segoe UI", "Be Vietnam Pro", system-ui, sans-serif`
+  ctx.font = fontSpec
   const lines = wrapCanvasLines(ctx, display, maxWidth)
   const padX = 48
   const padY = 40
@@ -129,7 +133,7 @@ function sampleSharpTextParticles(text, options = {}) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.fillStyle = '#000'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  ctx.font = `700 ${fontSize}px "Segoe UI", "Be Vietnam Pro", system-ui, sans-serif`
+  ctx.font = fontSpec
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#fff'
@@ -455,6 +459,162 @@ function SpaceSparkles({ count = 3200 }) {
   )
 }
 
+/** Sao băng bay ngang trời ngẫu nhiên — thỉnh thoảng lướt qua */
+function ShootingStars({ poolSize = 3, trail = 22 }) {
+  const pointsRef = useRef(null)
+  const materialRef = useRef(null)
+
+  const meteors = useRef(
+    Array.from({ length: poolSize }, (_, index) => ({
+      active: false,
+      delay: 1.5 + Math.random() * 6 + index * 1.4,
+      ttl: 0,
+      age: 0,
+      px: 0,
+      py: 0,
+      pz: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      histX: new Float32Array(trail),
+      histY: new Float32Array(trail),
+      histZ: new Float32Array(trail),
+    })),
+  )
+
+  const { positions, aLife, aOn } = useMemo(() => {
+    const total = poolSize * trail
+    const positions = new Float32Array(total * 3)
+    const aLife = new Float32Array(total)
+    const aOn = new Float32Array(total)
+    for (let m = 0; m < poolSize; m += 1) {
+      for (let k = 0; k < trail; k += 1) {
+        aLife[m * trail + k] = k / (trail - 1)
+      }
+    }
+    return { positions, aLife, aOn }
+  }, [poolSize, trail])
+
+  const uniforms = useMemo(() => ({ uSize: { value: 0.7 } }), [])
+
+  function spawn(meteor) {
+    const dir = Math.random() < 0.5 ? -1 : 1
+    const startX = dir === 1 ? -60 - Math.random() * 20 : 60 + Math.random() * 20
+    meteor.px = startX
+    meteor.py = 26 + Math.random() * 30
+    meteor.pz = -25 - Math.random() * 60
+    const speed = 55 + Math.random() * 45
+    const angle = (Math.random() * 0.4 + 0.15) * Math.PI
+    meteor.vx = dir * Math.cos(angle) * speed
+    meteor.vy = -Math.sin(angle) * speed * (0.55 + Math.random() * 0.35)
+    meteor.vz = (Math.random() - 0.5) * 14
+    meteor.ttl = 1.1 + Math.random() * 1.3
+    meteor.age = 0
+    meteor.active = true
+    for (let k = 0; k < trail; k += 1) {
+      meteor.histX[k] = meteor.px
+      meteor.histY[k] = meteor.py
+      meteor.histZ[k] = meteor.pz
+    }
+  }
+
+  useFrame((_, delta) => {
+    const dt = Math.min(delta, 0.05)
+    let onChanged = false
+    const pool = meteors.current
+    for (let m = 0; m < pool.length; m += 1) {
+      const meteor = pool[m]
+      if (!meteor.active) {
+        meteor.delay -= dt
+        if (meteor.delay <= 0) spawn(meteor)
+      } else {
+        meteor.age += dt
+        meteor.px += meteor.vx * dt
+        meteor.py += meteor.vy * dt
+        meteor.pz += meteor.vz * dt
+        for (let k = trail - 1; k > 0; k -= 1) {
+          meteor.histX[k] = meteor.histX[k - 1]
+          meteor.histY[k] = meteor.histY[k - 1]
+          meteor.histZ[k] = meteor.histZ[k - 1]
+        }
+        meteor.histX[0] = meteor.px
+        meteor.histY[0] = meteor.py
+        meteor.histZ[0] = meteor.pz
+        if (meteor.age >= meteor.ttl || meteor.py < -30) {
+          meteor.active = false
+          meteor.delay = 2.5 + Math.random() * 7
+        }
+      }
+
+      const fadeIn = meteor.active ? Math.min(1, meteor.age / 0.15) : 0
+      const fadeOut = meteor.active ? Math.min(1, (meteor.ttl - meteor.age) / 0.35) : 0
+      const vis = meteor.active ? Math.max(0, Math.min(fadeIn, fadeOut)) : 0
+      for (let k = 0; k < trail; k += 1) {
+        const idx = m * trail + k
+        positions[idx * 3] = meteor.histX[k]
+        positions[idx * 3 + 1] = meteor.histY[k]
+        positions[idx * 3 + 2] = meteor.histZ[k]
+        const next = vis
+        if (aOn[idx] !== next) onChanged = true
+        aOn[idx] = next
+      }
+    }
+
+    const geom = pointsRef.current?.geometry
+    if (geom) {
+      geom.attributes.position.needsUpdate = true
+      if (onChanged) geom.attributes.aOn.needsUpdate = true
+    }
+  })
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-aLife" args={[aLife, 1]} />
+        <bufferAttribute attach="attributes-aOn" args={[aOn, 1]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={materialRef}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+        uniforms={uniforms}
+        vertexShader={`
+          attribute float aLife;
+          attribute float aOn;
+          varying float vLife;
+          varying float vOn;
+          uniform float uSize;
+          void main() {
+            vLife = aLife;
+            vOn = aOn;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            float dist = max(6.0, -mvPosition.z);
+            gl_PointSize = clamp(uSize * (0.2 + aLife * 0.9) * (120.0 / dist), 0.2, 0.7);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `}
+        fragmentShader={`
+          varying float vLife;
+          varying float vOn;
+          void main() {
+            if (vOn < 0.01) discard;
+            vec2 uv = gl_PointCoord - 0.5;
+            float d = length(uv);
+            if (d > 0.5) discard;
+            float core = smoothstep(0.5, 0.04, d);
+            vec3 col = mix(vec3(0.65, 0.8, 1.0), vec3(1.0, 1.0, 1.0), vLife);
+            float alpha = core * vLife * vLife * vOn;
+            gl_FragColor = vec4(col * (0.6 + vLife * 0.8), alpha);
+          }
+        `}
+      />
+    </points>
+  )
+}
+
 /** Trái tim 3D — đốm phủ bề mặt; có thể nổ tung */
 function ParticleHeartOutline({ count = 32000, exploding = false, onExploded }) {
   const groupRef = useRef(null)
@@ -689,6 +849,29 @@ function ParticleMessageText({ phrases, active, onBounds }) {
   const isMobile = useMediaQuery('(max-width: 768px)')
   const textWorldWidth = isMobile ? 5.4 : 7.4
   const groupScale = isMobile ? 0.78 : 1
+  const [fontReady, setFontReady] = useState(false)
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || !document.fonts) {
+      setFontReady(true)
+      return
+    }
+    let cancelled = false
+    Promise.all([
+      document.fonts.load('700 112px "Dancing Script"'),
+      document.fonts.load('600 112px "Dancing Script"'),
+    ])
+      .then(() => document.fonts.ready)
+      .then(() => {
+        if (!cancelled) setFontReady(true)
+      })
+      .catch(() => {
+        if (!cancelled) setFontReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const phraseList = useMemo(() => {
     const list = (Array.isArray(phrases) ? phrases : [])
@@ -716,9 +899,12 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         worldWidth: textWorldWidth,
         step: 1,
         maxParticles: 160000,
+        fontFamily: '"Dancing Script", "Segoe Script", "Segoe UI", cursive',
+        fontWeight: 700,
       }),
     )
-  }, [phraseList, textWorldWidth, isMobile])
+    // fontReady kích hoạt sample lại khi font viết tay đã tải xong
+  }, [phraseList, textWorldWidth, isMobile, fontReady])
 
   const maxCount = useMemo(
     () => Math.max(1, ...clouds.map((cloud) => cloud.particleCount || 0)),
@@ -1152,9 +1338,9 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
         (h * 1.28) / Math.tan(halfFov),
       )
       const startDist = startPos.current.distanceTo(endLook.current)
-      // Zoom out xa để chữ lời chúc nhỏ lại trên khung hình
-      const dist = Math.max(fitDist * 2.25, startDist * 2.25, startDist + 16, 36)
-      endDist.current = THREE.MathUtils.clamp(dist, 36, 52)
+      // Zoom out vừa phải — chữ lời chúc to rõ hơn
+      const dist = Math.max(fitDist * 1.7, startDist * 1.7, startDist + 12, 28)
+      endDist.current = THREE.MathUtils.clamp(dist, 28, 42)
       // Trước mặt chữ (+Z), hơi cao nhẹ
       endPos.current.set(0, 3.55, endDist.current)
     } else if (textBounds?.worldWidth && progress.current < 0.35) {
@@ -1167,8 +1353,8 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
         (h * 1.28) / Math.tan(halfFov),
       )
       const startDist = startPos.current.distanceTo(endLook.current)
-      const dist = Math.max(fitDist * 2.25, startDist * 2.25, startDist + 16, 36)
-      endDist.current = THREE.MathUtils.clamp(dist, 36, 52)
+      const dist = Math.max(fitDist * 1.7, startDist * 1.7, startDist + 12, 28)
+      endDist.current = THREE.MathUtils.clamp(dist, 28, 42)
       endPos.current.set(0, 3.55, endDist.current)
     }
 
@@ -1243,6 +1429,7 @@ function Scene({ labels, messages, onSelectLabel }) {
       <ambientLight intensity={0.15} />
       <Stars radius={140} depth={80} count={18000} factor={2.55} saturation={0} fade speed={0.38} />
       <SpaceSparkles count={3200} />
+      <ShootingStars poolSize={3} />
 
       <GalaxyIntro spinSpeedRef={spinSpeedRef} onComplete={handleIntroComplete} />
       <TextViewCamera
@@ -1330,8 +1517,56 @@ function GalaxyOfLoveScreen({
   keywords = [],
   messages = [],
   message = '',
+  music = '',
 }) {
   const [selected, setSelected] = useState(null)
+
+  const musicUrl = useMemo(() => getMusicUrl(music), [music])
+
+  useEffect(() => {
+    if (preview || !musicUrl) return undefined
+
+    const audio = new Audio(musicUrl)
+    audio.loop = true
+    audio.volume = 0.7
+
+    let started = false
+    const tryPlay = () => {
+      if (started) return
+      const promise = audio.play()
+      if (promise?.then) {
+        promise.then(() => {
+          started = true
+        }).catch(() => {})
+      } else {
+        started = true
+      }
+    }
+
+    tryPlay()
+
+    // Trình duyệt thường chặn autoplay — phát khi người dùng chạm lần đầu
+    const onInteract = () => {
+      tryPlay()
+      if (started) removeListeners()
+    }
+    const removeListeners = () => {
+      window.removeEventListener('pointerdown', onInteract)
+      window.removeEventListener('touchstart', onInteract)
+      window.removeEventListener('keydown', onInteract)
+      window.removeEventListener('click', onInteract)
+    }
+    window.addEventListener('pointerdown', onInteract)
+    window.addEventListener('touchstart', onInteract)
+    window.addEventListener('keydown', onInteract)
+    window.addEventListener('click', onInteract)
+
+    return () => {
+      removeListeners()
+      audio.pause()
+      audio.src = ''
+    }
+  }, [preview, musicUrl])
 
   const labels = useMemo(() => {
     const fromKeywords = (Array.isArray(keywords) ? keywords : [])

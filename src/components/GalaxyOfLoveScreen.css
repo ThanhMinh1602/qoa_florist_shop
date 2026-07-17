@@ -25,11 +25,11 @@
   border: none;
   background: transparent;
   padding: 0.15rem 0.25rem;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
+  font-family: 'Dancing Script', 'Segoe Script', 'Segoe UI', cursive;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
   color: #ffffff;
   text-transform: none;
   text-shadow:
@@ -148,6 +148,6 @@
 
 @media (max-width: 640px) {
   .galaxy-love-text {
-    font-size: 0.85rem;
+    font-size: 1.2rem;
   }
 }
