@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import * as THREE from 'three'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { getMusicUrl } from '../constants/galaxyMusic'
+import MaterialIcon from './common/MaterialIcon'
 import './GalaxyOfLoveScreen.css'
 
 const WHITE = new THREE.Color('#ffffff')
@@ -1034,13 +1035,13 @@ function ParticleMessageText({ phrases, active, onBounds }) {
       }
       posAttr.needsUpdate = true
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = Math.min(0.22, progressRef.current * 0.3)
+        materialRef.current.uniforms.uOpacity.value = Math.min(0.13, progressRef.current * 0.19)
       }
       if (progressRef.current >= 1) {
         if (isLast) {
           phaseRef.current = 'hold'
           holdRef.current = 0
-          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.22
+          if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.13
         } else {
           phaseRef.current = 'hold'
           holdRef.current = 0
@@ -1048,7 +1049,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         }
       }
     } else if (phase === 'hold') {
-      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.22
+      if (materialRef.current) materialRef.current.uniforms.uOpacity.value = 0.13
       if (!isLast) {
         holdRef.current += delta
         if (holdRef.current >= holdDurationRef.current) {
@@ -1069,7 +1070,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
         posAttr.needsUpdate = true
       }
       if (materialRef.current) {
-        materialRef.current.uniforms.uOpacity.value = 0.22 * fade
+        materialRef.current.uniforms.uOpacity.value = 0.13 * fade
         materialRef.current.uniforms.uSize.value = 2.4 + progressRef.current * 4
       }
 
@@ -1151,7 +1152,7 @@ function ParticleMessageText({ phrases, active, onBounds }) {
               float core = smoothstep(0.48, 0.14, d);
               float glow = exp(-d * d * 28.0);
               float alpha = mix(glow * 0.06, core, 0.9) * vAlpha * 0.5;
-              gl_FragColor = vec4(vColor * 0.48, alpha);
+              gl_FragColor = vec4(vColor * 0.34, alpha);
             }
           `}
         />
@@ -1245,7 +1246,7 @@ function SceneFX() {
 
 const INTRO_SPIN_START = 2.6
 const INTRO_SPIN_END = 0.032
-const INTRO_DURATION = 3.6
+const INTRO_DURATION = 5.8
 /** Sau khi camera dừng: trái tim đập thêm vài nhịp rồi mới nổ */
 const HEART_BEAT_PERIOD = 1.55
 const HEART_BEATS_BEFORE_EXPLODE = 2
@@ -1339,8 +1340,8 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
       )
       const startDist = startPos.current.distanceTo(endLook.current)
       // Zoom out vừa phải — chữ lời chúc to rõ hơn
-      const dist = Math.max(fitDist * 1.7, startDist * 1.7, startDist + 12, 28)
-      endDist.current = THREE.MathUtils.clamp(dist, 28, 42)
+      const dist = Math.max(fitDist * 1.5, startDist * 1.5, startDist + 10, 24)
+      endDist.current = THREE.MathUtils.clamp(dist, 24, 38)
       // Trước mặt chữ (+Z), hơi cao nhẹ
       endPos.current.set(0, 3.55, endDist.current)
     } else if (textBounds?.worldWidth && progress.current < 0.35) {
@@ -1353,8 +1354,8 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
         (h * 1.28) / Math.tan(halfFov),
       )
       const startDist = startPos.current.distanceTo(endLook.current)
-      const dist = Math.max(fitDist * 1.7, startDist * 1.7, startDist + 12, 28)
-      endDist.current = THREE.MathUtils.clamp(dist, 28, 42)
+      const dist = Math.max(fitDist * 1.5, startDist * 1.5, startDist + 10, 24)
+      endDist.current = THREE.MathUtils.clamp(dist, 24, 38)
       endPos.current.set(0, 3.55, endDist.current)
     }
 
@@ -1520,6 +1521,9 @@ function GalaxyOfLoveScreen({
   music = '',
 }) {
   const [selected, setSelected] = useState(null)
+  const [muted, setMuted] = useState(false)
+  const [opened, setOpened] = useState(preview)
+  const audioRef = useRef(null)
 
   const musicUrl = useMemo(() => getMusicUrl(music), [music])
 
@@ -1529,44 +1533,29 @@ function GalaxyOfLoveScreen({
     const audio = new Audio(musicUrl)
     audio.loop = true
     audio.volume = 0.7
-
-    let started = false
-    const tryPlay = () => {
-      if (started) return
-      const promise = audio.play()
-      if (promise?.then) {
-        promise.then(() => {
-          started = true
-        }).catch(() => {})
-      } else {
-        started = true
-      }
-    }
-
-    tryPlay()
-
-    // Trình duyệt thường chặn autoplay — phát khi người dùng chạm lần đầu
-    const onInteract = () => {
-      tryPlay()
-      if (started) removeListeners()
-    }
-    const removeListeners = () => {
-      window.removeEventListener('pointerdown', onInteract)
-      window.removeEventListener('touchstart', onInteract)
-      window.removeEventListener('keydown', onInteract)
-      window.removeEventListener('click', onInteract)
-    }
-    window.addEventListener('pointerdown', onInteract)
-    window.addEventListener('touchstart', onInteract)
-    window.addEventListener('keydown', onInteract)
-    window.addEventListener('click', onInteract)
+    audio.preload = 'auto'
+    audioRef.current = audio
 
     return () => {
-      removeListeners()
       audio.pause()
       audio.src = ''
+      audioRef.current = null
     }
   }, [preview, musicUrl])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.muted = muted
+    if (!muted && opened && audio.paused) audio.play().catch(() => {})
+  }, [muted, opened])
+
+  function handleOpen() {
+    setOpened(true)
+    // Cú chạm này là "user gesture" → trình duyệt cho phép phát nhạc
+    const audio = audioRef.current
+    if (audio && !muted) audio.play().catch(() => {})
+  }
 
   const labels = useMemo(() => {
     const fromKeywords = (Array.isArray(keywords) ? keywords : [])
@@ -1599,18 +1588,20 @@ function GalaxyOfLoveScreen({
 
   return (
     <div className={preview ? 'galaxy-screen galaxy-screen--preview' : 'galaxy-screen'}>
-      <Canvas
-        dpr={[1, 2]}
-        camera={{ position: [0, 48, 4.8], fov: 42, near: 0.1, far: 160 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-        onCreated={({ camera }) => {
-          camera.lookAt(0, 0.05, 0)
-        }}
-      >
-        <Suspense fallback={null}>
-          <Scene labels={labels} messages={phraseMessages} onSelectLabel={setSelected} />
-        </Suspense>
-      </Canvas>
+      {opened ? (
+        <Canvas
+          dpr={[1, 2]}
+          camera={{ position: [0, 48, 4.8], fov: 42, near: 0.1, far: 160 }}
+          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          onCreated={({ camera }) => {
+            camera.lookAt(0, 0.05, 0)
+          }}
+        >
+          <Suspense fallback={null}>
+            <Scene labels={labels} messages={phraseMessages} onSelectLabel={setSelected} />
+          </Suspense>
+        </Canvas>
+      ) : null}
 
       <PopupCard
         open={Boolean(selected)}
@@ -1619,9 +1610,40 @@ function GalaxyOfLoveScreen({
         onClose={() => setSelected(null)}
       />
 
-      {!preview ? (
+      {opened && !preview && musicUrl ? (
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          className="galaxy-mute-btn"
+          aria-label={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+          title={muted ? 'Bật nhạc' : 'Tắt nhạc'}
+        >
+          <MaterialIcon name={muted ? 'volume_off' : 'volume_up'} className="text-base" />
+        </button>
+      ) : null}
+
+      {opened && !preview ? (
         <p className="galaxy-hint">Kéo để xoay · chờ trái tim nổ ra lời nhắn</p>
       ) : null}
+
+      <AnimatePresence>
+        {!opened && !preview ? (
+          <motion.button
+            type="button"
+            className="galaxy-open-gate"
+            onClick={handleOpen}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="galaxy-open-gate__heart" aria-hidden>
+              ♥
+            </span>
+            <span className="galaxy-open-gate__title">Chạm để mở thiệp</span>
+          </motion.button>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

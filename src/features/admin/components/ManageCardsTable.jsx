@@ -6,6 +6,7 @@ import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
+import { QR_BG_COLOR, QR_FG_COLOR, qrHeartImageSettings } from '../../../constants/qrStyle'
 
 function formatDate(isoString) {
   if (!isoString) return '—'
@@ -78,10 +79,11 @@ function CardQrModal({ card, onClose }) {
               ref={canvasRef}
               value={greetingUrl}
               size={180}
-              level="M"
+              level="H"
               includeMargin
-              bgColor="#ffffff"
-              fgColor="#1f2937"
+              bgColor={QR_BG_COLOR}
+              fgColor={QR_FG_COLOR}
+              imageSettings={qrHeartImageSettings(180)}
             />
           </div>
 

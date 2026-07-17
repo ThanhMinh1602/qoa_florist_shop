@@ -5,6 +5,7 @@ import { buildGreetingUrl } from '../../../constants/app'
 import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { QR_BG_COLOR, QR_FG_COLOR, qrHeartImageSettings } from '../../../constants/qrStyle'
 
 function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
   const canvasRef = useRef(null)
@@ -75,10 +76,11 @@ function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
             ref={canvasRef}
             value={greetingUrl}
             size={qrSize}
-            level="M"
+            level="H"
             includeMargin
-            bgColor="#ffffff"
-            fgColor="#1f2937"
+            bgColor={QR_BG_COLOR}
+            fgColor={QR_FG_COLOR}
+            imageSettings={qrHeartImageSettings(qrSize)}
           />
         </div>
 

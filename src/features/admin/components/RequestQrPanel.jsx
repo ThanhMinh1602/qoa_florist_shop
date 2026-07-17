@@ -5,6 +5,7 @@ import { buildGreetingUrl } from '../../../constants/app'
 import { getTopicById } from '../../../constants/topics'
 import { downloadQrImage } from '../../../utils/downloadQr'
 import TopicLabel from '../../../components/common/TopicLabel'
+import { QR_BG_COLOR, QR_FG_COLOR, qrHeartImageSettings } from '../../../constants/qrStyle'
 
 function RequestQrPanel({ request }) {
   const canvasRef = useRef(null)
@@ -38,10 +39,11 @@ function RequestQrPanel({ request }) {
             ref={canvasRef}
             value={greetingUrl}
             size={140}
-            level="M"
+            level="H"
             includeMargin
-            bgColor="#ffffff"
-            fgColor="#1f2937"
+            bgColor={QR_BG_COLOR}
+            fgColor={QR_FG_COLOR}
+            imageSettings={qrHeartImageSettings(140)}
           />
         </div>
 
