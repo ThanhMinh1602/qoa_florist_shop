@@ -82,29 +82,29 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-on-surface/50 backdrop-blur-[2px]"
         aria-label="Đóng"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl sm:rounded-3xl"
+        className="relative z-10 flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-xl sm:rounded-3xl"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-rose-100 px-6 py-5 sm:px-8">
+        <div className="flex items-start justify-between gap-3 border-b border-outline-variant/25 px-6 py-5 sm:px-8">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-outline">
               {editing ? 'Sửa QR' : 'Chi tiết QR'}
             </p>
-            <h3 className="mt-1 truncate text-xl font-semibold text-slate-900 sm:text-2xl">
+            <h3 className="mt-1 truncate text-xl font-semibold text-on-surface sm:text-2xl">
               {card.label || card.recipientName || 'Thiệp QR'}
             </h3>
-            <p className="mt-1 text-base text-slate-500">{topic?.name ?? card.topicId}</p>
+            <p className="mt-1 text-base text-on-surface-variant">{topic?.name ?? card.topicId}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-xl p-2.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+            className="shrink-0 rounded-xl p-2.5 text-outline hover:bg-surface-container-low hover:text-primary"
             aria-label="Đóng"
           >
             <MaterialIcon name="close" className="text-2xl" />
@@ -129,35 +129,35 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
             <>
               <dl className="grid gap-4 sm:grid-cols-2 sm:gap-5">
                 <div className="sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                     {card.topicId === 'galaxy_love' ? 'Tên khách hàng' : 'Tên gợi nhớ'}
                   </dt>
-                  <dd className="mt-1 text-base font-medium text-slate-800">{card.label || '—'}</dd>
+                  <dd className="mt-1 text-base font-medium text-on-surface">{card.label || '—'}</dd>
                 </div>
 
                 {card.topicId === 'galaxy_love' ? (
                   <>
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                         Keywords
                       </dt>
-                      <dd className="mt-1 text-base text-slate-700">
+                      <dd className="mt-1 text-base text-on-surface">
                         {(card.keywords || []).filter(Boolean).join(' · ') || '—'}
                       </dd>
                     </div>
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                         Lời nhắn
                       </dt>
-                      <dd className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-slate-700">
+                      <dd className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-on-surface">
                         {(card.messages || []).filter(Boolean).join('\n') || card.message || '—'}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                         Nhạc nền
                       </dt>
-                      <dd className="mt-1 text-base text-slate-700">
+                      <dd className="mt-1 text-base text-on-surface">
                         {getMusicName(card.music) || '—'}
                       </dd>
                     </div>
@@ -165,26 +165,26 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
                 ) : (
                   <>
                     <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                         Người nhận
                       </dt>
-                      <dd className="mt-1 text-base font-medium text-slate-800">
+                      <dd className="mt-1 text-base font-medium text-on-surface">
                         {card.recipientName || '—'}
                       </dd>
                     </div>
                     {card.senderName ? (
                       <div>
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                           Người gửi
                         </dt>
-                        <dd className="mt-1 text-base text-slate-700">{card.senderName}</dd>
+                        <dd className="mt-1 text-base text-on-surface">{card.senderName}</dd>
                       </div>
                     ) : null}
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                         Lời chúc
                       </dt>
-                      <dd className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-slate-700">
+                      <dd className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-on-surface">
                         {card.message || '—'}
                       </dd>
                     </div>
@@ -193,25 +193,25 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
 
                 {card.phone ? (
                   <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                       SĐT
                     </dt>
-                    <dd className="mt-1 text-base text-slate-700">{card.phone}</dd>
+                    <dd className="mt-1 text-base text-on-surface">{card.phone}</dd>
                   </div>
                 ) : null}
 
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                     Tạo lúc
                   </dt>
-                  <dd className="mt-1 text-base text-slate-700">{formatTimeAgo(card.createdAt)}</dd>
+                  <dd className="mt-1 text-base text-on-surface">{formatTimeAgo(card.createdAt)}</dd>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                     Link
                   </dt>
-                  <dd className="mt-1 break-all text-base text-rose-700">{greetingUrl}</dd>
+                  <dd className="mt-1 break-all text-base text-primary">{greetingUrl}</dd>
                 </div>
               </dl>
 
@@ -220,7 +220,7 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 border-t border-rose-100 px-6 py-4 sm:px-8 sm:py-5">
+        <div className="flex flex-wrap gap-2 border-t border-outline-variant/25 px-6 py-4 sm:px-8 sm:py-5">
           {editing ? (
             <>
               <button
@@ -231,7 +231,7 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
                   setSaveError('')
                 }}
                 disabled={isSaving}
-                className="rounded-xl border border-rose-200 px-5 py-3 text-sm font-medium text-slate-700 hover:bg-rose-50 disabled:opacity-60"
+                className="rounded-xl border border-outline-variant/40 px-5 py-3 text-sm font-medium text-on-surface hover:bg-surface-container-low disabled:opacity-60"
               >
                 Hủy
               </button>
@@ -239,7 +239,7 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="rounded-xl bg-rose-500 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60"
+                className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-container disabled:opacity-60"
               >
                 {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
@@ -249,7 +249,7 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl border border-rose-200 px-5 py-3 text-sm font-medium text-slate-700 hover:bg-rose-50"
+                className="rounded-xl border border-outline-variant/40 px-5 py-3 text-sm font-medium text-on-surface hover:bg-surface-container-low"
               >
                 Đóng
               </button>
@@ -260,7 +260,7 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
                   setEditing(true)
                   setSaveError('')
                 }}
-                className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-600"
+                className="inline-flex items-center gap-1 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-container"
               >
                 <MaterialIcon name="edit" className="text-lg" />
                 Sửa
@@ -313,17 +313,17 @@ function QrListPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Danh sách QR</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Bấm vào một hàng để xem chi tiết, sửa hoặc lấy mã QR.
+            <h2 className="font-display text-3xl text-primary">Danh sách QR</h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Quản lý và theo dõi các mã QR thiệp đính kèm hoa.
             </p>
           </div>
           <Link
             to="/admin/qr/new"
-            className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
+            className="inline-flex items-center gap-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"
           >
             <MaterialIcon name="add" className="text-lg" />
             Tạo QR mới
@@ -338,7 +338,7 @@ function QrListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm tên khách, keyword, lời nhắn..."
-            className="w-full max-w-md rounded-xl border border-rose-100 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+            className="w-full max-w-md rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/15"
           />
         </div>
 
@@ -347,20 +347,20 @@ function QrListPage() {
         ) : null}
 
         {isLoading ? (
-          <p className="py-12 text-center text-sm text-slate-500">Đang tải...</p>
+          <p className="py-12 text-center text-sm text-on-surface-variant">Đang tải...</p>
         ) : cards.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-            <MaterialIcon name="qr_code_2" className="text-4xl text-rose-200" />
-            <p className="mt-3 text-sm font-medium text-slate-700">Chưa có QR nào</p>
-            <Link to="/admin/qr/new" className="mt-3 inline-block text-sm font-medium text-rose-600">
+          <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-6 py-16 text-center">
+            <MaterialIcon name="qr_code_2" className="text-4xl text-primary-fixed-dim" />
+            <p className="mt-3 text-sm font-medium text-on-surface">Chưa có QR nào</p>
+            <Link to="/admin/qr/new" className="mt-3 inline-block text-sm font-medium text-primary">
               Tạo QR đầu tiên
             </Link>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm">
+          <div className="glass-card overflow-hidden">
             {isLgUp ? (
               <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <thead className="border-b border-outline-variant/25 bg-surface-container-low/60 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                   <tr>
                     <th className="px-4 py-3">Tên khách / gợi nhớ</th>
                     <th className="px-4 py-3">Chủ đề</th>
@@ -369,7 +369,7 @@ function QrListPage() {
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rose-50">
+                <tbody className="divide-y divide-surface-container">
                   {cards.map((card) => (
                     <tr
                       key={card.id}
@@ -382,16 +382,16 @@ function QrListPage() {
                           setSelected(card)
                         }
                       }}
-                      className="cursor-pointer transition hover:bg-rose-50/50"
+                      className="cursor-pointer transition hover:bg-surface-container-low/50"
                     >
-                      <td className="px-4 py-3 font-semibold text-slate-900">
+                      <td className="px-4 py-3 font-semibold text-on-surface">
                         {card.label || '(Chưa đặt tên)'}
                       </td>
                       <td className="px-4 py-3">
                         <TopicLabel topicId={card.topicId} />
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{contentPreview(card)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                      <td className="px-4 py-3 text-on-surface-variant">{contentPreview(card)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
                         {formatTimeAgo(card.createdAt)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -411,18 +411,18 @@ function QrListPage() {
                 </tbody>
               </table>
             ) : (
-              <ul className="divide-y divide-rose-50">
+              <ul className="divide-y divide-surface-container">
                 {cards.map((card) => (
                   <li key={card.id}>
                     <button
                       type="button"
                       onClick={() => setSelected(card)}
-                      className="w-full p-4 text-left transition hover:bg-rose-50/40"
+                      className="w-full p-4 text-left transition hover:bg-surface-container-low/40"
                     >
-                      <p className="font-semibold text-slate-900">
+                      <p className="font-semibold text-on-surface">
                         {card.label || '(Chưa đặt tên)'}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-on-surface-variant">
                         <TopicLabel topicId={card.topicId} /> · {contentPreview(card)} ·{' '}
                         {formatTimeAgo(card.createdAt)}
                       </p>
@@ -431,7 +431,7 @@ function QrListPage() {
                       <button
                         type="button"
                         onClick={() => setSelected(card)}
-                        className="text-sm font-medium text-rose-600"
+                        className="text-sm font-medium text-primary"
                       >
                         Xem / Sửa
                       </button>

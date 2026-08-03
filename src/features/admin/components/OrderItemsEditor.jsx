@@ -55,7 +55,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
               event.target.value = ''
             }
           }}
-          className="min-w-[12rem] flex-1 rounded-xl border border-rose-100 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+          className="min-w-[12rem] flex-1 rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option value="">+ Thêm từ catalog...</option>
           {products
@@ -69,14 +69,14 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         <button
           type="button"
           onClick={addCustom}
-          className="rounded-xl border border-rose-200 px-3 py-2.5 text-sm font-medium text-rose-700 hover:bg-rose-50"
+          className="rounded-xl border border-outline-variant/40 px-3 py-2.5 text-sm font-medium text-primary hover:bg-surface-container-low"
         >
           Dòng tùy chỉnh
         </button>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-rose-200 px-4 py-6 text-center text-sm text-slate-500">
+        <p className="rounded-xl border border-dashed border-outline-variant/40 px-4 py-6 text-center text-sm text-on-surface-variant">
           Chưa có sản phẩm. Chọn từ catalog hoặc thêm dòng tùy chỉnh.
         </p>
       ) : (
@@ -84,20 +84,20 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
           {items.map((item, index) => (
             <div
               key={`${item.productId || 'custom'}-${index}`}
-              className="grid gap-2 rounded-xl border border-rose-100 bg-rose-50/20 p-3 sm:grid-cols-[1fr_5rem_7rem_auto]"
+              className="grid gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low/20 p-3 sm:grid-cols-[1fr_5rem_7rem_auto]"
             >
               <input
                 value={item.productName}
                 onChange={(e) => updateItem(index, { productName: e.target.value })}
                 placeholder="Tên sản phẩm"
-                className="rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               />
               <input
                 type="number"
                 min="1"
                 value={item.quantity}
                 onChange={(e) => updateItem(index, { quantity: Number(e.target.value) || 1 })}
-                className="rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 title="Số lượng"
               />
               <input
@@ -105,13 +105,13 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
                 min="0"
                 value={item.unitPrice}
                 onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) || 0 })}
-                className="rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 title="Đơn giá"
               />
               <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="rounded-lg px-2 text-sm text-slate-400 hover:bg-white hover:text-red-500"
+                className="rounded-lg px-2 text-sm text-outline hover:bg-surface-container-lowest hover:text-red-500"
               >
                 Xóa
               </button>
@@ -120,7 +120,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         </div>
       )}
 
-      <p className="text-right text-sm font-semibold text-slate-800">
+      <p className="text-right text-sm font-semibold text-on-surface">
         Thu vào (tạm tính): {formatMoney(subtotal)}
       </p>
     </div>

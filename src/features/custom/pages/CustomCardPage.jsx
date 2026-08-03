@@ -1,21 +1,21 @@
 import { useCallback, useState } from 'react'
-import { submitCustomRequestApi } from '../api/customRequestsApi'
-import TopicGreetingScreen from '../components/TopicGreetingScreen'
-import BrandLogo from '../components/common/BrandLogo'
-import BrandLogoCenter from '../components/common/BrandLogoCenter'
-import MaterialIcon from '../components/common/MaterialIcon'
-import MobileFrame from '../components/common/MobileFrame'
-import TopicLabel from '../components/common/TopicLabel'
-import { useIsLgUp } from '../hooks/useMediaQuery'
+import { submitCustomRequestApi } from '../../../api/customRequestsApi'
+import BrandLogo from '../../../components/common/BrandLogo'
+import BrandLogoCenter from '../../../components/common/BrandLogoCenter'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+import MobileFrame from '../../../components/common/MobileFrame'
+import TopicLabel from '../../../components/common/TopicLabel'
 import {
   DEFAULT_CARD_STEP,
   DEFAULT_DELIVERY_STEP,
-} from '../constants/customRequestDefaults'
-import { TOPICS } from '../constants/topics'
-import CustomCardStepForm from '../features/custom/components/CustomCardStepForm'
-import CustomDeliveryForm from '../features/custom/components/CustomDeliveryForm'
-import CustomCardMobileView from '../features/custom/mobile/CustomCardMobileView'
-import CustomSuccessMobile from '../features/custom/mobile/CustomSuccessMobile'
+} from '../../../constants/customRequestDefaults'
+import { TOPICS } from '../../../constants/topics'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
+import CustomCardStepForm from '../components/CustomCardStepForm'
+import CustomDeliveryForm from '../components/CustomDeliveryForm'
+import CustomCardMobileView from '../mobile/CustomCardMobileView'
+import CustomSuccessMobile from '../mobile/CustomSuccessMobile'
 
 function CustomCardPage() {
   const availableTopics = TOPICS.filter((topic) => topic.available)
@@ -91,20 +91,20 @@ function CustomCardPage() {
     }
 
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4 pb-[env(safe-area-inset-bottom)]">
-        <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white p-6 text-center shadow-xl shadow-rose-100/60 sm:p-8">
+      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container px-4 pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md rounded-3xl border border-emerald-100 bg-surface-container-lowest p-6 text-center shadow-xl shadow-primary/10 sm:p-8">
           <BrandLogoCenter size="md" />
           <MaterialIcon name="check_circle" className="mt-4 text-5xl text-emerald-500" filled />
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">Đã gửi yêu cầu!</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
+          <h1 className="mt-4 text-2xl font-semibold text-on-surface">Đã gửi yêu cầu!</h1>
+          <p className="mt-3 text-sm leading-6 text-on-surface-variant">
             QOA Florist đã nhận thiệp và thông tin giao hàng. Shop sẽ liên hệ qua{' '}
-            <span className="font-medium text-slate-700">{deliveryData.customerPhone}</span> để xác
+            <span className="font-medium text-on-surface">{deliveryData.customerPhone}</span> để xác
             nhận đơn.
           </p>
           <button
             type="button"
             onClick={handleReset}
-            className="mt-6 rounded-xl bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600"
+            className="mt-6 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-container"
           >
             Gửi yêu cầu khác
           </button>
@@ -134,36 +134,38 @@ function CustomCardPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-rose-50/80 via-white to-pink-50/60">
-      <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur">
+    <div className="relative min-h-dvh overflow-hidden bg-background">
+      <div className="mesh-wash pointer-events-none absolute inset-0" aria-hidden="true" />
+
+      <header className="relative border-b border-white/55 bg-surface/75 px-6 py-5 backdrop-blur-2xl">
         <BrandLogo size="md" />
-        <h1 className="mt-3 text-2xl font-semibold text-rose-900">Tự thiết kế thiệp</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        <h1 className="font-display mt-3 text-3xl tracking-wide text-primary">Tự thiết kế thiệp</h1>
+        <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
           Bước 1: Thiết kế thiệp QR — Bước 2: Nhập thông tin giao hàng và gửi về shop.
         </p>
 
         <div className="mt-5 flex items-center gap-3">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-rose-700' : 'text-slate-400'}`}>
-            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step >= 1 ? 'bg-rose-500 text-white' : 'bg-slate-100'}`}>1</span>
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-outline'}`}>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step >= 1 ? 'bg-primary text-white' : 'bg-surface-container'}`}>1</span>
             <span className="text-sm font-medium">Thiệp & QR</span>
           </div>
-          <span className="h-px w-8 bg-rose-100" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-rose-700' : 'text-slate-400'}`}>
-            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step >= 2 ? 'bg-rose-500 text-white' : 'bg-slate-100'}`}>2</span>
+          <span className="h-px w-8 bg-outline-variant/40" />
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-primary' : 'text-outline'}`}>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step >= 2 ? 'bg-primary text-white' : 'bg-surface-container'}`}>2</span>
             <span className="text-sm font-medium">Giao hàng</span>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:p-8">
-        <section className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
+      <div className="relative mx-auto grid max-w-6xl gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:p-8">
+        <section className="glass-card rounded-xl p-6">
           {step === 1 ? (
             <>
-              <h3 className="text-lg font-semibold text-slate-900">Bước 1 — Nội dung thiệp QR</h3>
-              <p className="mt-1 text-sm text-slate-500">Thông tin này sẽ hiển thị khi quét mã QR.</p>
+              <h3 className="text-lg font-semibold text-on-surface">Bước 1 — Nội dung thiệp QR</h3>
+              <p className="mt-1 text-sm text-on-surface-variant">Thông tin này sẽ hiển thị khi quét mã QR.</p>
 
               <div className="mt-5 mb-6">
-                <span className="mb-1.5 block text-sm font-medium text-slate-700">Chủ đề</span>
+                <span className="mb-1.5 block text-sm font-medium text-on-surface">Chủ đề</span>
                 <div className="flex flex-wrap gap-2">
                   {availableTopics.map((topic) => (
                     <button
@@ -173,8 +175,8 @@ function CustomCardPage() {
                       className={[
                         'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
                         topicId === topic.id
-                          ? 'border-rose-300 bg-rose-50 text-rose-700 ring-1 ring-rose-100'
-                          : 'border-rose-100 bg-white text-slate-600 hover:bg-rose-50/70',
+                          ? 'border-primary/40 bg-surface-container-low text-primary ring-1 ring-primary/20'
+                          : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low/70',
                       ].join(' ')}
                     >
                       <TopicLabel topic={topic} />
@@ -192,7 +194,7 @@ function CustomCardPage() {
               <button
                 type="button"
                 onClick={handleContinueToStep2}
-                className="mt-6 rounded-xl bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600"
+                className="mt-6 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-container"
               >
                 <span className="inline-flex items-center gap-1">
                   Tiếp tục — Thông tin giao hàng
@@ -205,15 +207,15 @@ function CustomCardPage() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="text-sm font-medium text-rose-600 transition hover:text-rose-700"
+                className="text-sm font-medium text-primary transition hover:text-primary"
               >
                 <span className="inline-flex items-center gap-1">
                   <MaterialIcon name="arrow_back" className="text-base" />
                   Quay lại bước 1
                 </span>
               </button>
-              <h3 className="mt-3 text-lg font-semibold text-slate-900">Bước 2 — Thông tin giao hàng</h3>
-              <p className="mt-1 text-sm text-slate-500">
+              <h3 className="mt-3 text-lg font-semibold text-on-surface">Bước 2 — Thông tin giao hàng</h3>
+              <p className="mt-1 text-sm text-on-surface-variant">
                 Shop sẽ tạo mã QR và xử lý giao hàng theo thông tin bên dưới.
               </p>
 
@@ -228,7 +230,7 @@ function CustomCardPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-6 w-full rounded-xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="mt-6 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu về shop'}
               </button>
@@ -248,7 +250,7 @@ function CustomCardPage() {
             />
           </MobileFrame>
           {step === 2 ? (
-            <p className="mt-3 max-w-xs text-center text-xs text-slate-500">
+            <p className="mt-3 max-w-xs text-center text-xs text-on-surface-variant">
               Mã QR sẽ được tạo tự động khi bạn gửi yêu cầu. Shop có thể tải QR ngay trên hệ thống admin.
             </p>
           ) : null}

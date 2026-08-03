@@ -8,9 +8,9 @@ import { TypeBadge, formatShipDate } from '../components/ManageUnifiedTable'
 function ManageUnifiedListMobile({ items, onSelect }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-4 py-12 text-center">
-        <MaterialIcon name="inbox" className="text-4xl text-slate-300" />
-        <p className="mt-3 text-sm font-medium text-slate-700">Chưa có dữ liệu</p>
+      <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-4 py-12 text-center">
+        <MaterialIcon name="inbox" className="text-4xl text-outline" />
+        <p className="mt-3 text-sm font-medium text-on-surface">Chưa có dữ liệu</p>
       </div>
     )
   }
@@ -28,21 +28,21 @@ function ManageUnifiedListMobile({ items, onSelect }) {
             key={`${item.kind}-${item.id}`}
             type="button"
             onClick={() => onSelect(item)}
-            className="w-full rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm shadow-rose-50 transition active:bg-rose-50/40"
+            className="w-full rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 text-left shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.05)] transition active:bg-surface-container-low/40"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs text-slate-500">Ship {formatShipDate(item.shipDate)}</p>
-                <p className="mt-1 truncate text-base font-semibold text-slate-900">
+                <p className="text-xs text-on-surface-variant">Ship {formatShipDate(item.shipDate)}</p>
+                <p className="mt-1 truncate text-base font-semibold text-on-surface">
                   {item.primaryName}
                 </p>
-                <p className="font-mono text-[11px] text-slate-400">{item.code}</p>
+                <p className="font-mono text-[11px] text-outline">{item.code}</p>
               </div>
-              <p className="shrink-0 font-semibold text-rose-700">{formatMoney(item.subtotal)}</p>
+              <p className="shrink-0 font-semibold text-primary">{formatMoney(item.subtotal)}</p>
             </div>
 
-            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{item.productsLine}</p>
-            <p className="mt-1 line-clamp-1 text-xs text-slate-500">{item.addressLine}</p>
+            <p className="mt-2 line-clamp-2 text-sm text-on-surface-variant">{item.productsLine}</p>
+            <p className="mt-1 line-clamp-1 text-xs text-on-surface-variant">{item.addressLine}</p>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span
@@ -62,7 +62,7 @@ function ManageUnifiedListMobile({ items, onSelect }) {
                 typeLabel={item.typeLabel}
                 typeIcon={item.typeIcon}
               />
-              <span className="text-xs text-slate-400">{formatTimeAgo(item.createdAt)}</span>
+              <span className="text-xs text-outline">{formatTimeAgo(item.createdAt)}</span>
             </div>
           </button>
         )

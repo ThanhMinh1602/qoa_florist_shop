@@ -90,206 +90,245 @@ function CashbookPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
-        <h2 className="text-2xl font-semibold text-slate-900">Thu chi</h2>
-        <p className="mt-1 text-sm text-slate-500">Sổ quỹ theo tháng — chi / thu / nợ NCC.</p>
+    <div className="flex flex-1 flex-col gap-8 p-5 md:p-10">
+      <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h2 className="font-display text-3xl text-primary md:text-[2rem]">Sổ quỹ</h2>
+          <p className="mt-1 text-sm text-on-surface-variant md:text-base">
+            Quản lý thu chi và dòng tiền boutique.
+          </p>
+        </div>
+        <a href="#cash-entry-form" className="btn-primary inline-flex items-center gap-2">
+          <MaterialIcon name="add" className="text-lg" />
+          Thêm khoản thu/chi
+        </a>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-            <p className="text-xs font-medium text-emerald-700">Tổng thu</p>
-            <p className="mt-1 text-xl font-semibold text-emerald-800">{formatMoney(totals.income)}</p>
-          </div>
-          <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
-            <p className="text-xs font-medium text-rose-700">Tổng chi</p>
-            <p className="mt-1 text-xl font-semibold text-rose-800">{formatMoney(totals.expense)}</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium text-slate-600">Chênh lệch</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">{formatMoney(totals.balance)}</p>
-          </div>
+      <section className="grid gap-4 md:grid-cols-3 md:gap-6">
+        <div className="glass-card relative overflow-hidden rounded-xl p-6">
+          <MaterialIcon
+            name="trending_up"
+            className="pointer-events-none absolute top-3 right-3 text-[4rem] text-primary opacity-20"
+          />
+          <p className="label-caps relative z-10 mb-2 text-on-surface-variant">Tổng thu (Tháng này)</p>
+          <p className="font-display relative z-10 text-2xl text-primary md:text-3xl">
+            {formatMoney(totals.income)}
+          </p>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="rounded-xl border border-rose-100 bg-white px-3 py-2 text-sm"
-          >
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                Tháng {i + 1}
-              </option>
-            ))}
-          </select>
-          <select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="rounded-xl border border-rose-100 bg-white px-3 py-2 text-sm"
-          >
-            {[year - 1, year, year + 1].map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-          {['all', 'expense', 'income'].map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTypeFilter(value)}
-              className={[
-                'rounded-xl border px-3 py-2 text-sm font-medium',
-                typeFilter === value
-                  ? 'border-rose-300 bg-rose-50 text-rose-700'
-                  : 'border-rose-100 bg-white text-slate-600',
-              ].join(' ')}
-            >
-              {value === 'all' ? 'Tất cả' : value === 'expense' ? 'Chi' : 'Thu'}
-            </button>
-          ))}
+        <div className="glass-card relative overflow-hidden rounded-xl p-6">
+          <MaterialIcon
+            name="trending_down"
+            className="pointer-events-none absolute top-3 right-3 text-[4rem] text-secondary opacity-20"
+          />
+          <p className="label-caps relative z-10 mb-2 text-on-surface-variant">Tổng chi (Tháng này)</p>
+          <p className="font-display relative z-10 text-2xl text-secondary md:text-3xl">
+            {formatMoney(totals.expense)}
+          </p>
         </div>
+        <div className="glass-card relative overflow-hidden rounded-xl border-primary/30 bg-primary-container/20 p-6">
+          <MaterialIcon
+            name="account_balance"
+            className="pointer-events-none absolute top-3 right-3 text-[4rem] text-primary opacity-20"
+          />
+          <p className="label-caps relative z-10 mb-2 text-on-surface-variant">Số dư hiện tại</p>
+          <p className="font-display relative z-10 text-2xl font-semibold text-primary md:text-3xl">
+            {formatMoney(totals.balance)}
+          </p>
+        </div>
+      </section>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-3 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3"
+      <form
+        id="cash-entry-form"
+        onSubmit={handleSubmit}
+        className="glass-card grid gap-3 rounded-xl p-5 md:grid-cols-2 lg:grid-cols-3 md:p-6"
+      >
+        <h3 className="label-caps md:col-span-2 lg:col-span-3 text-on-surface">Thêm bút toán</h3>
+        <select
+          value={form.type}
+          onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+          className="input-glass"
         >
-          <h3 className="md:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-900">
-            Thêm bút toán
-          </h3>
-          <select
-            value={form.type}
-            onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-            className="rounded-xl border border-rose-100 px-3 py-2.5 text-sm"
-          >
-            <option value="expense">Chi tiêu</option>
-            <option value="income">Thu nhập</option>
-          </select>
+          <option value="expense">Chi tiêu</option>
+          <option value="income">Thu nhập</option>
+        </select>
+        <input
+          type="date"
+          required
+          value={form.date}
+          onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+          className="input-glass"
+        />
+        <input
+          type="number"
+          required
+          min="0"
+          placeholder="Số tiền"
+          value={form.amount}
+          onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+          className="input-glass"
+        />
+        <input
+          required
+          placeholder="Nội dung"
+          value={form.content}
+          onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
+          className="input-glass md:col-span-2"
+        />
+        <input
+          placeholder="Đối tượng (Ny, anh Hiếu...)"
+          value={form.counterparty}
+          onChange={(e) => setForm((p) => ({ ...p, counterparty: e.target.value }))}
+          className="input-glass"
+        />
+        <label className="flex items-center gap-2 text-sm text-on-surface-variant">
           <input
-            type="date"
-            required
-            value={form.date}
-            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-            className="rounded-xl border border-rose-100 px-3 py-2.5 text-sm"
+            type="checkbox"
+            checked={form.isDebt}
+            onChange={(e) => setForm((p) => ({ ...p, isDebt: e.target.checked }))}
           />
-          <input
-            type="number"
-            required
-            min="0"
-            placeholder="Số tiền"
-            value={form.amount}
-            onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-            className="rounded-xl border border-rose-100 px-3 py-2.5 text-sm"
-          />
-          <input
-            required
-            placeholder="Nội dung"
-            value={form.content}
-            onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
-            className="rounded-xl border border-rose-100 px-3 py-2.5 text-sm md:col-span-2"
-          />
-          <input
-            placeholder="Đối tượng (Ny, anh Hiếu...)"
-            value={form.counterparty}
-            onChange={(e) => setForm((p) => ({ ...p, counterparty: e.target.value }))}
-            className="rounded-xl border border-rose-100 px-3 py-2.5 text-sm"
-          />
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={form.isDebt}
-              onChange={(e) => setForm((p) => ({ ...p, isDebt: e.target.checked }))}
-            />
-            Là nợ
-          </label>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60 lg:col-span-3"
-          >
-            {isSaving ? 'Đang lưu...' : 'Thêm vào sổ'}
-          </button>
-        </form>
+          Là nợ
+        </label>
+        <button type="submit" disabled={isSaving} className="btn-primary disabled:opacity-60 lg:col-span-3">
+          {isSaving ? 'Đang lưu...' : 'Thêm vào sổ'}
+        </button>
+      </form>
+
+      <section className="glass-card rounded-xl p-5 md:p-8">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:justify-between">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="label-caps text-on-surface-variant">Tháng</label>
+              <select
+                value={month}
+                onChange={(e) => setMonth(Number(e.target.value))}
+                className="input-glass"
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    Tháng {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="label-caps text-on-surface-variant">Năm</label>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="input-glass"
+              >
+                {[year - 1, year, year + 1].map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="label-caps text-on-surface-variant">Lọc theo loại</label>
+              <div className="flex flex-wrap gap-2">
+                {['all', 'expense', 'income'].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTypeFilter(value)}
+                    className={[
+                      'rounded-lg border px-3 py-2 text-sm font-medium transition',
+                      typeFilter === value
+                        ? 'border-primary/40 bg-primary-container/20 text-primary'
+                        : 'border-white/55 bg-surface-container-lowest/50 text-on-surface-variant hover:bg-surface-variant/50',
+                    ].join(' ')}
+                  >
+                    {value === 'all' ? 'Tất cả' : value === 'expense' ? 'Chi' : 'Thu'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {error ? (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+          <p className="mb-4 rounded-xl bg-error-container/40 px-4 py-3 text-sm text-error">{error}</p>
         ) : null}
 
         {isLoading ? (
-          <p className="py-10 text-center text-sm text-slate-500">Đang tải...</p>
+          <p className="py-10 text-center text-sm text-on-surface-variant">Đang tải...</p>
         ) : entries.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-rose-200 bg-white py-16 text-center">
-            <MaterialIcon name="account_balance_wallet" className="text-4xl text-slate-300" />
-            <p className="mt-3 text-sm text-slate-600">Chưa có bút toán tháng này</p>
+          <div className="rounded-xl border border-dashed border-outline-variant/40 py-16 text-center">
+            <MaterialIcon name="account_balance_wallet" className="text-4xl text-outline" />
+            <p className="mt-3 text-sm text-on-surface-variant">Chưa có bút toán tháng này</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">Ngày</th>
-                    <th className="px-4 py-3">Loại</th>
-                    <th className="px-4 py-3">Nội dung</th>
-                    <th className="px-4 py-3">Số tiền</th>
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-rose-50">
-                  {entries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                        {new Intl.DateTimeFormat('vi-VN').format(new Date(entry.date))}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={[
-                            'rounded-full px-2 py-0.5 text-xs font-medium ring-1',
-                            entry.type === 'income'
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-                              : 'bg-rose-50 text-rose-700 ring-rose-100',
-                          ].join(' ')}
-                        >
-                          {entry.type === 'income' ? 'Thu' : 'Chi'}
-                        </span>
-                        {entry.isDebt ? (
-                          <span className="ml-1 text-xs text-amber-600">Nợ {entry.counterparty}</span>
-                        ) : entry.counterparty ? (
-                          <span className="ml-1 text-xs text-slate-400">{entry.counterparty}</span>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-800">{entry.content}</p>
-                        {entry.note ? <p className="text-xs text-slate-400">{entry.note}</p> : null}
-                      </td>
-                      <td
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/55">
+                  <th className="label-caps px-4 py-4 text-on-surface-variant">Ngày</th>
+                  <th className="label-caps px-4 py-4 text-on-surface-variant">Loại</th>
+                  <th className="label-caps px-4 py-4 text-on-surface-variant">Nội dung</th>
+                  <th className="label-caps px-4 py-4 text-right text-on-surface-variant">Số tiền</th>
+                  <th className="label-caps px-4 py-4 text-center text-on-surface-variant">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    className="border-b border-white/20 transition-colors hover:bg-surface-variant/20"
+                  >
+                    <td className="whitespace-nowrap px-4 py-4 text-on-surface">
+                      {new Intl.DateTimeFormat('vi-VN').format(new Date(entry.date))}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
                         className={[
-                          'whitespace-nowrap px-4 py-3 font-semibold',
-                          entry.type === 'income' ? 'text-emerald-700' : 'text-rose-700',
+                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider',
+                          entry.type === 'income'
+                            ? 'bg-primary-container/30 text-primary'
+                            : 'bg-error-container/50 text-error',
                         ].join(' ')}
                       >
-                        {entry.type === 'income' ? '+' : '−'}
-                        {formatMoney(entry.amount)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(entry.id)}
-                          className="text-xs text-slate-400 hover:text-red-500"
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <MaterialIcon
+                          name={entry.type === 'income' ? 'arrow_upward' : 'arrow_downward'}
+                          className="text-sm"
+                        />
+                        {entry.type === 'income' ? 'Thu' : 'Chi'}
+                      </span>
+                      {entry.isDebt ? (
+                        <span className="ml-1 text-xs text-amber-700">Nợ {entry.counterparty}</span>
+                      ) : entry.counterparty ? (
+                        <span className="ml-1 text-xs text-outline">{entry.counterparty}</span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-4">
+                      <p className="font-medium text-on-surface">{entry.content}</p>
+                      {entry.note ? <p className="text-xs text-on-surface-variant">{entry.note}</p> : null}
+                    </td>
+                    <td
+                      className={[
+                        'whitespace-nowrap px-4 py-4 text-right font-semibold',
+                        entry.type === 'income' ? 'text-primary' : 'text-secondary',
+                      ].join(' ')}
+                    >
+                      {entry.type === 'income' ? '+' : '−'} {formatMoney(entry.amount)}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-on-surface-variant transition hover:text-error"
+                        aria-label="Xóa"
+                      >
+                        <MaterialIcon name="delete" className="text-lg" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

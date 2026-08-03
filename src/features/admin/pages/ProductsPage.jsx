@@ -92,7 +92,7 @@ async function prepareImagesPayload(images = []) {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-rose-100 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100'
+  'w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20'
 
 function toForm(product) {
   return {
@@ -165,8 +165,8 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium text-slate-700">Hình ảnh sản phẩm</p>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm font-medium text-on-surface">Hình ảnh sản phẩm</p>
+          <p className="text-xs text-outline">
             Chọn ảnh hiện ngay · resize + Cloudinary khi bấm Lưu
           </p>
         </div>
@@ -174,7 +174,7 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
           type="button"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-sm font-medium text-primary hover:bg-surface-container-low disabled:opacity-60"
         >
           <MaterialIcon name="add_photo_alternate" className="text-lg" />
           Thêm ảnh
@@ -194,9 +194,9 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
           type="button"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-rose-200 bg-rose-50/40 px-4 py-8 text-sm text-slate-500 hover:bg-rose-50 disabled:opacity-60"
+          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-low/70 px-4 py-8 text-sm text-on-surface-variant hover:bg-surface-container-low disabled:opacity-60"
         >
-          <MaterialIcon name="imagesmode" className="text-3xl text-rose-300" />
+          <MaterialIcon name="imagesmode" className="text-3xl text-primary-fixed-dim" />
           Chọn ảnh từ máy — hiện preview ngay
         </button>
       ) : (
@@ -205,8 +205,8 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
             <li
               key={image.id}
               className={[
-                'relative overflow-hidden rounded-xl border bg-slate-50',
-                image.isMain ? 'border-rose-400 ring-2 ring-rose-200' : 'border-rose-100',
+                'relative overflow-hidden rounded-xl border bg-surface-container-low',
+                image.isMain ? 'border-primary ring-2 ring-primary/20' : 'border-outline-variant/25',
               ].join(' ')}
             >
               <img
@@ -215,12 +215,12 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
                 className="aspect-square w-full object-cover"
               />
               {image.isMain ? (
-                <span className="absolute left-2 top-2 rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                <span className="absolute left-2 top-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                   Main
                 </span>
               ) : null}
               {image.file ? (
-                <span className="absolute right-2 top-2 rounded-md bg-slate-900/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                <span className="absolute right-2 top-2 rounded-md bg-on-surface/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
                   Chưa lưu
                 </span>
               ) : null}
@@ -229,19 +229,19 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
                   <button
                     type="button"
                     onClick={() => setMain(image.id)}
-                    className="flex-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-white"
+                    className="flex-1 rounded-lg bg-surface-container-lowest/95 px-2 py-1 text-[11px] font-medium text-on-surface hover:bg-surface-container-lowest"
                   >
                     Đặt main
                   </button>
                 ) : (
-                  <span className="flex-1 rounded-lg bg-rose-500/90 px-2 py-1 text-center text-[11px] font-medium text-white">
+                  <span className="flex-1 rounded-lg bg-primary/90 px-2 py-1 text-center text-[11px] font-medium text-white">
                     Ảnh chính
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={() => removeImage(image)}
-                  className="rounded-lg bg-white/95 px-2 py-1 text-[11px] font-medium text-red-600 hover:bg-white"
+                  className="rounded-lg bg-surface-container-lowest/95 px-2 py-1 text-[11px] font-medium text-red-600 hover:bg-surface-container-lowest"
                   aria-label="Xóa ảnh"
                 >
                   <MaterialIcon name="delete" className="text-sm" />
@@ -280,7 +280,7 @@ function ProductFormDialog({
     <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50"
+        className="absolute inset-0 bg-on-surface/50"
         aria-label="Đóng"
         onClick={onClose}
       />
@@ -289,19 +289,19 @@ function ProductFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-form-title"
-        className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-rose-50 px-4 py-4 sm:px-6">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">
           <div>
-            <h3 id="product-form-title" className="text-lg font-semibold text-slate-900">
+            <h3 id="product-form-title" className="text-lg font-semibold text-on-surface">
               {title}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">Thông tin lưu vào database.</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Thông tin lưu vào database.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-outline transition hover:bg-surface-container hover:text-on-surface-variant"
             aria-label="Đóng"
           >
             <MaterialIcon name="close" className="text-xl" />
@@ -312,32 +312,32 @@ function ProductFormDialog({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="mb-1 block font-medium text-slate-700">Mã SP</span>
+                <span className="mb-1 block font-medium text-on-surface">Mã SP</span>
                 <div className="flex gap-2">
                   <input
                     readOnly
                     value={values.code}
-                    className={`${inputClass} font-mono font-bold tracking-wider text-slate-800 bg-slate-50`}
+                    className={`${inputClass} font-mono font-bold tracking-wider text-on-surface bg-surface-container-low`}
                   />
                   {!isEditing ? (
                     <button
                       type="button"
                       onClick={onRegenerateCode}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-rose-200 px-3 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-outline-variant/40 px-3 text-sm font-medium text-primary hover:bg-surface-container-low"
                       title="Tạo mã mới"
                     >
                       <MaterialIcon name="refresh" className="text-lg" />
                     </button>
                   ) : null}
                 </div>
-                <span className="mt-1 block text-xs text-slate-400">
+                <span className="mt-1 block text-xs text-outline">
                   {isEditing
                     ? 'Mã đã tạo — không đổi khi sửa.'
                     : 'Tự sinh 8 chữ in hoa.'}
                 </span>
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium text-slate-700">Tên sản phẩm</span>
+                <span className="mb-1 block font-medium text-on-surface">Tên sản phẩm</span>
                 <input
                   required
                   value={values.name}
@@ -348,7 +348,7 @@ function ProductFormDialog({
             </div>
 
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-slate-700">Nguyên liệu</span>
+              <span className="mb-1 block font-medium text-on-surface">Nguyên liệu</span>
               <textarea
                 rows={2}
                 value={values.materials}
@@ -373,7 +373,7 @@ function ProductFormDialog({
                 ['otherCost', 'Chi phí khác'],
               ].map(([field, label]) => (
                 <label key={field} className="block text-sm">
-                  <span className="mb-1 block font-medium text-slate-700">{label}</span>
+                  <span className="mb-1 block font-medium text-on-surface">{label}</span>
                   <input
                     type="number"
                     min="0"
@@ -398,15 +398,15 @@ function ProductFormDialog({
               ))}
             </div>
 
-            <p className="rounded-xl bg-rose-50/60 px-3 py-2 text-sm text-slate-600">
+            <p className="rounded-xl bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">
               Gợi ý giá bán ≈ cost × 1.7:{' '}
-              <span className="font-medium text-slate-800">{formatMoney(suggested)}</span>
+              <span className="font-medium text-on-surface">{formatMoney(suggested)}</span>
               {' · '}
               Lợi nhuận:{' '}
               <span className="font-semibold text-emerald-700">{formatMoney(profit)}</span>
             </p>
 
-            <label className="flex items-center gap-2 text-sm text-slate-700">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={values.active}
@@ -422,17 +422,17 @@ function ProductFormDialog({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-2 border-t border-rose-50 px-4 py-4 sm:px-6">
+          <div className="flex shrink-0 flex-wrap gap-2 border-t border-surface-container px-4 py-4 sm:px-6">
             <button
               type="submit"
-              className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
+              className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"
             >
               Lưu vào database
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-rose-100 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-xl border border-outline-variant/25 px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container"
             >
               Hủy
             </button>
@@ -456,7 +456,7 @@ function ProductThumb({ product }) {
   const src = product.mainImage || product.images?.find((image) => image.isMain)?.url || product.images?.[0]?.url
   if (!src) {
     return (
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-300">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-container-low text-primary-fixed-dim">
         <MaterialIcon name="image" className="text-lg" />
       </div>
     )
@@ -687,33 +687,29 @@ function ProductsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-1 flex-col gap-6 p-5 md:p-10">
+        <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Sản phẩm</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Thêm / sửa / xóa bằng dialog — lưu trên MongoDB.
+            <h2 className="font-display text-3xl text-primary">Quản lý sản phẩm</h2>
+            <p className="mt-1 text-sm text-on-surface-variant md:text-base">
+              Tổng quan và tùy chỉnh bộ sưu tập hoa.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-1 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
-          >
+          <button type="button" onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
             <MaterialIcon name="add" className="text-lg" />
             Thêm sản phẩm
           </button>
-        </div>
-      </header>
+        </header>
 
-      <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm mã, tên, nguyên liệu..."
-          className="w-full max-w-md rounded-xl border border-rose-100 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-100"
-        />
+        <div className="glass-card flex flex-col gap-3 rounded-xl p-4 md:flex-row md:items-center">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm mã, tên, nguyên liệu..."
+            className="input-glass w-full max-w-md"
+          />
+        </div>
 
         {error ? (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
@@ -722,17 +718,17 @@ function ProductsPage() {
         ) : null}
 
         {isLoading ? (
-          <p className="py-12 text-center text-sm text-slate-500">Đang tải...</p>
+          <p className="py-12 text-center text-sm text-on-surface-variant">Đang tải...</p>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-            <MaterialIcon name="inventory_2" className="text-4xl text-slate-300" />
-            <p className="mt-3 text-sm font-medium text-slate-700">Chưa có sản phẩm</p>
+          <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-6 py-16 text-center">
+            <MaterialIcon name="inventory_2" className="text-4xl text-outline" />
+            <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
           </div>
         ) : isLgUp ? (
-          <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm">
+          <div className="glass-card overflow-hidden rounded-xl">
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <thead className="border-b border-white/55 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                   <tr>
                     <th className="px-4 py-3">Ảnh</th>
                     <th className="px-4 py-3">Mã</th>
@@ -744,7 +740,7 @@ function ProductsPage() {
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rose-50">
+                <tbody className="divide-y divide-surface-container">
                   {filtered.map((product) => (
                     <tr key={product.id} className={!product.active ? 'opacity-50' : ''}>
                       <td className="px-4 py-3">
@@ -754,8 +750,8 @@ function ProductsPage() {
                         {product.code}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-slate-800">{product.name}</p>
-                        <p className="max-w-xs truncate text-xs text-slate-500">{product.materials}</p>
+                        <p className="font-medium text-on-surface">{product.name}</p>
+                        <p className="max-w-xs truncate text-xs text-on-surface-variant">{product.materials}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">{formatMoney(product.costPrice)}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium">
@@ -764,14 +760,14 @@ function ProductsPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-emerald-700">
                         {formatMoney(product.profit)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                      <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
                         {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right">
                         <button
                           type="button"
                           onClick={() => openEdit(product)}
-                          className="mr-2 text-sm font-medium text-rose-600 hover:text-rose-700"
+                          className="mr-2 text-sm font-medium text-primary hover:text-primary"
                         >
                           Sửa
                         </button>
@@ -779,7 +775,7 @@ function ProductsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeactivate(product)}
-                            className="mr-2 text-sm text-slate-400 hover:text-slate-600"
+                            className="mr-2 text-sm text-outline hover:text-on-surface-variant"
                           >
                             Ngừng
                           </button>
@@ -812,7 +808,7 @@ function ProductsPage() {
               <div
                 key={product.id}
                 className={[
-                  'rounded-2xl border border-rose-100 bg-white p-4 shadow-sm',
+                  'rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm',
                   !product.active ? 'opacity-60' : '',
                 ].join(' ')}
               >
@@ -822,23 +818,23 @@ function ProductsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-mono text-[11px] font-bold text-slate-500">{product.code}</p>
-                          <p className="mt-1 font-semibold text-slate-900">{product.name}</p>
+                          <p className="font-mono text-[11px] font-bold text-on-surface-variant">{product.code}</p>
+                          <p className="mt-1 font-semibold text-on-surface">{product.name}</p>
                         </div>
-                        <p className="font-semibold text-rose-700">{formatMoney(product.sellPrice)}</p>
+                        <p className="font-semibold text-primary">{formatMoney(product.sellPrice)}</p>
                       </div>
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-on-surface-variant">
                         Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
                         {!product.active ? ' · Đã ngừng bán' : ''}
                       </p>
                     </div>
                   </div>
                 </button>
-                <div className="mt-3 flex gap-3 border-t border-rose-50 pt-3">
+                <div className="mt-3 flex gap-3 border-t border-surface-container pt-3">
                   <button
                     type="button"
                     onClick={() => openEdit(product)}
-                    className="text-sm font-medium text-rose-600"
+                    className="text-sm font-medium text-primary"
                   >
                     Sửa
                   </button>
@@ -846,7 +842,7 @@ function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => handleDeactivate(product)}
-                      className="text-sm text-slate-500"
+                      className="text-sm text-on-surface-variant"
                     >
                       Ngừng
                     </button>

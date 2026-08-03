@@ -1,5 +1,5 @@
 const fieldClassName =
-  'w-full rounded-xl border border-rose-100 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-rose-300 focus:ring-2 focus:ring-rose-100'
+  'w-full rounded-xl border border-outline-variant/25 px-4 py-3 text-sm text-on-surface outline-none transition placeholder:text-outline focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
 
 function CustomDeliveryForm({ values, onChange }) {
   function handleChange(field) {
@@ -11,12 +11,12 @@ function CustomDeliveryForm({ values, onChange }) {
   return (
     <div className="space-y-6">
       <section>
-        <h4 className="text-sm font-semibold text-slate-900">Thông tin liên hệ của bạn</h4>
-        <p className="mt-1 text-xs text-slate-500">Shop sẽ gọi xác nhận qua số này.</p>
+        <h4 className="text-sm font-semibold text-on-surface">Thông tin liên hệ của bạn</h4>
+        <p className="mt-1 text-xs text-on-surface-variant">Shop sẽ gọi xác nhận qua số này.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">
-              Họ tên <span className="text-rose-500">*</span>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">
+              Họ tên <span className="text-primary">*</span>
             </span>
             <input
               type="text"
@@ -28,8 +28,8 @@ function CustomDeliveryForm({ values, onChange }) {
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">
-              SĐT <span className="text-rose-500">*</span>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">
+              SĐT <span className="text-primary">*</span>
             </span>
             <input
               type="tel"
@@ -44,12 +44,12 @@ function CustomDeliveryForm({ values, onChange }) {
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-slate-900">Thông tin giao hàng</h4>
+        <h4 className="text-sm font-semibold text-on-surface">Thông tin giao hàng</h4>
         <div className="mt-4 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">
-                Người nhận hàng <span className="text-rose-500">*</span>
+              <span className="mb-1.5 block text-sm font-medium text-on-surface">
+                Người nhận hàng <span className="text-primary">*</span>
               </span>
               <input
                 type="text"
@@ -60,8 +60,8 @@ function CustomDeliveryForm({ values, onChange }) {
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">
-                SĐT người nhận <span className="text-rose-500">*</span>
+              <span className="mb-1.5 block text-sm font-medium text-on-surface">
+                SĐT người nhận <span className="text-primary">*</span>
               </span>
               <input
                 type="tel"
@@ -74,8 +74,8 @@ function CustomDeliveryForm({ values, onChange }) {
           </div>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">
-              Địa chỉ giao hàng <span className="text-rose-500">*</span>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">
+              Địa chỉ giao hàng <span className="text-primary">*</span>
             </span>
             <textarea
               value={values.deliveryAddress}
@@ -88,7 +88,7 @@ function CustomDeliveryForm({ values, onChange }) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Ngày giao mong muốn</span>
+              <span className="mb-1.5 block text-sm font-medium text-on-surface">Ngày giao mong muốn</span>
               <input
                 type="date"
                 value={values.deliveryDate}
@@ -97,7 +97,7 @@ function CustomDeliveryForm({ values, onChange }) {
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Khung giờ giao</span>
+              <span className="mb-1.5 block text-sm font-medium text-on-surface">Khung giờ giao</span>
               <select
                 value={values.deliveryTimeSlot}
                 onChange={handleChange('deliveryTimeSlot')}
@@ -112,7 +112,7 @@ function CustomDeliveryForm({ values, onChange }) {
           </div>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">Ghi chú giao hàng</span>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">Ghi chú giao hàng</span>
             <textarea
               value={values.deliveryNote}
               onChange={handleChange('deliveryNote')}
@@ -122,7 +122,7 @@ function CustomDeliveryForm({ values, onChange }) {
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">Ghi chú gửi shop</span>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">Ghi chú gửi shop</span>
             <textarea
               value={values.note}
               onChange={handleChange('note')}

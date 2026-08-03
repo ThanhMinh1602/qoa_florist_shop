@@ -23,7 +23,7 @@ function TypeBadge({ typeKind, typeLabel, typeIcon }) {
   const className =
     typeKind === 'with_qr'
       ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-      : 'bg-slate-100 text-slate-600 ring-slate-200'
+      : 'bg-surface-container text-on-surface-variant ring-slate-200'
 
   return (
     <span
@@ -38,19 +38,19 @@ function TypeBadge({ typeKind, typeLabel, typeIcon }) {
 function ManageUnifiedTable({ items, onSelect }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-16 text-center">
-        <MaterialIcon name="inbox" className="text-4xl text-slate-300" />
-        <p className="mt-3 text-sm font-medium text-slate-700">Chưa có dữ liệu</p>
-        <p className="mt-1 text-sm text-slate-500">Thử đổi bộ lọc hoặc lên đơn mới.</p>
+      <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-6 py-16 text-center">
+        <MaterialIcon name="inbox" className="text-4xl text-outline" />
+        <p className="mt-3 text-sm font-medium text-on-surface">Chưa có dữ liệu</p>
+        <p className="mt-1 text-sm text-on-surface-variant">Thử đổi bộ lọc hoặc lên đơn mới.</p>
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm shadow-rose-50">
+    <div className="overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.05)]">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-rose-100 bg-rose-50/60 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-outline-variant/25 bg-surface-container-low text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
             <tr>
               <th className="px-3 py-3">Ship</th>
               <th className="px-3 py-3">Khách</th>
@@ -61,7 +61,7 @@ function ManageUnifiedTable({ items, onSelect }) {
               <th className="px-3 py-3">VĐ</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-rose-50">
+          <tbody className="divide-y divide-surface-container">
             {items.map((item) => {
               const status = item.status
                 ? ORDER_STATUS_LABELS[item.status] ?? ORDER_STATUS_LABELS.pending
@@ -72,30 +72,30 @@ function ManageUnifiedTable({ items, onSelect }) {
               return (
                 <tr
                   key={`${item.kind}-${item.id}`}
-                  className="cursor-pointer transition hover:bg-rose-50/50"
+                  className="cursor-pointer transition hover:bg-surface-container-low/80"
                   onClick={() => onSelect(item)}
                 >
-                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                  <td className="whitespace-nowrap px-3 py-3 text-on-surface-variant">
                     <p className="font-medium">{formatShipDate(item.shipDate)}</p>
-                    <p className="font-mono text-[10px] text-slate-400">{item.code}</p>
+                    <p className="font-mono text-[10px] text-outline">{item.code}</p>
                   </td>
                   <td className="px-3 py-3">
-                    <p className="font-medium text-slate-800">{item.primaryName}</p>
-                    <p className="text-xs text-slate-500">{item.secondaryPhone}</p>
-                    <p className="mt-0.5 max-w-[12rem] truncate text-xs text-slate-400">
+                    <p className="font-medium text-on-surface">{item.primaryName}</p>
+                    <p className="text-xs text-on-surface-variant">{item.secondaryPhone}</p>
+                    <p className="mt-0.5 max-w-[12rem] truncate text-xs text-outline">
                       {item.addressLine}
                     </p>
                   </td>
-                  <td className="max-w-[14rem] px-3 py-3 text-slate-700">
+                  <td className="max-w-[14rem] px-3 py-3 text-on-surface">
                     <p className="line-clamp-2">{item.productsLine}</p>
                     {item.raw?.note ? (
-                      <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{item.raw.note}</p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-outline">{item.raw.note}</p>
                     ) : null}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 font-semibold text-slate-900">
+                  <td className="whitespace-nowrap px-3 py-3 font-semibold text-on-surface">
                     {formatMoney(item.subtotal)}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-600">
+                  <td className="whitespace-nowrap px-3 py-3 text-xs text-on-surface-variant">
                     <p>Cọc {formatMoney(item.deposit)}</p>
                     <p>Ship {formatMoney(item.shippingFee)}</p>
                     <p>COD {formatMoney(item.codAmount)}</p>
@@ -121,9 +121,9 @@ function ManageUnifiedTable({ items, onSelect }) {
                       />
                     </div>
                   </td>
-                  <td className="px-3 py-3 font-mono text-[11px] text-slate-500">
+                  <td className="px-3 py-3 font-mono text-[11px] text-on-surface-variant">
                     {item.trackingCode || '—'}
-                    <p className="mt-1 font-sans text-[10px] text-slate-400">
+                    <p className="mt-1 font-sans text-[10px] text-outline">
                       {formatTimeAgo(item.createdAt)}
                     </p>
                   </td>

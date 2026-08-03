@@ -28,13 +28,13 @@ function RequestQrPanel({ request }) {
 
   return (
     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
-      <h4 className="text-sm font-semibold text-slate-900">Mã QR thiệp</h4>
-      <p className="mt-1 text-xs text-slate-500">
+      <h4 className="text-sm font-semibold text-on-surface">Mã QR thiệp</h4>
+      <p className="mt-1 text-xs text-on-surface-variant">
         <TopicLabel topic={topic} topicId={request.topicId} /> — {request.recipientName}
       </p>
 
       <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-        <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-rose-100">
+        <div className="rounded-xl bg-surface-container-lowest p-3 shadow-sm ring-1 ring-primary/20">
           <QRCodeCanvas
             ref={canvasRef}
             value={greetingUrl}
@@ -48,19 +48,19 @@ function RequestQrPanel({ request }) {
         </div>
 
         <div className="w-full flex-1 space-y-2">
-          <p className="break-all text-xs text-rose-700">{greetingUrl}</p>
+          <p className="break-all text-xs text-primary">{greetingUrl}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleCopyUrl}
-              className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-rose-50"
+              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3 py-1.5 text-xs font-medium text-on-surface transition hover:bg-surface-container-low"
             >
               {copied ? 'Đã sao chép!' : 'Sao chép link'}
             </button>
             <button
               type="button"
               onClick={handleDownloadQr}
-              className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-container"
             >
               Tải QR
             </button>
@@ -68,7 +68,7 @@ function RequestQrPanel({ request }) {
               to={`/q/${request.cardId}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-surface-container-low"
             >
               Mở thiệp
             </Link>

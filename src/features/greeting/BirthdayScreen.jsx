@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { DEFAULT_BIRTHDAY_CARD_FORM } from '../constants/cardDefaults'
+import { DEFAULT_BIRTHDAY_CARD_FORM } from '../../constants/cardDefaults'
 import './BirthdayScreen.css'
 
 const PINK = '#FF69B4'

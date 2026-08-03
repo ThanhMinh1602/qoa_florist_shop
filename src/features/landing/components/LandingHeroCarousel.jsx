@@ -1,0 +1,191 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import MaterialIcon from '../../../components/common/MaterialIcon'
+
+/**
+ * Hero carousel — dùng chung Landing + preview admin.
+ * @param {{ images: { id?: string, url: string }[], autoPlayMs?: number, preview?: boolean, onExplore?: () => void, onCustom?: () => void }} props
+ */
+function LandingHeroCarousel({
+  images = [],
+  autoPlayMs = 5000,
+  preview = false,
+  onExplore,
+  onCustom,
+}) {
+  const slides = images.filter((item) => item?.url)
+  const [index, setIndex] = useState(0)
+  const pauseUntilRef = useRef(0)
+  const count = slides.length
+
+  const go = useCallback(
+    (direction) => {
+      if (count < 2) return
+      pauseUntilRef.current = Date.now() + Math.max(autoPlayMs, 4000)
+      setIndex((current) => (current + direction + count) % count)
+    },
+    [autoPlayMs, count],
+  )
+
+  useEffect(() => {
+    setIndex(0)
+  }, [count])
+
+  useEffect(() => {
+    if (count < 2) return undefined
+    const timer = window.setInterval(() => {
+      if (Date.now() < pauseUntilRef.current) return
+      setIndex((current) => (current + 1) % count)
+    }, autoPlayMs)
+    return () => window.clearInterval(timer)
+  }, [autoPlayMs, count])
+
+  const hasSlides = count > 0
+  const sizeClass = preview
+    ? 'min-h-[320px] w-full sm:min-h-[380px] rounded-2xl'
+    : 'h-dvh min-h-dvh w-full'
+
+  return (
+    <section
+      className={[
+        'relative z-10 flex flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8 lg:px-16',
+        sizeClass,
+      ].join(' ')}
+    >
+      {hasSlides ? (
+        <>
+          {slides.map((slide, slideIndex) => (
+            <img
+              key={slide.id || slide.url}
+              src={slide.url}
+              alt=""
+              className={[
+                'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+                slideIndex === index ? 'opacity-100' : 'opacity-0',
+              ].join(' ')}
+              aria-hidden={slideIndex !== index}
+              decoding="async"
+              fetchPriority={slideIndex === 0 ? 'high' : 'low'}
+            />
+          ))}
+          {/* Overlay nhẹ toàn ảnh + vignette đáy để chữ nổi, nền vẫn rõ */}
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/45"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent"
+            aria-hidden="true"
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-surface-container-low" aria-hidden="true" />
+      )}
+
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            className="absolute top-1/2 left-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/25 text-white backdrop-blur-md transition hover:bg-white/40 sm:left-6"
+            aria-label="Ảnh trước"
+          >
+            <MaterialIcon name="chevron_left" className="text-2xl" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            className="absolute top-1/2 right-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/25 text-white backdrop-blur-md transition hover:bg-white/40 sm:right-6"
+            aria-label="Ảnh sau"
+          >
+            <MaterialIcon name="chevron_right" className="text-2xl" />
+          </button>
+          <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {slides.map((slide, slideIndex) => (
+              <button
+                key={slide.id || `${slide.url}-dot`}
+                type="button"
+                aria-label={`Chuyển tới ảnh ${slideIndex + 1}`}
+                onClick={() => {
+                  pauseUntilRef.current = Date.now() + Math.max(autoPlayMs, 4000)
+                  setIndex(slideIndex)
+                }}
+                className={[
+                  'h-2 rounded-full transition-all',
+                  slideIndex === index ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/80',
+                ].join(' ')}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center py-16">
+        <h1
+          className={[
+            'mb-6 font-display font-semibold leading-[1.08] tracking-[-0.03em]',
+            preview ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-6xl md:text-[5.25rem]',
+            hasSlides
+              ? 'text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.55),0_1px_4px_rgba(0,0,0,0.45)]'
+              : 'text-primary',
+          ].join(' ')}
+        >
+          Hoa tươi chọn tay.
+          <br />
+          Thiệp số gắn QR.
+        </h1>
+        <p
+          className={[
+            'mb-10 max-w-2xl text-base sm:text-lg',
+            hasSlides
+              ? 'text-white/95 [text-shadow:0_1px_12px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.4)]'
+              : 'text-on-surface-variant',
+          ].join(' ')}
+        >
+          Trải nghiệm tặng hoa hoàn toàn mới với thông điệp cá nhân hóa được mã hóa qua QR code,
+          mang đến bất ngờ tinh tế cho người nhận.
+        </p>
+        <div className="flex flex-col gap-4 sm:flex-row">
+          {preview || !onExplore ? (
+            <span className="btn-primary pointer-events-none px-8 py-4 shadow-lg shadow-black/25 opacity-90">
+              Khám phá bộ sưu tập
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onExplore}
+              className="btn-primary px-8 py-4 shadow-lg shadow-black/25"
+            >
+              Khám phá bộ sưu tập
+            </button>
+          )}
+          {preview || !onCustom ? (
+            <span
+              className={[
+                'pointer-events-none px-8 py-4 text-xs font-bold tracking-[0.1em] uppercase opacity-90',
+                hasSlides
+                  ? 'rounded-[var(--radius-control)] border border-white/55 bg-white/20 text-white backdrop-blur-md'
+                  : 'btn-glass',
+              ].join(' ')}
+            >
+              Tạo thiệp lời chúc
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onCustom}
+              className={
+                hasSlides
+                  ? 'rounded-[var(--radius-control)] border border-white/55 bg-white/20 px-8 py-4 text-xs font-bold tracking-[0.1em] text-white uppercase backdrop-blur-md transition hover:bg-white/30'
+                  : 'btn-glass px-8 py-4'
+              }
+            >
+              Tạo thiệp lời chúc
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default LandingHeroCarousel

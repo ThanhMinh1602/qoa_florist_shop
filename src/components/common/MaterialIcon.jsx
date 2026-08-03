@@ -1,12 +1,12 @@
 /**
  * Material Symbols — mặc định dùng bản fill.
- * @example <MaterialIcon name="edit_note" className="text-rose-600" />
+ * @example <MaterialIcon name="edit_note" className="text-primary" />
  * @example <MaterialIcon name="expand_more" filled={false} />
  */
 function MaterialIcon({
   name,
   className = '',
-  filled = true,
+  filled = false,
   size,
   style,
   'aria-hidden': ariaHidden = true,

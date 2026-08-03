@@ -4,9 +4,9 @@ import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { AnimatePresence, motion } from 'framer-motion'
 import * as THREE from 'three'
-import { useMediaQuery } from '../hooks/useMediaQuery'
-import { getMusicUrl } from '../constants/galaxyMusic'
-import MaterialIcon from './common/MaterialIcon'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { getMusicUrl } from '../../constants/galaxyMusic'
+import MaterialIcon from '../../components/common/MaterialIcon'
 import './GalaxyOfLoveScreen.css'
 
 const WHITE = new THREE.Color('#ffffff')

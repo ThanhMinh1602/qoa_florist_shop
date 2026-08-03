@@ -4,7 +4,6 @@ import { QRCodeCanvas } from 'qrcode.react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { formatMoney } from '../../../utils/money'
 import { downloadQrImage } from '../../../utils/downloadQr'
-import { useCart } from '../context/CartContext'
 import { readSuccessOrder, storeSuccessOrder } from '../utils/orderSuccessStorage'
 import {
   buildBuyerToSellerMessage,
@@ -15,18 +14,16 @@ import {
 
 function ShopOrderSuccessPage() {
   const location = useLocation()
-  const { clearCart } = useCart()
   const canvasRef = useRef(null)
-  const clearedRef = useRef(false)
+  const storedRef = useRef(false)
   const [copiedMsg, setCopiedMsg] = useState(false)
   const [order] = useState(() => location.state?.order || readSuccessOrder())
 
   useEffect(() => {
-    if (!order || clearedRef.current) return
-    clearedRef.current = true
+    if (!order || storedRef.current) return
+    storedRef.current = true
     storeSuccessOrder(order)
-    clearCart()
-  }, [order, clearCart])
+  }, [order])
 
   if (!order) {
     return <Navigate to="/shop" replace />
@@ -54,35 +51,35 @@ function ShopOrderSuccessPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 rounded-3xl border border-rose-100 bg-white p-6 text-center shadow-sm sm:p-8">
+    <div className="mx-auto max-w-lg space-y-5 rounded-3xl border border-outline-variant/25 bg-surface-container-lowest p-6 text-center shadow-sm sm:p-8">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
         <MaterialIcon name="check_circle" className="text-3xl" />
       </div>
       <div>
-        <h1 className="font-[Georgia,serif] text-2xl text-slate-900">Đặt hàng thành công</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Mã đơn <span className="font-mono font-bold text-rose-600">{order.invoiceCode}</span>
+        <h1 className="font-display text-2xl text-on-surface">Đặt hàng thành công</h1>
+        <p className="mt-2 text-sm text-on-surface-variant">
+          Mã đơn <span className="font-mono font-bold text-primary">{order.invoiceCode}</span>
         </p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-on-surface-variant">
           Tổng tạm tính {formatMoney(order.subtotal)} · Shop đã nhận thông báo trên hệ thống.
         </p>
       </div>
 
       <div className="rounded-2xl border border-[#0068FF]/20 bg-[#0068FF]/5 px-4 py-5">
-        <p className="text-sm font-semibold text-slate-800">QR Zalo shop</p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="text-sm font-semibold text-on-surface">QR Zalo shop</p>
+        <p className="mt-1 text-xs text-on-surface-variant">
           Quét QR → xem tin nhắn (có sản phẩm) → mở Zalo. Shop: {shopPhone}
         </p>
 
-        <div className="mx-auto mt-4 inline-flex rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+        <div className="mx-auto mt-4 inline-flex rounded-2xl bg-surface-container-lowest p-3 shadow-sm ring-1 ring-slate-100">
           <QRCodeCanvas ref={canvasRef} value={qrValue} size={200} level="M" includeMargin />
         </div>
 
-        <div className="mt-4 rounded-xl bg-white px-3 py-3 text-left ring-1 ring-slate-100">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <div className="mt-4 rounded-xl bg-surface-container-lowest px-3 py-3 text-left ring-1 ring-slate-100">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-outline">
             Nội dung tin nhắn
           </p>
-          <pre className="mt-1.5 whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-slate-700">
+          <pre className="mt-1.5 whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-on-surface">
             {message}
           </pre>
         </div>
@@ -100,14 +97,14 @@ function ShopOrderSuccessPage() {
             <button
               type="button"
               onClick={handleCopyMessage}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="flex-1 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-3 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low"
             >
               {copiedMsg ? 'Đã copy tin' : 'Copy tin nhắn'}
             </button>
             <button
               type="button"
               onClick={handleDownload}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="flex-1 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-3 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low"
             >
               Tải QR
             </button>
@@ -117,7 +114,7 @@ function ShopOrderSuccessPage() {
 
       <Link
         to="/shop"
-        className="inline-flex items-center gap-1 text-sm font-medium text-rose-600 hover:text-rose-700"
+        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary"
       >
         <MaterialIcon name="arrow_back" className="text-base" />
         Tiếp tục mua hoa

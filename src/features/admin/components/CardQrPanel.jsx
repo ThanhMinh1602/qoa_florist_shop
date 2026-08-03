@@ -38,8 +38,8 @@ function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
         <div className="flex items-start gap-3">
           <MaterialIcon name="check_circle" className="text-2xl text-emerald-500" filled />
           <div>
-            <h4 className="text-lg font-semibold text-slate-900">Đã tạo thiệp & mã QR</h4>
-            <p className="mt-1 text-sm text-slate-600">
+            <h4 className="text-lg font-semibold text-on-surface">Đã tạo thiệp & mã QR</h4>
+            <p className="mt-1 text-sm text-on-surface-variant">
               {card.label ? (
                 <>
                   <span className="font-medium">{card.label}</span>
@@ -62,7 +62,7 @@ function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
           </div>
         </div>
       ) : (
-        <h4 className="text-sm font-semibold text-slate-900">Mã QR thiệp</h4>
+        <h4 className="text-sm font-semibold text-on-surface">Mã QR thiệp</h4>
       )}
 
       <div
@@ -71,7 +71,7 @@ function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
           embedded ? 'mt-4' : 'mt-6',
         ].join(' ')}
       >
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-rose-100 sm:p-5">
+        <div className="rounded-2xl bg-surface-container-lowest p-4 shadow-sm ring-1 ring-primary/15 sm:p-5">
           <QRCodeCanvas
             ref={canvasRef}
             value={greetingUrl}
@@ -86,36 +86,36 @@ function CardQrPanel({ card, embedded = false, qrSize = 200 }) {
 
         <div className="w-full flex-1 space-y-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">ID thiệp</p>
-            <p className="mt-1 break-all font-mono text-sm text-slate-700">{card.id}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">ID thiệp</p>
+            <p className="mt-1 break-all font-mono text-sm text-on-surface">{card.id}</p>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
               Link quét QR
             </p>
-            <p className="mt-1 break-all text-sm text-rose-700">{greetingUrl}</p>
+            <p className="mt-1 break-all text-sm text-primary">{greetingUrl}</p>
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="button"
               onClick={handleCopyUrl}
-              className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-rose-50"
+              className="rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-2.5 text-sm font-medium text-on-surface transition hover:bg-surface-container-low"
             >
               {copied ? 'Đã sao chép!' : 'Sao chép link'}
             </button>
             <button
               type="button"
               onClick={handleDownloadQr}
-              className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600"
+              className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-container"
             >
               Tải ảnh QR
             </button>
             {!embedded ? (
               <Link
                 to="/admin/qr"
-                className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                className="rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-surface-container-low"
               >
                 Danh sách QR
               </Link>

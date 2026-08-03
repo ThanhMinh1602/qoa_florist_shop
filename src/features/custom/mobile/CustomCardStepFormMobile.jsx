@@ -1,5 +1,5 @@
 const fieldClassName =
-  'w-full rounded-xl border border-rose-100 px-4 py-3.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-rose-300 focus:ring-2 focus:ring-rose-100'
+  'w-full rounded-xl border border-outline-variant/25 px-4 py-3.5 text-base text-on-surface outline-none transition placeholder:text-outline focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
 
 function CustomCardStepFormMobile({ values, onChange }) {
   function handleChange(field) {
@@ -11,7 +11,7 @@ function CustomCardStepFormMobile({ values, onChange }) {
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">Tên người gửi</span>
+        <span className="mb-1.5 block text-sm font-medium text-on-surface">Tên người gửi</span>
         <input
           type="text"
           value={values.senderName}
@@ -23,8 +23,8 @@ function CustomCardStepFormMobile({ values, onChange }) {
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">
-          Tên người nhận <span className="text-rose-500">*</span>
+        <span className="mb-1.5 block text-sm font-medium text-on-surface">
+          Tên người nhận <span className="text-primary">*</span>
         </span>
         <input
           type="text"
@@ -37,8 +37,8 @@ function CustomCardStepFormMobile({ values, onChange }) {
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">
-          Lời chúc <span className="text-rose-500">*</span>
+        <span className="mb-1.5 block text-sm font-medium text-on-surface">
+          Lời chúc <span className="text-primary">*</span>
         </span>
         <textarea
           value={values.message}

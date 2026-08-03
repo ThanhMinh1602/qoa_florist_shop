@@ -7,8 +7,8 @@ const VARIANT_META = {
   info: {
     icon: 'info',
     iconClass: 'text-sky-600',
-    iconWrap: 'bg-sky-50',
-    confirmClass: 'bg-rose-500 hover:bg-rose-600 text-white',
+    iconWrap: 'bg-primary-container/15',
+    confirmClass: 'bg-primary hover:bg-primary-container text-white',
   },
   success: {
     icon: 'check_circle',
@@ -20,7 +20,7 @@ const VARIANT_META = {
     icon: 'error',
     iconClass: 'text-red-600',
     iconWrap: 'bg-red-50',
-    confirmClass: 'bg-rose-500 hover:bg-rose-600 text-white',
+    confirmClass: 'bg-primary hover:bg-primary-container text-white',
   },
   danger: {
     icon: 'warning',
@@ -40,7 +40,7 @@ function AppDialog({ dialog, onResolve }) {
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50"
+        className="absolute inset-0 bg-on-surface/50"
         aria-label="Đóng"
         onClick={() => onResolve(false)}
       />
@@ -48,7 +48,7 @@ function AppDialog({ dialog, onResolve }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="app-dialog-title"
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-2xl"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
       >
         <div className="p-5 sm:p-6">
           <div className="flex gap-3">
@@ -58,11 +58,11 @@ function AppDialog({ dialog, onResolve }) {
               <MaterialIcon name={meta.icon} className={`text-[1.5rem] ${meta.iconClass}`} />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 id="app-dialog-title" className="text-lg font-semibold text-slate-900">
+              <h3 id="app-dialog-title" className="text-lg font-semibold text-on-surface">
                 {dialog.title}
               </h3>
               {dialog.message ? (
-                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-on-surface-variant">
                   {dialog.message}
                 </p>
               ) : null}
@@ -74,7 +74,7 @@ function AppDialog({ dialog, onResolve }) {
               <button
                 type="button"
                 onClick={() => onResolve(false)}
-                className="rounded-xl border border-rose-100 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="rounded-xl border border-outline-variant/25 px-4 py-2.5 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container-low"
               >
                 {dialog.cancelLabel || 'Hủy'}
               </button>

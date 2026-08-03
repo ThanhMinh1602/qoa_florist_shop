@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import MobileFrame from '../../../components/common/MobileFrame'
-import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
+import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
 import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import { TOPICS } from '../../../constants/topics'
 import { getEmptyFormValues, getTopicQrForm, normalizePhraseList } from '../../../constants/topicQrForms'
@@ -58,17 +58,17 @@ function CreateQrPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8 md:py-5">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8 md:py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Tạo QR thiệp</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
+            <h2 className="font-display text-3xl text-primary">Tạo QR thiệp</h2>
+            <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
               Chọn chủ đề animation → nhập form tương ứng → tạo QR gửi khách. Không gắn đơn giao.
             </p>
           </div>
           <Link
             to="/admin/qr"
-            className="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+            className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-sm font-medium text-primary hover:bg-surface-container-low"
           >
             <MaterialIcon name="list" className="text-lg" />
             Danh sách QR
@@ -78,17 +78,17 @@ function CreateQrPage() {
 
       <div className="grid flex-1 gap-4 p-4 md:gap-8 md:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-10">
         <div className="space-y-4">
-          <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
-            <h3 className="text-sm font-semibold text-slate-900">1. Chọn chủ đề</h3>
+          <section className="glass-card p-4 sm:p-5">
+            <h3 className="text-sm font-semibold text-on-surface">1. Chọn chủ đề</h3>
             <div className="relative mt-3">
               <MaterialIcon
                 name={selectedTopic?.icon ?? 'category'}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-rose-500"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary"
               />
               <select
                 value={topicId}
                 onChange={(event) => handleTopicSelect(event.target.value)}
-                className="w-full appearance-none rounded-xl border border-rose-200 bg-white py-3 pl-11 pr-10 text-sm font-medium text-slate-800 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                className="w-full appearance-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest py-3 pl-11 pr-10 text-sm font-medium text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
               >
                 {availableTopics.map((topic) => (
                   <option key={topic.id} value={topic.id}>
@@ -98,18 +98,18 @@ function CreateQrPage() {
               </select>
               <MaterialIcon
                 name="expand_more"
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-outline"
               />
             </div>
             {selectedTopic?.description ? (
-              <p className="mt-2 text-xs text-slate-500">{selectedTopic.description}</p>
+              <p className="mt-2 text-xs text-on-surface-variant">{selectedTopic.description}</p>
             ) : null}
           </section>
 
           {formConfig ? (
-            <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm sm:p-5">
-              <h3 className="text-sm font-semibold text-slate-900">2. {formConfig.title}</h3>
-              <p className="mt-1 text-xs text-slate-500">{formConfig.hint}</p>
+            <section className="glass-card p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-on-surface">2. {formConfig.title}</h3>
+              <p className="mt-1 text-xs text-on-surface-variant">{formConfig.hint}</p>
               <div className="mt-5">
                 <TopicQrForm
                   fields={formConfig.fields}
@@ -128,7 +128,7 @@ function CreateQrPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="mt-6 inline-flex items-center gap-1 rounded-xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60"
+                className="mt-6 inline-flex items-center gap-1 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-container disabled:opacity-60"
               >
                 <MaterialIcon name="qr_code_2" className="text-lg" />
                 {isSaving ? 'Đang tạo...' : 'Tạo QR & lưu'}

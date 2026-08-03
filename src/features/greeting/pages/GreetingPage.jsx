@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import TopicGreetingScreen from '../components/TopicGreetingScreen'
-import BrandLogoCenter from '../components/common/BrandLogoCenter'
-import { fetchCardById } from '../api/cardsApi'
-import { useIsLgUp } from '../hooks/useMediaQuery'
-import {
-  GreetingLoadingMobile,
-  GreetingNotFoundMobile,
-} from '../features/custom/mobile/GreetingMobileViews'
+import { fetchCardById } from '../../../api/cardsApi'
+import BrandLogoCenter from '../../../components/common/BrandLogoCenter'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import TopicGreetingScreen from '../TopicGreetingScreen'
+import { GreetingLoadingMobile, GreetingNotFoundMobile } from '../mobile/GreetingMobileViews'
 
 function GreetingPage() {
   const { uuid } = useParams()

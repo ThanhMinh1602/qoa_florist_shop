@@ -91,19 +91,19 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-on-surface/50 p-0 sm:items-center sm:p-4">
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Đóng" />
 
-      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-2xl">
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-rose-50 px-4 py-4 sm:px-6">
+      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">
           <div className="min-w-0">
-            <p className="font-mono text-xs font-bold tracking-wide text-slate-500">
+            <p className="font-mono text-xs font-bold tracking-wide text-on-surface-variant">
               {getInvoiceCode(request)}
             </p>
-            <h3 className="mt-1 truncate text-lg font-semibold text-slate-900">
+            <h3 className="mt-1 truncate text-lg font-semibold text-on-surface">
               {request.customerName}
             </h3>
-            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-on-surface-variant">
               <span>{formatTimeAgo(request.createdAt)}</span>
               <span>·</span>
               {hasCard ? <TopicLabel topic={topic} topicId={request.topicId} /> : <span>Không QR</span>}
@@ -115,7 +115,7 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${payment.className}`}>
                 {payment.label}
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+              <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-medium text-on-surface ring-1 ring-slate-200">
                 {formatMoney(request.subtotal)}
               </span>
             </div>
@@ -123,7 +123,7 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-outline transition hover:bg-surface-container hover:text-on-surface-variant"
             aria-label="Đóng"
           >
             <MaterialIcon name="close" className="text-xl" />
@@ -148,7 +148,7 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
               value={request.status === 'reviewed' ? 'arranging' : request.status}
               disabled={isUpdating}
               onChange={(event) => onStatusChange(request.id, event.target.value)}
-              className="rounded-xl border border-rose-100 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-rose-100"
+              className="rounded-xl border border-outline-variant/25 px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-secondary/20"
             >
               {ORDER_STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -158,8 +158,8 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
             </select>
           </div>
 
-          <div className="rounded-2xl border border-rose-100 bg-white p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Sản phẩm & tiền</h4>
+          <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
+            <h4 className="text-sm font-semibold text-on-surface">Sản phẩm & tiền</h4>
             <div className="mt-3">
               <OrderItemsEditor products={products} items={items} onChange={setItems} />
             </div>
@@ -171,12 +171,12 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
               />
             </div>
             <label className="mt-3 block text-sm">
-              <span className="mb-1 block font-medium text-slate-700">Note đơn</span>
+              <span className="mb-1 block font-medium text-on-surface">Note đơn</span>
               <textarea
                 rows={2}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+                className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-secondary/20"
               />
             </label>
             {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
@@ -184,7 +184,7 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
               type="button"
               onClick={handleSaveCommerce}
               disabled={isSaving}
-              className="mt-3 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-60"
+              className="mt-3 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container disabled:opacity-60"
             >
               {isSaving ? 'Đang lưu...' : 'Lưu sản phẩm & tiền'}
             </button>
@@ -194,32 +194,32 @@ function OrderDetailModal({ request, onClose, onStatusChange, onUpdated, isUpdat
             {hasCard ? (
               <RequestQrPanel request={request} />
             ) : (
-              <div className="rounded-2xl border border-dashed border-rose-200 px-4 py-8 text-center text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-outline-variant/40 px-4 py-8 text-center text-sm text-on-surface-variant">
                 Đơn không kèm thiệp QR
               </div>
             )}
 
             <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Thông tin giao hàng</h4>
+              <h4 className="text-sm font-semibold text-on-surface">Thông tin giao hàng</h4>
               <dl className="mt-3 space-y-2 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-400">Người nhận hàng</dt>
-                  <dd className="font-medium text-slate-800">
+                  <dt className="text-xs text-outline">Người nhận hàng</dt>
+                  <dd className="font-medium text-on-surface">
                     {request.deliveryRecipientName || request.recipientName}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-400">SĐT</dt>
-                  <dd className="text-slate-700">{request.deliveryPhone || '—'}</dd>
+                  <dt className="text-xs text-outline">SĐT</dt>
+                  <dd className="text-on-surface">{request.deliveryPhone || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-400">Địa chỉ</dt>
-                  <dd className="leading-6 text-slate-700">{request.deliveryAddress || '—'}</dd>
+                  <dt className="text-xs text-outline">Địa chỉ</dt>
+                  <dd className="leading-6 text-on-surface">{request.deliveryAddress || '—'}</dd>
                 </div>
                 {request.shippingStatus ? (
                   <div>
-                    <dt className="text-xs text-slate-400">VC</dt>
-                    <dd className="text-slate-700">
+                    <dt className="text-xs text-outline">VC</dt>
+                    <dd className="text-on-surface">
                       {SHIPPING_STATUS_LABELS[request.shippingStatus]}
                     </dd>
                   </div>

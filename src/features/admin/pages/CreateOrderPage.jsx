@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import TopicGreetingScreen from '../../../components/TopicGreetingScreen'
+import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
 import MobileFrame from '../../../components/common/MobileFrame'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import TopicLabel from '../../../components/common/TopicLabel'
@@ -42,15 +42,15 @@ function OrderModePicker({ mode, onChange }) {
           className={[
             'rounded-2xl border px-4 py-4 text-left transition',
             mode === item.id
-              ? 'border-rose-300 bg-rose-50 ring-1 ring-rose-100'
-              : 'border-rose-100 bg-white hover:bg-rose-50/50',
+              ? 'border-primary/40 bg-primary-container/15 ring-1 ring-primary/20'
+              : 'border-outline-variant/25 bg-surface-container-lowest hover:bg-surface-container-low/70',
           ].join(' ')}
         >
-          <span className="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <MaterialIcon name={item.icon} className="text-xl text-rose-500" />
+          <span className="flex items-center gap-2 text-base font-semibold text-on-surface">
+            <MaterialIcon name={item.icon} className="text-xl text-primary" />
             {item.label}
           </span>
-          <span className="mt-1 block text-sm text-slate-500">{item.description}</span>
+          <span className="mt-1 block text-sm text-on-surface-variant">{item.description}</span>
         </button>
       ))}
     </div>
@@ -210,18 +210,18 @@ function CreateOrderPage() {
     setError('')
   }
 
-  const submitLabel = withQr ? 'Lên đơn & tạo QR' : 'Lên đơn giao'
+  const submitLabel = withQr ? 'Tạo đơn hàng & tạo QR' : 'Tạo đơn hàng giao'
   const commerceSection = (
     <>
-      <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-50 md:p-6">
-        <h3 className="text-lg font-semibold text-slate-900">Sản phẩm</h3>
-        <p className="mt-1 text-sm text-slate-500">Chọn từ catalog giá cost hoặc nhập tùy chỉnh.</p>
+      <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.06)] md:p-6">
+        <h3 className="text-lg font-semibold text-on-surface">Sản phẩm</h3>
+        <p className="mt-1 text-sm text-on-surface-variant">Chọn từ catalog giá cost hoặc nhập tùy chỉnh.</p>
         <div className="mt-4">
           <OrderItemsEditor products={products} items={items} onChange={setItems} />
         </div>
       </section>
-      <section className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-50 md:p-6">
-        <h3 className="text-lg font-semibold text-slate-900">Tiền & giao</h3>
+      <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.06)] md:p-6">
+        <h3 className="text-lg font-semibold text-on-surface">Tiền & giao</h3>
         <div className="mt-4">
           <OrderMoneyFields values={money} onChange={handleMoneyChange} subtotal={itemsSubtotal} />
         </div>
@@ -263,9 +263,9 @@ function CreateOrderPage() {
   if (savedRequest) {
     return (
       <div className="flex flex-1 flex-col">
-        <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur md:px-8">
-          <h2 className="text-2xl font-semibold text-slate-900">Lên đơn</h2>
-          <p className="mt-2 text-sm text-slate-500">Đơn đã được tạo.</p>
+        <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-6 py-5 backdrop-blur md:px-8">
+          <h2 className="font-display text-3xl text-primary">Tạo đơn hàng mới</h2>
+          <p className="mt-2 text-sm text-on-surface-variant">Đơn đã được tạo.</p>
         </header>
         <div className="mx-auto w-full max-w-2xl p-6 md:p-8">
           <CreateOrderSuccess request={savedRequest} onCreateAnother={handleCreateAnother} />
@@ -276,9 +276,9 @@ function CreateOrderPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-6 py-5 backdrop-blur md:px-8">
-        <h2 className="text-2xl font-semibold text-slate-900">Lên đơn</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-6 py-5 backdrop-blur md:px-8">
+        <h2 className="font-display text-3xl text-primary">Tạo đơn hàng mới</h2>
+        <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
           Chọn sản phẩm, tiền (cọc/ship/COD) và tùy chọn thiệp QR.
         </p>
       </header>
@@ -291,8 +291,8 @@ function CreateOrderPage() {
             withQr ? 'max-w-none' : 'mx-auto max-w-3xl',
           ].join(' ')}
         >
-          <section className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
-            <h3 className="text-lg font-semibold text-slate-900">Loại đơn</h3>
+          <section className="glass-card rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-on-surface">Loại đơn</h3>
             <div className="mt-4">
               <OrderModePicker mode={mode} onChange={handleModeChange} />
             </div>
@@ -308,10 +308,10 @@ function CreateOrderPage() {
             aria-hidden={!withQr}
           >
             <div className="min-h-0 overflow-hidden">
-              <section className="mb-6 rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
-                <h3 className="text-lg font-semibold text-slate-900">Nội dung thiệp QR</h3>
+              <section className="mb-6 glass-card rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-on-surface">Nội dung thiệp QR</h3>
                 <div className="mt-5 mb-6">
-                  <span className="mb-1.5 block text-sm font-medium text-slate-700">Chủ đề</span>
+                  <span className="mb-1.5 block text-sm font-medium text-on-surface-variant">Chủ đề</span>
                   <div className="flex flex-wrap gap-2">
                     {availableTopics.map((topic) => (
                       <button
@@ -322,8 +322,8 @@ function CreateOrderPage() {
                         className={[
                           'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
                           topicId === topic.id
-                            ? 'border-rose-300 bg-rose-50 text-rose-700 ring-1 ring-rose-100'
-                            : 'border-rose-100 bg-white text-slate-600 hover:bg-rose-50/70',
+                            ? 'border-primary/40 bg-primary-container/15 text-primary ring-1 ring-primary/20'
+                            : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low/70',
                         ].join(' ')}
                       >
                         <TopicLabel topic={topic} />
@@ -336,8 +336,8 @@ function CreateOrderPage() {
             </div>
           </div>
 
-          <section className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm shadow-rose-50">
-            <h3 className="text-lg font-semibold text-slate-900">Thông tin giao hàng</h3>
+          <section className="glass-card rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-on-surface">Thông tin giao hàng</h3>
             <div className="mt-6">
               <AdminDeliveryForm values={deliveryData} onChange={handleDeliveryChange} />
             </div>
@@ -352,7 +352,7 @@ function CreateOrderPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-rose-500 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="w-full rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isSubmitting ? 'Đang lên đơn...' : submitLabel}
           </button>

@@ -44,9 +44,9 @@ function ShopZaloBridgePage() {
 
   if (!order) {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-rose-100 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm text-slate-600">Không tìm thấy thông tin đơn để chat Zalo.</p>
-        <Link to="/shop" className="mt-4 inline-block text-sm font-medium text-rose-600">
+      <div className="mx-auto max-w-md rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-6 text-center shadow-sm">
+        <p className="text-sm text-on-surface-variant">Không tìm thấy thông tin đơn để chat Zalo.</p>
+        <Link to="/shop" className="mt-4 inline-block text-sm font-medium text-primary">
           Về shop
         </Link>
       </div>
@@ -54,20 +54,20 @@ function ShopZaloBridgePage() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4 rounded-3xl border border-rose-100 bg-white p-6 shadow-sm">
+    <div className="mx-auto max-w-md space-y-4 rounded-3xl border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
       <div className="text-center">
-        <p className="text-sm font-semibold text-slate-800">Chat Zalo với shop</p>
-        <p className="mt-1 text-xs text-slate-500">
-          Đơn <span className="font-mono font-bold text-rose-600">{order.invoiceCode}</span>
+        <p className="text-sm font-semibold text-on-surface">Chat Zalo với shop</p>
+        <p className="mt-1 text-xs text-on-surface-variant">
+          Đơn <span className="font-mono font-bold text-primary">{order.invoiceCode}</span>
           {order.subtotal ? ` · ${formatMoney(order.subtotal)}` : ''} · Shop {shopPhone}
         </p>
       </div>
 
-      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-left">
+        <p className="text-xs font-semibold uppercase tracking-wide text-outline">
           Tin nhắn sẽ gửi (copy nếu Zalo không tự điền)
         </p>
-        <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-slate-700">
+        <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-on-surface">
           {message}
         </pre>
       </div>
@@ -84,14 +84,14 @@ function ShopZaloBridgePage() {
       <button
         type="button"
         onClick={handleCopy}
-        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        className="w-full rounded-xl border border-outline-variant/40 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low"
       >
         {copied ? 'Đã copy tin nhắn' : 'Copy tin nhắn để dán trên Zalo'}
       </button>
 
       <a
         href={buildZaloChatUrl(order)}
-        className="block text-center text-xs text-slate-400 underline"
+        className="block text-center text-xs text-outline underline"
       >
         Mở link Zalo thủ công
       </a>

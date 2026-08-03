@@ -9,17 +9,17 @@ function CollapsiblePreview({ label, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm shadow-rose-50">
+    <div className="overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.05)]">
       <button
         type="button"
         onClick={() => setIsOpen((previous) => !previous)}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
         aria-expanded={isOpen}
       >
-        <span className="text-sm font-semibold text-slate-900">{label}</span>
+        <span className="text-sm font-semibold text-on-surface">{label}</span>
         <span
           className={[
-            'flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition-transform duration-300 ease-out',
+            'flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-primary transition-transform duration-300 ease-out',
             isOpen ? 'rotate-180' : '',
           ].join(' ')}
           aria-hidden="true"
@@ -35,7 +35,7 @@ function CollapsiblePreview({ label, children, defaultOpen = false }) {
         <div className="min-h-0 overflow-hidden">
           <div
             className={[
-              'border-t border-rose-50 px-4 pb-4 transition-opacity duration-300 ease-out',
+              'border-t border-surface-container px-4 pb-4 transition-opacity duration-300 ease-out',
               isOpen ? 'opacity-100' : 'opacity-0',
             ].join(' ')}
           >

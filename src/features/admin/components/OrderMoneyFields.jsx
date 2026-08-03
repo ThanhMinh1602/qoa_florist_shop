@@ -10,7 +10,7 @@ function OrderMoneyFields({ values, onChange, subtotal }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="block text-sm sm:col-span-2">
-        <span className="mb-1 block font-medium text-slate-700">
+        <span className="mb-1 block font-medium text-on-surface">
           Thu vào (subtotal) — {formatMoney(subtotal)}
         </span>
         <input
@@ -19,9 +19,9 @@ function OrderMoneyFields({ values, onChange, subtotal }) {
           value={values.subtotalOverride ?? ''}
           placeholder={String(subtotal || 0)}
           onChange={(e) => onChange('subtotalOverride', e.target.value)}
-          className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+          className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="mt-1 block text-xs text-slate-400">Để trống = tự tính từ dòng hàng.</span>
+        <span className="mt-1 block text-xs text-outline">Để trống = tự tính từ dòng hàng.</span>
       </label>
 
       {[
@@ -31,23 +31,23 @@ function OrderMoneyFields({ values, onChange, subtotal }) {
         ['paidAmount', 'Đã thu'],
       ].map(([field, label]) => (
         <label key={field} className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-700">{label}</span>
+          <span className="mb-1 block font-medium text-on-surface">{label}</span>
           <input
             type="number"
             min="0"
             value={values[field]}
             onChange={(e) => onChange(field, e.target.value)}
-            className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+            className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
           />
         </label>
       ))}
 
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Trạng thái TT</span>
+        <span className="mb-1 block font-medium text-on-surface">Trạng thái TT</span>
         <select
           value={values.paymentStatus}
           onChange={(e) => onChange('paymentStatus', e.target.value)}
-          className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+          className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
         >
           {Object.entries(PAYMENT_STATUS_LABELS).map(([value, meta]) => (
             <option key={value} value={value}>
@@ -58,27 +58,27 @@ function OrderMoneyFields({ values, onChange, subtotal }) {
       </label>
 
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Ghi chú thanh toán</span>
+        <span className="mb-1 block font-medium text-on-surface">Ghi chú thanh toán</span>
         <input
           value={values.paymentNote}
           onChange={(e) => onChange('paymentNote', e.target.value)}
           placeholder="Đã ck / Cọc 30k..."
-          className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+          className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
         />
       </label>
 
       <label className="block text-sm sm:col-span-2">
-        <span className="mb-1 block font-medium text-slate-700">Ngày ship</span>
+        <span className="mb-1 block font-medium text-on-surface">Ngày ship</span>
         <input
           type="date"
           value={values.shipDate}
           onChange={(e) => onChange('shipDate', e.target.value)}
-          className="w-full rounded-xl border border-rose-100 px-3 py-2.5 outline-none focus:ring-2 focus:ring-rose-100"
+          className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
         />
       </label>
 
-      <p className="sm:col-span-2 text-sm text-slate-500">
-        Còn lại ước tính: <span className="font-semibold text-slate-800">{formatMoney(remaining)}</span>
+      <p className="sm:col-span-2 text-sm text-on-surface-variant">
+        Còn lại ước tính: <span className="font-semibold text-on-surface">{formatMoney(remaining)}</span>
       </p>
     </div>
   )

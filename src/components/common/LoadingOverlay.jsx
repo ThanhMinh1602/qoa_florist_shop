@@ -26,14 +26,14 @@ function LoadingOverlay({ open, message = 'Đang xử lý...' }) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/45 p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-on-surface/45 p-4"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex w-full max-w-[220px] flex-col items-center rounded-3xl bg-white px-6 py-7 shadow-2xl">
+      <div className="flex w-full max-w-[220px] flex-col items-center rounded-3xl bg-surface-container-lowest px-6 py-7 shadow-2xl">
         <div ref={containerRef} className="h-36 w-36" />
-        <p className="mt-1 text-center text-sm font-medium text-slate-700">{message}</p>
+        <p className="mt-1 text-center text-sm font-medium text-on-surface">{message}</p>
       </div>
     </div>
   )

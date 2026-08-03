@@ -3,8 +3,7 @@ import { countBracketPhrases } from '../../../constants/topicQrForms'
 import { MUSIC_TRACKS } from '../../../constants/galaxyMusic'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 
-const fieldClassName =
-  'w-full rounded-xl border border-rose-100 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-rose-300 focus:ring-2 focus:ring-rose-100'
+const fieldClassName = 'input-glass'
 
 /** Chọn nhạc nền + nghe thử trước khi lưu */
 function MusicField({ field, values, onChange }) {
@@ -38,9 +37,9 @@ function MusicField({ field, values, onChange }) {
 
   return (
     <div className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block text-sm font-medium text-on-surface">
         {field.label}
-        {field.required ? <span className="text-rose-500"> *</span> : null}
+        {field.required ? <span className="text-secondary"> *</span> : null}
       </span>
 
       {MUSIC_TRACKS.length === 0 ? (
@@ -49,7 +48,7 @@ function MusicField({ field, values, onChange }) {
         </p>
       ) : (
         <div className="space-y-2">
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-rose-100 px-4 py-2.5 text-sm transition hover:bg-rose-50/60">
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/25 px-4 py-2.5 text-sm transition hover:bg-surface-container-low">
             <input
               type="radio"
               name={`music-${field.name}`}
@@ -58,9 +57,9 @@ function MusicField({ field, values, onChange }) {
                 stopPreview()
                 onChange(field.name, '')
               }}
-              className="h-4 w-4 accent-rose-500"
+              className="h-4 w-4 accent-primary"
             />
-            <span className="text-slate-600">Không có nhạc</span>
+            <span className="text-on-surface-variant">Không có nhạc</span>
           </label>
 
           {MUSIC_TRACKS.map((track) => {
@@ -72,8 +71,8 @@ function MusicField({ field, values, onChange }) {
                 className={[
                   'flex items-center gap-2 rounded-xl border px-3 py-2 transition',
                   active
-                    ? 'border-rose-300 bg-rose-50 ring-1 ring-rose-100'
-                    : 'border-rose-100 hover:bg-rose-50/60',
+                    ? 'border-primary/40 bg-surface-container-low ring-1 ring-primary/15'
+                    : 'border-outline-variant/25 hover:bg-surface-container-low',
                 ].join(' ')}
               >
                 <label className="flex flex-1 cursor-pointer items-center gap-3 text-sm">
@@ -82,14 +81,14 @@ function MusicField({ field, values, onChange }) {
                     name={`music-${field.name}`}
                     checked={active}
                     onChange={() => onChange(field.name, track.id)}
-                    className="h-4 w-4 accent-rose-500"
+                    className="h-4 w-4 accent-primary"
                   />
-                  <span className="font-medium text-slate-800">{track.name}</span>
+                  <span className="font-medium text-on-surface">{track.name}</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => togglePreview(track)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-surface-container-low"
                 >
                   <MaterialIcon name={isPlaying ? 'stop' : 'play_arrow'} className="text-base" />
                   {isPlaying ? 'Dừng' : 'Nghe thử'}
@@ -100,7 +99,7 @@ function MusicField({ field, values, onChange }) {
         </div>
       )}
 
-      {field.help ? <span className="mt-1.5 block text-xs text-slate-400">{field.help}</span> : null}
+      {field.help ? <span className="mt-1.5 block text-xs text-outline">{field.help}</span> : null}
     </div>
   )
 }
@@ -134,9 +133,9 @@ function PhraseListField({ field, values, onChange }) {
 
   return (
     <div className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block text-sm font-medium text-on-surface">
         {field.label}
-        {field.required ? <span className="text-rose-500"> *</span> : null}
+        {field.required ? <span className="text-secondary"> *</span> : null}
       </span>
       <textarea
         ref={inputRef}
@@ -153,15 +152,15 @@ function PhraseListField({ field, values, onChange }) {
           <button
             type="button"
             onClick={insertNewBracketPair}
-            className="text-sm font-medium text-rose-600 hover:text-rose-700"
+            className="text-sm font-medium text-primary hover:text-primary"
           >
             + Thêm cụm từ ({phraseCount}/{maxItems})
           </button>
         ) : (
-          <span className="text-xs text-slate-400">Đã đạt tối đa {maxItems} cụm từ.</span>
+          <span className="text-xs text-outline">Đã đạt tối đa {maxItems} cụm từ.</span>
         )}
       </div>
-      {field.help ? <span className="mt-1.5 block text-xs text-slate-400">{field.help}</span> : null}
+      {field.help ? <span className="mt-1.5 block text-xs text-outline">{field.help}</span> : null}
     </div>
   )
 }
@@ -184,9 +183,9 @@ function TopicQrForm({ fields, values, onChange }) {
 
         return (
           <label key={field.name} className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">
               {field.label}
-              {field.required ? <span className="text-rose-500"> *</span> : null}
+              {field.required ? <span className="text-secondary"> *</span> : null}
             </span>
             <InputTag
               type={isTextarea ? undefined : field.type || 'text'}
@@ -198,7 +197,7 @@ function TopicQrForm({ fields, values, onChange }) {
               autoComplete={field.type === 'tel' ? 'tel' : undefined}
             />
             {field.help ? (
-              <span className="mt-1.5 block text-xs text-slate-400">{field.help}</span>
+              <span className="mt-1.5 block text-xs text-outline">{field.help}</span>
             ) : null}
           </label>
         )

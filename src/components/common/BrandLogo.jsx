@@ -24,11 +24,11 @@ function BrandLogo({ size = 'md', className = '', subtitle = '', center = false 
         alt="QOA florist"
         className={[
           SIZE_CLASS[size] ?? SIZE_CLASS.md,
-          'shrink-0 rounded-full object-cover ring-1 ring-rose-100',
+          'shrink-0 rounded-full object-cover ring-1 ring-primary/20',
         ].join(' ')}
       />
       {subtitle ? (
-        <p className="mt-1.5 text-xs font-medium tracking-wide text-slate-500">{subtitle}</p>
+        <p className="mt-1.5 text-xs font-medium tracking-wide text-on-surface-variant">{subtitle}</p>
       ) : null}
     </div>
   )

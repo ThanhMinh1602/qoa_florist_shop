@@ -8,18 +8,18 @@ function MobileStepIndicator({ step, steps }) {
 
         return (
           <div key={item.id} className="flex min-w-0 items-center gap-2">
-            <div className={`flex min-w-0 items-center gap-2 ${isActive ? 'text-rose-700' : 'text-slate-400'}`}>
+            <div className={`flex min-w-0 items-center gap-2 ${isActive ? 'text-primary' : 'text-outline'}`}>
               <span
                 className={[
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                  isActive ? 'bg-rose-500 text-white' : 'bg-slate-100',
+                  isActive ? 'bg-primary text-white' : 'bg-surface-container',
                 ].join(' ')}
               >
                 {stepNumber}
               </span>
               <span className="truncate text-sm font-medium">{item.label}</span>
             </div>
-            {!isLast ? <span className="h-px w-6 shrink-0 bg-rose-100" /> : null}
+            {!isLast ? <span className="h-px w-6 shrink-0 bg-primary-container/20" /> : null}
           </div>
         )
       })}

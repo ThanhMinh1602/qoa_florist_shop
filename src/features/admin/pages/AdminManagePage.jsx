@@ -129,17 +129,17 @@ function AdminManagePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-rose-100 bg-white/80 px-4 py-4 backdrop-blur md:px-8">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Đơn hàng</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            <h2 className="font-display text-3xl text-primary">Đơn hàng</h2>
+            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
               Theo dõi ship, sản phẩm, cọc/ship/COD và trạng thái làm hàng.
             </p>
           </div>
           <Link
             to="/admin/orders/new"
-            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-container"
           >
             + Lên đơn
           </Link>
@@ -161,8 +161,8 @@ function AdminManagePage() {
                 className={[
                   'shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition',
                   typeFilter === item.value
-                    ? 'border-rose-300 bg-rose-50 text-rose-700'
-                    : 'border-rose-100 bg-white text-slate-600 hover:bg-rose-50/70',
+                    ? 'border-primary bg-surface-container-low text-primary'
+                    : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
                 ].join(' ')}
               >
                 {item.label}
@@ -175,7 +175,7 @@ function AdminManagePage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm mã, SĐT, tên..."
-            className="w-full rounded-xl border border-rose-100 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-rose-200 transition focus:ring-2 lg:max-w-xs"
+            className="w-full rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface outline-none ring-primary/20 transition focus:ring-2 lg:max-w-xs"
           />
         </div>
 
@@ -186,8 +186,8 @@ function AdminManagePage() {
             className={[
               'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
               statusFilter === ''
-                ? 'border-slate-300 bg-slate-100 text-slate-800'
-                : 'border-rose-100 bg-white text-slate-500 hover:bg-rose-50/70',
+                ? 'border-outline bg-surface-container text-on-surface'
+                : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
             ].join(' ')}
           >
             Mọi trạng thái
@@ -200,8 +200,8 @@ function AdminManagePage() {
               className={[
                 'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
                 statusFilter === item.value
-                  ? 'border-slate-300 bg-slate-100 text-slate-800'
-                  : 'border-rose-100 bg-white text-slate-500 hover:bg-rose-50/70',
+                  ? 'border-outline bg-surface-container text-on-surface'
+                  : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
               ].join(' ')}
             >
               {item.label}
@@ -209,8 +209,8 @@ function AdminManagePage() {
           ))}
         </div>
 
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{filteredItems.length}</span> mục
+        <p className="text-sm text-on-surface-variant">
+          <span className="font-semibold text-on-surface">{filteredItems.length}</span> mục
           {search.trim() || typeFilter !== 'all' || statusFilter ? ' phù hợp bộ lọc' : ''}
         </p>
 
@@ -221,8 +221,8 @@ function AdminManagePage() {
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-2xl border border-rose-100 bg-white px-6 py-16 text-center">
-            <p className="text-sm text-slate-500">Đang tải...</p>
+          <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest px-6 py-16 text-center">
+            <p className="text-sm text-on-surface-variant">Đang tải...</p>
           </div>
         ) : isLgUp ? (
           <ManageUnifiedTable items={filteredItems} onSelect={setSelectedItem} />

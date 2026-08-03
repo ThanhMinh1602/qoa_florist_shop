@@ -61,27 +61,27 @@ function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-surface-container-low hover:text-primary"
         aria-label="Thông báo"
         aria-expanded={isOpen}
       >
         <MaterialIcon name="notifications" className="text-[1.4rem]" />
         {unreadCount > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         ) : null}
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-2xl shadow-rose-100/80 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto">
-          <div className="flex items-center justify-between border-b border-rose-50 px-4 py-3">
-            <h3 className="text-sm font-semibold text-slate-900">Thông báo</h3>
+        <div className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-2xl shadow-primary/10 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto">
+          <div className="flex items-center justify-between border-b border-surface-container px-4 py-3">
+            <h3 className="text-sm font-semibold text-on-surface">Thông báo</h3>
             {unreadCount > 0 ? (
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="text-xs font-medium text-rose-600 transition hover:text-rose-700"
+                className="text-xs font-medium text-primary transition hover:text-primary"
               >
                 Đánh dấu đã đọc
               </button>
@@ -90,9 +90,9 @@ function NotificationBell() {
 
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">Đang tải...</p>
+              <p className="px-4 py-8 text-center text-sm text-on-surface-variant">Đang tải...</p>
             ) : notifications.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">Chưa có thông báo nào.</p>
+              <p className="px-4 py-8 text-center text-sm text-on-surface-variant">Chưa có thông báo nào.</p>
             ) : (
               <ul>
                 {notifications.map((notification) => (
@@ -101,11 +101,11 @@ function NotificationBell() {
                       type="button"
                       onClick={() => handleNotificationClick(notification)}
                       className={[
-                        'flex w-full gap-3 px-4 py-3 text-left transition hover:bg-rose-50/70',
-                        notification.read ? 'bg-white' : 'bg-rose-50/40',
+                        'flex w-full gap-3 px-4 py-3 text-left transition hover:bg-surface-container-low/70',
+                        notification.read ? 'bg-surface-container-lowest' : 'bg-surface-container-low/40',
                       ].join(' ')}
                     >
-                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container/20 text-primary">
                         <MaterialIcon name="local_florist" className="text-[1.25rem]" />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -114,20 +114,20 @@ function NotificationBell() {
                             className={[
                               'text-sm leading-5',
                               notification.read
-                                ? 'font-medium text-slate-700'
-                                : 'font-semibold text-slate-900',
+                                ? 'font-medium text-on-surface'
+                                : 'font-semibold text-on-surface',
                             ].join(' ')}
                           >
                             {notification.title}
                           </span>
                           {!notification.read ? (
-                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                           ) : null}
                         </span>
-                        <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                        <span className="mt-0.5 block text-xs leading-5 text-on-surface-variant">
                           {notification.body}
                         </span>
-                        <span className="mt-1 block text-[11px] text-slate-400">
+                        <span className="mt-1 block text-[11px] text-outline">
                           {formatTimeAgo(notification.createdAt)}
                         </span>
                       </span>
@@ -138,14 +138,14 @@ function NotificationBell() {
             )}
           </div>
 
-          <div className="border-t border-rose-50 px-4 py-2.5">
+          <div className="border-t border-surface-container px-4 py-2.5">
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false)
                 navigate('/admin/manage')
               }}
-              className="w-full rounded-lg py-2 text-center text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+              className="w-full rounded-lg py-2 text-center text-xs font-medium text-primary transition hover:bg-surface-container-low"
             >
               Xem tất cả đơn hàng
             </button>

@@ -33,7 +33,7 @@ function RequestExportButton({ request }) {
         type="button"
         onClick={handleExport}
         disabled={isExporting}
-        className="rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-sm font-medium text-on-surface transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isExporting ? 'Đang xuất...' : '📄 Xuất hóa đơn VC'}
       </button>
