@@ -23,6 +23,13 @@ export function deleteProductApi(id) {
   return apiRequest(`/products/${id}`, { method: 'DELETE' })
 }
 
+export function bulkDeleteProductsApi(ids) {
+  return apiRequest('/products/bulk-delete', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  })
+}
+
 export function deactivateProductApi(id) {
   return updateProductApi(id, { active: false })
 }

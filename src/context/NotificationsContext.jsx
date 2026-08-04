@@ -6,6 +6,7 @@ import {
   markNotificationReadApi,
 } from '../api/notificationsApi'
 import { connectAdminSocket, disconnectAdminSocket } from '../api/adminSocket'
+import { getAuthToken } from '../utils/authStorage'
 import { useAuth } from './AuthContext'
 
 const NotificationsContext = createContext(null)
@@ -38,7 +39,7 @@ export function NotificationsProvider({ children }) {
 
     loadNotifications()
 
-    const token = sessionStorage.getItem('qoa_admin_token')
+    const token = getAuthToken()
     const socket = connectAdminSocket(token)
 
     if (!socket) return undefined

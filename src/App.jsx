@@ -8,6 +8,7 @@ import CreateQrPage from './features/admin/pages/CreateQrPage'
 import DashboardPage from './features/admin/pages/DashboardPage'
 import LoginPage from './features/admin/pages/LoginPage'
 import ProductsPage from './features/admin/pages/ProductsPage'
+import CategoriesPage from './features/admin/pages/CategoriesPage'
 import QrListPage from './features/admin/pages/QrListPage'
 import SiteSettingsPage from './features/admin/pages/SiteSettingsPage'
 import GalaxyOfLoveScreen from './features/greeting/GalaxyOfLoveScreen'
@@ -42,6 +43,7 @@ function App() {
           <Route path="manage" element={<AdminManagePage />} />
           <Route path="orders" element={<Navigate to="/admin/manage" replace />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
           <Route path="cashbook" element={<CashbookPage />} />
           <Route path="settings" element={<SiteSettingsPage />} />
           <Route path="create" element={<Navigate to="/admin/qr/new" replace />} />

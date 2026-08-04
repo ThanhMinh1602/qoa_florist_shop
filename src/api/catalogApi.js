@@ -6,6 +6,8 @@ export function fetchCatalogApi({
   maxPrice,
   sort,
   tag,
+  category,
+  categoryId,
   page,
   limit,
 } = {}) {
@@ -15,6 +17,8 @@ export function fetchCatalogApi({
   if (maxPrice !== undefined && maxPrice !== '') params.set('maxPrice', String(maxPrice))
   if (sort) params.set('sort', sort)
   if (tag) params.set('tag', tag)
+  if (category) params.set('category', category)
+  if (categoryId) params.set('categoryId', categoryId)
   if (page) params.set('page', String(page))
   if (limit) params.set('limit', String(limit))
   const query = params.toString()

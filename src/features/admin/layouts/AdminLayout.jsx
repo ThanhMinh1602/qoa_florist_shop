@@ -5,17 +5,16 @@ import AdminHeader from '../components/AdminHeader'
 import AdminSidebar from '../components/AdminSidebar'
 import AdminMobileBottomNav from '../mobile/AdminMobileBottomNav'
 import AdminMobileDrawer from '../mobile/AdminMobileDrawer'
+import BrandLogo from '../../../components/common/BrandLogo'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import NotificationBell from '../components/NotificationBell'
 
 function AdminMobileTopBar({ onOpenMenu }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/55 bg-surface-container-lowest/80 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl lg:hidden">
-      <div>
-        <p className="font-display text-xl leading-none text-primary">QOA Admin</p>
-        <p className="mt-0.5 text-[10px] tracking-[0.12em] text-on-surface-variant uppercase">
-          Boutique
-        </p>
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/55 bg-surface-container-lowest/80 px-4 py-2.5 pt-[max(0.65rem,env(safe-area-inset-top))] backdrop-blur-xl lg:hidden">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <BrandLogo size="xs" />
+        <p className="font-display truncate text-lg leading-none text-primary">QOA Florist</p>
       </div>
       <div className="flex items-center gap-1">
         <NotificationBell />

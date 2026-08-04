@@ -1,7 +1,9 @@
+import { getAuthToken } from '../utils/authStorage'
+
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? '/api'
 
 function getAuthHeaders() {
-  const token = sessionStorage.getItem('qoa_admin_token')
+  const token = getAuthToken()
   if (!token) return {}
 
   return {

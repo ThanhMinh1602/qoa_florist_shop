@@ -1,53 +1,49 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { changePasswordApi, fetchMeApi, loginApi } from '../api/authApi'
-
-const AUTH_TOKEN_KEY = 'qoa_admin_token'
-const AUTH_USERNAME_KEY = 'qoa_admin_username'
+import {
+  clearAuthSession,
+  getAuthToken,
+  getAuthUsername,
+  saveAuthSession,
+} from '../utils/authStorage'
 
 const AuthContext = createContext(null)
 
-function readStoredToken() {
-  try {
-    return sessionStorage.getItem(AUTH_TOKEN_KEY) ?? ''
-  } catch {
-    return ''
-  }
-}
-
-function readStoredUsername() {
-  try {
-    return sessionStorage.getItem(AUTH_USERNAME_KEY) ?? ''
-  } catch {
-    return ''
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(readStoredToken)
-  const [username, setUsername] = useState(readStoredUsername)
-  const [isLoading, setIsLoading] = useState(Boolean(readStoredToken()))
+  const [token, setToken] = useState(() => getAuthToken())
+  const [username, setUsername] = useState(() => getAuthUsername())
+  const [isLoading, setIsLoading] = useState(() => Boolean(getAuthToken()))
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const skipRestoreRef = useRef(false)
 
   const clearSession = useCallback(() => {
-    sessionStorage.removeItem(AUTH_TOKEN_KEY)
-    sessionStorage.removeItem(AUTH_USERNAME_KEY)
+    clearAuthSession()
     setToken('')
     setUsername('')
     setIsAuthenticated(false)
+    setIsLoading(false)
   }, [])
 
   const saveSession = useCallback((nextToken, nextUsername) => {
-    sessionStorage.setItem(AUTH_TOKEN_KEY, nextToken)
-    sessionStorage.setItem(AUTH_USERNAME_KEY, nextUsername)
+    saveAuthSession(nextToken, nextUsername)
+    skipRestoreRef.current = true
     setToken(nextToken)
     setUsername(nextUsername)
     setIsAuthenticated(true)
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
     if (!token) {
       setIsLoading(false)
       setIsAuthenticated(false)
+      return undefined
+    }
+
+    if (skipRestoreRef.current) {
+      skipRestoreRef.current = false
+      setIsAuthenticated(true)
+      setIsLoading(false)
       return undefined
     }
 
@@ -59,8 +55,9 @@ export function AuthProvider({ children }) {
       try {
         const result = await fetchMeApi()
         if (!cancelled) {
-          setUsername(result.data.username)
-          sessionStorage.setItem(AUTH_USERNAME_KEY, result.data.username)
+          const nextUsername = result.data?.username || getAuthUsername()
+          setUsername(nextUsername)
+          saveAuthSession(token, nextUsername)
           setIsAuthenticated(true)
         }
       } catch {
@@ -85,7 +82,17 @@ export function AuthProvider({ children }) {
     async (loginUsername, password) => {
       try {
         const result = await loginApi(loginUsername, password)
-        saveSession(result.data.token, result.data.username)
+        const nextToken = result.data?.token
+        const nextUsername = result.data?.username || loginUsername
+
+        if (!nextToken) {
+          return {
+            success: false,
+            message: 'Máy chủ không trả về token đăng nhập.',
+          }
+        }
+
+        saveSession(nextToken, nextUsername)
         return { success: true }
       } catch (err) {
         return {

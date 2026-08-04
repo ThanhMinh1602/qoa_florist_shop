@@ -3,17 +3,20 @@ import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import {
   CATALOG_PAGE_SIZE,
-  CATALOG_QUICK_FILTERS,
+  buildQuickFilters,
   resolveQuickFilter,
 } from '../../../constants/catalogFilters'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
-import { useCatalogInfinite } from '../../../hooks/swr'
+import { useCatalogInfinite, usePublicCategories } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 
 function ShopCatalogPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
+  const { categories } = usePublicCategories()
+
+  const quickFilters = useMemo(() => buildQuickFilters(categories), [categories])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
@@ -21,17 +24,18 @@ function ShopCatalogPage() {
   }, [search])
 
   const queryParams = useMemo(() => {
-    const quick = resolveQuickFilter(activeFilter)
+    const quick = resolveQuickFilter(activeFilter, quickFilters)
     const params = {
       limit: CATALOG_PAGE_SIZE,
       sort: quick?.sort || 'newest',
     }
     if (debouncedSearch) params.q = debouncedSearch
+    if (quick?.categoryId) params.categoryId = quick.categoryId
     if (quick?.tag) params.tag = quick.tag
     if (quick?.minPrice != null) params.minPrice = quick.minPrice
     if (quick?.maxPrice != null) params.maxPrice = quick.maxPrice
     return params
-  }, [activeFilter, debouncedSearch])
+  }, [activeFilter, debouncedSearch, quickFilters])
 
   const {
     products,
@@ -82,7 +86,7 @@ function ShopCatalogPage() {
         <div className="mt-5">
           <p className="label-caps mb-2.5 text-on-surface-variant">Lọc nhanh</p>
           <div className="flex flex-wrap gap-2">
-            {CATALOG_QUICK_FILTERS.map((filter) => {
+            {quickFilters.map((filter) => {
               const selected = activeFilter === filter.id
               return (
                 <button

@@ -6,6 +6,8 @@ export const swrKeys = {
   card: (id) => (id ? ['cards', id] : null),
   cards: (filters = {}) => ['cards', 'list', filters],
   products: (active) => ['products', active ?? 'all'],
+  publicCategories: ['categories', 'public'],
+  adminCategories: ['categories', 'admin'],
   statsOverview: ['stats', 'overview'],
   cashbook: (params = {}) => ['cashbook', params],
 }

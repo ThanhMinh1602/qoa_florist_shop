@@ -3,6 +3,7 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   activateProductApi,
+  bulkDeleteProductsApi,
   createProductApi,
   deactivateProductApi,
   deleteProductApi,
@@ -10,7 +11,7 @@ import {
 } from '../../../api/productsApi'
 import { deleteUploadedImageApi, uploadImagesApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
-import { useProducts } from '../../../hooks/swr'
+import { useAdminCategories, useProducts } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { resizeImageFiles } from '../../../utils/resizeImage'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
@@ -20,6 +21,7 @@ const EMPTY_FORM = {
   name: '',
   materials: '',
   images: [],
+  categoryIds: [],
   costPrice: '',
   makeMinutes: '',
   listPrice: '',
@@ -107,6 +109,7 @@ function toForm(product) {
           isMain: Boolean(image.isMain),
         }))
       : [],
+    categoryIds: Array.isArray(product.categoryIds) ? [...product.categoryIds] : [],
     costPrice: product.costPrice ?? '',
     makeMinutes: product.makeMinutes ?? '',
     listPrice: product.listPrice ?? '',
@@ -264,6 +267,7 @@ function ProductFormDialog({
   onDelete,
   onRegenerateCode,
   onRemoveCloudImage,
+  categoryOptions = [],
   isEditing,
   formError,
   title,
@@ -275,6 +279,14 @@ function ProductFormDialog({
     (Number(values.sellPrice) || 0) -
     (Number(values.costPrice) || 0) -
     (Number(values.otherCost) || 0)
+  const selectedIds = Array.isArray(values.categoryIds) ? values.categoryIds : []
+
+  function toggleCategory(categoryId) {
+    const next = selectedIds.includes(categoryId)
+      ? selectedIds.filter((id) => id !== categoryId)
+      : [...selectedIds, categoryId]
+    onChange('categoryIds', next)
+  }
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
@@ -356,6 +368,39 @@ function ProductFormDialog({
                 className={inputClass}
               />
             </label>
+
+            <div>
+              <p className="mb-2 text-sm font-medium text-on-surface">Danh mục</p>
+              {categoryOptions.length === 0 ? (
+                <p className="mt-1 text-xs text-outline">Chưa có danh mục — thêm ở tab Danh mục.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {categoryOptions.map((category) => {
+                    const checked = selectedIds.includes(category.id)
+                    return (
+                      <label
+                        key={category.id}
+                        className={[
+                          'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition',
+                          checked
+                            ? 'border-primary/40 bg-primary/10 text-primary'
+                            : 'border-outline-variant/30 text-on-surface-variant hover:border-primary/25',
+                          !category.active ? 'opacity-50' : '',
+                        ].join(' ')}
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-primary"
+                          checked={checked}
+                          onChange={() => toggleCategory(category.id)}
+                        />
+                        {category.name}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
 
             <ProductImagesField
               images={values.images || []}
@@ -472,6 +517,7 @@ function ProductsPage() {
     error: productsError,
     mutate: mutateProducts,
   } = useProducts()
+  const { categories } = useAdminCategories()
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -479,6 +525,7 @@ function ProductsPage() {
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [formError, setFormError] = useState('')
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState([])
   const isLgUp = useIsLgUp()
   const removedPublicIdsRef = useRef([])
   const error = productsError?.message || ''
@@ -491,9 +538,36 @@ function ProductsPage() {
     const keyword = search.trim().toLowerCase()
     if (!keyword) return products
     return products.filter((item) =>
-      [item.code, item.name, item.materials].join(' ').toLowerCase().includes(keyword),
+      [item.code, item.name, item.materials, ...(item.categories || []).map((c) => c.name)]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
     )
   }, [products, search])
+
+  const filteredIds = useMemo(() => filtered.map((item) => item.id), [filtered])
+  const allFilteredSelected =
+    filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id))
+  const selectedCount = selectedIds.length
+
+  function toggleSelect(id) {
+    setSelectedIds((previous) =>
+      previous.includes(id) ? previous.filter((item) => item !== id) : [...previous, id],
+    )
+  }
+
+  function toggleSelectAllFiltered() {
+    setSelectedIds((previous) => {
+      if (allFilteredSelected) {
+        return previous.filter((id) => !filteredIds.includes(id))
+      }
+      return [...new Set([...previous, ...filteredIds])]
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds([])
+  }
 
   function dismissFormUi() {
     setShowForm(false)
@@ -569,6 +643,7 @@ function ProductsPage() {
       const payload = {
         ...snapshot,
         images,
+        categoryIds: Array.isArray(snapshot.categoryIds) ? snapshot.categoryIds : [],
         costPrice: Number(snapshot.costPrice) || 0,
         makeMinutes: Number(snapshot.makeMinutes) || 0,
         listPrice: Number(snapshot.listPrice) || 0,
@@ -659,11 +734,50 @@ function ProductsPage() {
     await new Promise((resolve) => setTimeout(resolve, 80))
     try {
       await deleteProductApi(product.id)
+      setSelectedIds((previous) => previous.filter((id) => id !== product.id))
       await load()
       setIsBusy(false)
       await alert({
         title: 'Đã xóa',
         message: `“${product.name}” đã được xóa khỏi database.`,
+        variant: 'success',
+      })
+    } catch (err) {
+      setIsBusy(false)
+      await alert({
+        title: 'Không thể xóa',
+        message: err.message || 'Không thể xóa.',
+        variant: 'error',
+      })
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (isBusy || selectedIds.length === 0) return
+    const ok = await confirm({
+      title: 'Xóa nhiều sản phẩm',
+      message: `Xóa hẳn ${selectedIds.length} sản phẩm đã chọn khỏi database?\nThao tác này không hoàn tác được.`,
+      confirmLabel: `Xóa ${selectedIds.length} SP`,
+      variant: 'danger',
+    })
+    if (!ok) return
+
+    if (editingId && selectedIds.includes(editingId)) {
+      closeForm()
+    }
+
+    const ids = [...selectedIds]
+    setBusyMessage(`Đang xóa ${ids.length} sản phẩm...`)
+    setIsBusy(true)
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    try {
+      const result = await bulkDeleteProductsApi(ids)
+      clearSelection()
+      await load()
+      setIsBusy(false)
+      await alert({
+        title: 'Đã xóa',
+        message: result.message || `Đã xóa ${ids.length} sản phẩm.`,
         variant: 'success',
       })
     } catch (err) {
@@ -692,14 +806,36 @@ function ProductsPage() {
           </button>
         </header>
 
-        <div className="glass-card flex flex-col gap-3 rounded-xl p-4 md:flex-row md:items-center">
+        <div className="glass-card flex flex-col gap-3 rounded-xl p-4 md:flex-row md:items-center md:justify-between">
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm mã, tên, nguyên liệu..."
+            placeholder="Tìm mã, tên, nguyên liệu, danh mục..."
             className="input-glass w-full max-w-md"
           />
+          {selectedCount > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-xl border border-white/55 bg-white/40 px-3 py-2 text-sm font-medium text-on-surface backdrop-blur-md">
+                Đã chọn {selectedCount}
+              </span>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="rounded-xl border border-white/55 bg-white/40 px-3 py-2 text-sm font-medium text-on-surface-variant backdrop-blur-md hover:bg-white/70"
+              >
+                Bỏ chọn
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 backdrop-blur-md hover:bg-red-100/80"
+              >
+                <MaterialIcon name="delete" className="text-base" />
+                Xóa đã chọn
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {error ? (
@@ -721,9 +857,19 @@ function ProductsPage() {
               <table className="min-w-full text-left text-sm">
                 <thead className="border-b border-white/55 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                   <tr>
+                    <th className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="accent-primary"
+                        checked={allFilteredSelected}
+                        onChange={toggleSelectAllFiltered}
+                        aria-label="Chọn tất cả"
+                      />
+                    </th>
                     <th className="px-4 py-3">Ảnh</th>
                     <th className="px-4 py-3">Mã</th>
                     <th className="px-4 py-3">Tên / NL</th>
+                    <th className="px-4 py-3">Danh mục</th>
                     <th className="px-4 py-3">Cost</th>
                     <th className="px-4 py-3">Giá chốt</th>
                     <th className="px-4 py-3">LN</th>
@@ -732,130 +878,180 @@ function ProductsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-container">
-                  {filtered.map((product) => (
-                    <tr key={product.id} className={!product.active ? 'opacity-50' : ''}>
-                      <td className="px-4 py-3">
-                        <ProductThumb product={product} />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">
-                        {product.code}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-on-surface">{product.name}</p>
-                        <p className="max-w-xs truncate text-xs text-on-surface-variant">{product.materials}</p>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(product.costPrice)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium">
-                        {formatMoney(product.sellPrice)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-emerald-700">
-                        {formatMoney(product.profit)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
-                        {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(product)}
-                          className="mr-2 text-sm font-medium text-primary hover:text-primary"
-                        >
-                          Sửa
-                        </button>
-                        {product.active ? (
+                  {filtered.map((product) => {
+                    const checked = selectedIds.includes(product.id)
+                    return (
+                      <tr
+                        key={product.id}
+                        className={[
+                          !product.active ? 'opacity-50' : '',
+                          checked ? 'bg-primary/5' : '',
+                        ].join(' ')}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            checked={checked}
+                            onChange={() => toggleSelect(product.id)}
+                            aria-label={`Chọn ${product.name}`}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <ProductThumb product={product} />
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">
+                          {product.code}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-on-surface">{product.name}</p>
+                          <p className="max-w-xs truncate text-xs text-on-surface-variant">{product.materials}</p>
+                        </td>
+                        <td className="max-w-[180px] px-4 py-3 text-xs text-on-surface-variant">
+                          {(product.categories || []).length
+                            ? product.categories.map((item) => item.name).join(', ')
+                            : '—'}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3">{formatMoney(product.costPrice)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 font-medium">
+                          {formatMoney(product.sellPrice)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-emerald-700">
+                          {formatMoney(product.profit)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
+                          {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right">
                           <button
                             type="button"
-                            onClick={() => handleDeactivate(product)}
-                            className="mr-2 text-sm text-outline hover:text-on-surface-variant"
+                            onClick={() => openEdit(product)}
+                            className="mr-2 text-sm font-medium text-primary hover:text-primary"
                           >
-                            Ngừng
+                            Sửa
                           </button>
-                        ) : (
+                          {product.active ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivate(product)}
+                              className="mr-2 text-sm text-outline hover:text-on-surface-variant"
+                            >
+                              Ngừng
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleActivate(product)}
+                              className="mr-2 text-sm text-emerald-600 hover:text-emerald-700"
+                            >
+                              Bán lại
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleActivate(product)}
-                            className="mr-2 text-sm text-emerald-600 hover:text-emerald-700"
+                            onClick={() => handleDelete(product)}
+                            className="text-sm text-red-500 hover:text-red-600"
                           >
-                            Bán lại
+                            Xóa
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(product)}
-                          className="text-sm text-red-500 hover:text-red-600"
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((product) => (
-              <div
-                key={product.id}
-                className={[
-                  'rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm',
-                  !product.active ? 'opacity-60' : '',
-                ].join(' ')}
-              >
-                <button type="button" onClick={() => openEdit(product)} className="w-full text-left">
+            <label className="glass-card inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-on-surface">
+              <input
+                type="checkbox"
+                className="accent-primary"
+                checked={allFilteredSelected}
+                onChange={toggleSelectAllFiltered}
+              />
+              Chọn tất cả ({filtered.length})
+            </label>
+            {filtered.map((product) => {
+              const checked = selectedIds.includes(product.id)
+              return (
+                <div
+                  key={product.id}
+                  className={[
+                    'rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm',
+                    !product.active ? 'opacity-60' : '',
+                    checked ? 'border-primary/30 bg-primary/5' : '',
+                  ].join(' ')}
+                >
                   <div className="flex items-start gap-3">
-                    <ProductThumb product={product} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-mono text-[11px] font-bold text-on-surface-variant">{product.code}</p>
-                          <p className="mt-1 font-semibold text-on-surface">{product.name}</p>
+                    <input
+                      type="checkbox"
+                      className="mt-1 accent-primary"
+                      checked={checked}
+                      onChange={() => toggleSelect(product.id)}
+                      aria-label={`Chọn ${product.name}`}
+                    />
+                    <button type="button" onClick={() => openEdit(product)} className="min-w-0 flex-1 text-left">
+                      <div className="flex items-start gap-3">
+                        <ProductThumb product={product} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-mono text-[11px] font-bold text-on-surface-variant">{product.code}</p>
+                              <p className="mt-1 font-semibold text-on-surface">{product.name}</p>
+                            </div>
+                            <p className="font-semibold text-primary">{formatMoney(product.sellPrice)}</p>
+                          </div>
+                          <p className="mt-2 text-xs text-on-surface-variant">
+                            Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
+                            {!product.active ? ' · Đã ngừng bán' : ''}
+                          </p>
+                          {(product.categories || []).length ? (
+                            <p className="mt-1 text-xs text-primary/80">
+                              {product.categories.map((item) => item.name).join(' · ')}
+                            </p>
+                          ) : null}
                         </div>
-                        <p className="font-semibold text-primary">{formatMoney(product.sellPrice)}</p>
                       </div>
-                      <p className="mt-2 text-xs text-on-surface-variant">
-                        Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
-                        {!product.active ? ' · Đã ngừng bán' : ''}
-                      </p>
-                    </div>
+                    </button>
                   </div>
-                </button>
-                <div className="mt-3 flex gap-3 border-t border-surface-container pt-3">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(product)}
-                    className="text-sm font-medium text-primary"
-                  >
-                    Sửa
-                  </button>
-                  {product.active ? (
+                  <div className="mt-3 flex gap-3 border-t border-surface-container pt-3 pl-7">
                     <button
                       type="button"
-                      onClick={() => handleDeactivate(product)}
-                      className="text-sm text-on-surface-variant"
+                      onClick={() => openEdit(product)}
+                      className="text-sm font-medium text-primary"
                     >
-                      Ngừng
+                      Sửa
                     </button>
-                  ) : (
+                    {product.active ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDeactivate(product)}
+                        className="text-sm text-on-surface-variant"
+                      >
+                        Ngừng
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleActivate(product)}
+                        className="text-sm text-emerald-600"
+                      >
+                        Bán lại
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => handleActivate(product)}
-                      className="text-sm text-emerald-600"
+                      onClick={() => handleDelete(product)}
+                      className="text-sm text-red-500"
                     >
-                      Bán lại
+                      Xóa
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(product)}
-                    className="text-sm text-red-500"
-                  >
-                    Xóa
-                  </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -868,6 +1064,7 @@ function ProductsPage() {
         onClose={closeForm}
         onRegenerateCode={regenerateCode}
         onRemoveCloudImage={queueRemovedCloudImage}
+        categoryOptions={categories}
         isEditing={Boolean(editingId)}
         onDelete={
           editingId

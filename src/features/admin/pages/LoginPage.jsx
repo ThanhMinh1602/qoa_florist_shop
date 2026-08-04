@@ -9,6 +9,7 @@ function LoginPage() {
   const location = useLocation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -71,14 +72,14 @@ function LoginPage() {
               <div className="group relative">
                 <MaterialIcon
                   name="person"
-                  className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-primary/50 transition-colors group-focus-within:text-primary"
+                  className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-[1.25rem] text-primary/50 transition-colors group-focus-within:text-primary"
                 />
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  className="input-glass pl-12"
+                  className="input-glass with-leading-icon"
                   placeholder="Nhập tên tài khoản"
                   autoComplete="username"
                   required
@@ -93,18 +94,30 @@ function LoginPage() {
               <div className="group relative">
                 <MaterialIcon
                   name="lock"
-                  className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-primary/50 transition-colors group-focus-within:text-primary"
+                  className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-[1.25rem] text-primary/50 transition-colors group-focus-within:text-primary"
                 />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="input-glass pl-12"
+                  className="input-glass with-leading-icon with-trailing-icon"
                   placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute top-1/2 right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-primary/50 transition-colors hover:bg-primary/5 hover:text-primary"
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  tabIndex={-1}
+                >
+                  <MaterialIcon
+                    name={showPassword ? 'visibility_off' : 'visibility'}
+                    className="text-[1.25rem]"
+                  />
+                </button>
               </div>
             </div>
 
@@ -121,14 +134,6 @@ function LoginPage() {
               </button>
             </div>
           </form>
-
-          <div className="mt-8 w-full text-center">
-            <p className="text-sm text-outline">
-              Hệ thống quản lý nội bộ.
-              <br />
-              Yêu cầu kết nối bảo mật.
-            </p>
-          </div>
         </div>
       </main>
     </div>

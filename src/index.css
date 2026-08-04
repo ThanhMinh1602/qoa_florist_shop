@@ -184,6 +184,14 @@ body {
     box-shadow 0.2s ease;
 }
 
+.input-glass.with-leading-icon {
+  padding-left: 3rem;
+}
+
+.input-glass.with-trailing-icon {
+  padding-right: 3rem;
+}
+
 .input-glass::placeholder {
   color: var(--color-outline-variant);
 }
