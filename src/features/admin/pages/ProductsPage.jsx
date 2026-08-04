@@ -98,7 +98,7 @@ const inputClass =
   'w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20'
 
 const actionBtnClass =
-  'inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/55 bg-white/40 px-2.5 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
+  'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/40 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
 
 function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDelete }) {
   return (
@@ -109,9 +109,9 @@ function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDel
         onClick={() => onEdit(product)}
         className={`${actionBtnClass} text-primary`}
         title="Sửa"
+        aria-label="Sửa"
       >
         <MaterialIcon name="edit" className="text-base" />
-        <span className="hidden sm:inline">Sửa</span>
       </button>
 
       {product.active ? (
@@ -121,9 +121,9 @@ function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDel
           onClick={() => onToggleActive(product, false)}
           className={`${actionBtnClass} text-on-surface-variant`}
           title="Ngừng bán"
+          aria-label="Ngừng bán"
         >
           <MaterialIcon name="visibility_off" className="text-base" />
-          <span className="hidden sm:inline">Ngừng</span>
         </button>
       ) : (
         <button
@@ -132,9 +132,9 @@ function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDel
           onClick={() => onToggleActive(product, true)}
           className={`${actionBtnClass} text-emerald-700`}
           title="Bán lại"
+          aria-label="Bán lại"
         >
           <MaterialIcon name="visibility" className="text-base" />
-          <span className="hidden sm:inline">Bán lại</span>
         </button>
       )}
 
@@ -144,28 +144,39 @@ function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDel
         onClick={() => onDelete(product)}
         className={`${actionBtnClass} text-red-600 hover:border-red-200 hover:bg-red-50/70`}
         title="Xóa"
+        aria-label="Xóa"
       >
         <MaterialIcon name="delete" className="text-base" />
-        <span className="hidden sm:inline">Xóa</span>
       </button>
     </div>
   )
 }
 
+function withMainFirst(list = []) {
+  return list.map((image, index) => ({
+    ...image,
+    isMain: index === 0,
+  }))
+}
+
 function toForm(product) {
+  const images = Array.isArray(product.images)
+    ? product.images.map((image) => ({
+        id: image.id,
+        url: image.url,
+        publicId: image.publicId || '',
+        isMain: Boolean(image.isMain),
+      }))
+    : []
+
+  const sortedImages = [...images].sort((a, b) => Number(b.isMain) - Number(a.isMain))
+
   return {
     code: product.code || '',
     name: product.name || '',
     materials: product.materials || '',
     description: product.description || '',
-    images: Array.isArray(product.images)
-      ? product.images.map((image) => ({
-          id: image.id,
-          url: image.url,
-          publicId: image.publicId || '',
-          isMain: Boolean(image.isMain),
-        }))
-      : [],
+    images: withMainFirst(sortedImages),
     categoryIds: Array.isArray(product.categoryIds) ? [...product.categoryIds] : [],
     costPrice: product.costPrice ?? '',
     makeMinutes: product.makeMinutes ?? '',
@@ -178,6 +189,13 @@ function toForm(product) {
 
 function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) {
   const inputRef = useRef(null)
+  const dragIdRef = useRef(null)
+  const [draggingId, setDraggingId] = useState(null)
+  const [overId, setOverId] = useState(null)
+  const [limitMessage, setLimitMessage] = useState('')
+  const maxImages = 6
+  const remainingSlots = Math.max(0, maxImages - images.length)
+  const canAddMore = remainingSlots > 0 && !disabled
 
   function handleFilesSelected(event) {
     const files = Array.from(event.target.files || []).filter((file) =>
@@ -186,39 +204,87 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
     event.target.value = ''
     if (files.length === 0) return
 
+    if (remainingSlots <= 0) {
+      setLimitMessage('Chỉ được tải tối đa 6 hình ảnh.')
+      return
+    }
+
+    const accepted = files.slice(0, remainingSlots)
     const next = [...images]
-    for (const file of files) {
+    for (const file of accepted) {
       next.push({
         id: crypto.randomUUID(),
         url: URL.createObjectURL(file),
         publicId: '',
-        isMain: next.length === 0,
+        isMain: false,
         file,
       })
     }
-    if (next.length > 0 && !next.some((image) => image.isMain)) {
-      next[0].isMain = true
-    }
-    onChange(next)
-  }
+    onChange(withMainFirst(next))
 
-  function setMain(imageId) {
-    onChange(
-      images.map((image) => ({
-        ...image,
-        isMain: image.id === imageId,
-      })),
-    )
+    if (files.length > accepted.length) {
+      setLimitMessage(`Chỉ thêm được ${accepted.length} ảnh nữa (tối đa 6).`)
+    } else {
+      setLimitMessage('')
+    }
   }
 
   function removeImage(image) {
-    const next = images.filter((item) => item.id !== image.id)
-    if (next.length > 0 && !next.some((item) => item.isMain)) {
-      next[0].isMain = true
-    }
+    const next = withMainFirst(images.filter((item) => item.id !== image.id))
     onChange(next)
     revokeLocalPreview(image)
     if (image.publicId) onRemoveCloudImage?.(image.publicId)
+    setLimitMessage('')
+  }
+
+  function reorderById(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return
+    const fromIndex = images.findIndex((item) => item.id === fromId)
+    const toIndex = images.findIndex((item) => item.id === toId)
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return
+    const next = [...images]
+    const [item] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, item)
+    onChange(withMainFirst(next))
+  }
+
+  function handleDragStart(event, image) {
+    if (disabled) return
+    dragIdRef.current = image.id
+    setDraggingId(image.id)
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', image.id)
+    // Ghost nhẹ hơn
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.style.opacity = '0.45'
+    }
+  }
+
+  function handleDragOver(event, image) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    const fromId = dragIdRef.current
+    if (!fromId || fromId === image.id) return
+    setOverId(image.id)
+    reorderById(fromId, image.id)
+  }
+
+  function handleDragLeave(image) {
+    if (overId === image.id) setOverId(null)
+  }
+
+  function handleDrop(event) {
+    event.preventDefault()
+    setOverId(null)
+  }
+
+  function handleDragEnd(event) {
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.style.opacity = ''
+    }
+    dragIdRef.current = null
+    setDraggingId(null)
+    setOverId(null)
   }
 
   return (
@@ -227,17 +293,17 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
         <div>
           <p className="text-sm font-medium text-on-surface">Hình ảnh sản phẩm</p>
           <p className="text-xs text-outline">
-            Chọn ảnh hiện ngay · ảnh sẽ được tối ưu khi bấm Lưu
+            Ảnh đầu tiên là ảnh chính · kéo thả để sắp xếp · tối đa 6 ảnh
           </p>
         </div>
         <button
           type="button"
-          disabled={disabled}
+          disabled={!canAddMore}
           onClick={() => inputRef.current?.click()}
           className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-sm font-medium text-primary hover:bg-surface-container-low disabled:opacity-60"
         >
           <MaterialIcon name="add_photo_alternate" className="text-lg" />
-          Thêm ảnh
+          Thêm ảnh ({images.length}/6)
         </button>
         <input
           ref={inputRef}
@@ -249,66 +315,78 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
         />
       </div>
 
+      {limitMessage ? (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+          {limitMessage}
+        </p>
+      ) : null}
+
       {images.length === 0 ? (
         <button
           type="button"
-          disabled={disabled}
+          disabled={!canAddMore}
           onClick={() => inputRef.current?.click()}
           className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-low/70 px-4 py-8 text-sm text-on-surface-variant hover:bg-surface-container-low disabled:opacity-60"
         >
           <MaterialIcon name="imagesmode" className="text-3xl text-primary-fixed-dim" />
-          Chọn ảnh từ máy — hiện preview ngay
+          Chọn ảnh từ máy (tối đa 6)
         </button>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {images.map((image) => (
-            <li
-              key={image.id}
-              className={[
-                'relative overflow-hidden rounded-xl border bg-surface-container-low',
-                image.isMain ? 'border-primary ring-2 ring-primary/20' : 'border-outline-variant/25',
-              ].join(' ')}
-            >
-              <img
-                src={image.url}
-                alt=""
-                className="aspect-square w-full object-cover"
-              />
-              {image.isMain ? (
-                <span className="absolute left-2 top-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                  Main
-                </span>
-              ) : null}
-              {image.file ? (
-                <span className="absolute right-2 top-2 rounded-md bg-on-surface/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                  Chưa lưu
-                </span>
-              ) : null}
-              <div className="absolute inset-x-0 bottom-0 flex gap-1 bg-gradient-to-t from-black/60 to-transparent p-2 pt-6">
-                {!image.isMain ? (
-                  <button
-                    type="button"
-                    onClick={() => setMain(image.id)}
-                    className="flex-1 rounded-lg bg-surface-container-lowest/95 px-2 py-1 text-[11px] font-medium text-on-surface hover:bg-surface-container-lowest"
-                  >
-                    Đặt main
-                  </button>
-                ) : (
-                  <span className="flex-1 rounded-lg bg-primary/90 px-2 py-1 text-center text-[11px] font-medium text-white">
-                    Ảnh chính
+          {images.map((image, index) => {
+            const isMain = index === 0
+            const isDragging = draggingId === image.id
+            const isOver = overId === image.id && draggingId && draggingId !== image.id
+
+            return (
+              <li
+                key={image.id}
+                draggable={!disabled}
+                onDragStart={(event) => handleDragStart(event, image)}
+                onDragOver={(event) => handleDragOver(event, image)}
+                onDragLeave={() => handleDragLeave(image)}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                className={[
+                  'relative aspect-square touch-none overflow-hidden rounded-xl border-2 bg-surface-container-low transition-all duration-200 ease-out',
+                  disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+                  isMain
+                    ? 'border-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]'
+                    : 'border-outline-variant/25',
+                  isDragging ? 'scale-[0.96] opacity-40 shadow-none' : 'scale-100',
+                  isOver ? 'translate-y-0.5 border-primary/50 shadow-[0_10px_28px_rgba(74,48,32,0.16)]' : '',
+                ].join(' ')}
+              >
+                <img
+                  src={image.url}
+                  alt=""
+                  className="pointer-events-none h-full w-full object-cover"
+                  draggable={false}
+                />
+
+                {isMain ? (
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="rounded-full border border-white/50 bg-white/35 px-3 py-1.5 text-[11px] font-bold tracking-[0.16em] text-emerald-800 uppercase shadow-sm backdrop-blur-md">
+                      Main
+                    </span>
                   </span>
-                )}
+                ) : null}
+
                 <button
                   type="button"
+                  disabled={disabled}
                   onClick={() => removeImage(image)}
-                  className="rounded-lg bg-surface-container-lowest/95 px-2 py-1 text-[11px] font-medium text-red-600 hover:bg-surface-container-lowest"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/50 bg-black/35 text-white backdrop-blur-md transition hover:bg-red-500/90 disabled:opacity-60"
                   aria-label="Xóa ảnh"
+                  title="Xóa ảnh"
                 >
-                  <MaterialIcon name="delete" className="text-sm" />
+                  <MaterialIcon name="close" className="text-base" />
                 </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
@@ -829,7 +907,7 @@ function ProductsPage() {
     const ok = await confirm({
       title: 'Xóa nhiều sản phẩm',
       message: `Xóa hẳn ${selectedIds.length} sản phẩm đã chọn?\nThao tác này không hoàn tác được.`,
-      confirmLabel: `Xóa ${selectedIds.length} SP`,
+      confirmLabel: `Xóa ${selectedIds.length} sản phẩm`,
       variant: 'danger',
     })
     if (!ok) return
@@ -940,12 +1018,12 @@ function ProductsPage() {
                     </th>
                     <th className="px-4 py-3">Ảnh</th>
                     <th className="px-4 py-3">Mã</th>
-                    <th className="px-4 py-3">Tên / NL</th>
+                    <th className="px-4 py-3">Tên / Nguyên liệu</th>
                     <th className="px-4 py-3">Danh mục</th>
-                    <th className="px-4 py-3">Cost</th>
+                    <th className="px-4 py-3">Giá vốn</th>
                     <th className="px-4 py-3">Giá chốt</th>
-                    <th className="px-4 py-3">LN</th>
-                    <th className="px-4 py-3">TG</th>
+                    <th className="px-4 py-3">Lợi nhuận</th>
+                    <th className="px-4 py-3">Thời gian</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -1056,7 +1134,8 @@ function ProductsPage() {
                             <p className="font-semibold text-primary">{formatMoney(product.sellPrice)}</p>
                           </div>
                           <p className="mt-2 text-xs text-on-surface-variant">
-                            Cost {formatMoney(product.costPrice)} · LN {formatMoney(product.profit)}
+                            Giá vốn {formatMoney(product.costPrice)} · Lợi nhuận{' '}
+                            {formatMoney(product.profit)}
                             {!product.active ? ' · Đã ngừng bán' : ''}
                           </p>
                           {(product.categories || []).length ? (

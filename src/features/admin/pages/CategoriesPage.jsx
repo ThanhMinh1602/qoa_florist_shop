@@ -22,7 +22,7 @@ const EMPTY_FORM = {
 }
 
 const actionBtnClass =
-  'inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/55 bg-white/40 px-2.5 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
+  'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/40 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
 
 function CategoryFormDialog({
   open,
@@ -497,14 +497,14 @@ function CategoriesPage() {
                           : 'text-on-surface-variant',
                       ].join(' ')}
                       title="Hiện trong lọc nhanh shop"
+                      aria-label={
+                        category.showInQuickFilter ? 'Ẩn lọc nhanh' : 'Hiện lọc nhanh'
+                      }
                     >
                       <MaterialIcon
                         name={category.showInQuickFilter ? 'filter_alt' : 'filter_alt_off'}
                         className="text-base"
                       />
-                      <span className="hidden sm:inline">
-                        {category.showInQuickFilter ? 'Lọc nhanh' : 'Ẩn lọc'}
-                      </span>
                     </button>
 
                     <button
@@ -513,9 +513,9 @@ function CategoriesPage() {
                       onClick={() => openEdit(category)}
                       className={`${actionBtnClass} text-primary`}
                       title="Sửa"
+                      aria-label="Sửa"
                     >
                       <MaterialIcon name="edit" className="text-base" />
-                      <span className="hidden sm:inline">Sửa</span>
                     </button>
 
                     <button
@@ -524,12 +524,12 @@ function CategoriesPage() {
                       onClick={() => handleToggleActive(category)}
                       className={`${actionBtnClass} text-on-surface-variant`}
                       title={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}
+                      aria-label={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}
                     >
                       <MaterialIcon
                         name={category.active ? 'visibility_off' : 'visibility'}
                         className="text-base"
                       />
-                      <span className="hidden sm:inline">{category.active ? 'Ẩn' : 'Hiện'}</span>
                     </button>
 
                     <button
@@ -538,9 +538,9 @@ function CategoriesPage() {
                       onClick={() => handleDelete(category)}
                       className={`${actionBtnClass} text-red-600 hover:border-red-200 hover:bg-red-50/70`}
                       title="Xóa"
+                      aria-label="Xóa"
                     >
                       <MaterialIcon name="delete" className="text-base" />
-                      <span className="hidden sm:inline">Xóa</span>
                     </button>
                   </div>
                 </li>
