@@ -21,6 +21,9 @@ export function toDateInputValue(value) {
 export function summarizeItems(items = []) {
   if (!items.length) return '—'
   return items
-    .map((item) => `${item.quantity || 1}× ${item.productName}`)
+    .map((item) => {
+      const color = item.color ? ` (${item.color})` : ''
+      return `${item.quantity || 1}× ${item.productName}${color}`
+    })
     .join(', ')
 }

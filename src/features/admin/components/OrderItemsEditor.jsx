@@ -20,6 +20,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         quantity: 1,
         unitPrice: product.sellPrice || 0,
         unitCost: product.costPrice || 0,
+        color: '',
         note: '',
       },
     ])
@@ -34,6 +35,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         quantity: 1,
         unitPrice: 0,
         unitCost: 0,
+        color: '',
         note: '',
       },
     ])
@@ -81,47 +83,65 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         </p>
       ) : (
         <div className="space-y-2">
-          {items.map((item, index) => (
-            <div
-              key={`${item.productId || 'custom'}-${index}`}
-              className="grid gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low/20 p-3 sm:grid-cols-[1fr_5rem_7rem_auto]"
-            >
-              <input
-                value={item.productName}
-                onChange={(e) => updateItem(index, { productName: e.target.value })}
-                placeholder="Tên sản phẩm"
-                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <input
-                type="number"
-                min="1"
-                value={item.quantity}
-                onChange={(e) => updateItem(index, { quantity: Number(e.target.value) || 1 })}
-                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                title="Số lượng"
-              />
-              <input
-                type="number"
-                min="0"
-                value={item.unitPrice}
-                onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) || 0 })}
-                className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                title="Đơn giá"
-              />
-              <button
-                type="button"
-                onClick={() => removeItem(index)}
-                className="rounded-lg px-2 text-sm text-outline hover:bg-surface-container-lowest hover:text-red-500"
+          {items.map((item, index) => {
+            const lineTotal = (Number(item.unitPrice) || 0) * (Number(item.quantity) || 1)
+            return (
+              <div
+                key={`${item.productId || 'custom'}-${index}`}
+                className="space-y-2 rounded-xl border border-outline-variant/25 bg-surface-container-low/20 p-3"
               >
-                Xóa
-              </button>
-            </div>
-          ))}
+                <div className="grid gap-2 sm:grid-cols-[1fr_5rem_7rem_auto]">
+                  <input
+                    value={item.productName}
+                    onChange={(e) => updateItem(index, { productName: e.target.value })}
+                    placeholder="vd: Hộp tulip nhỏ"
+                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, { quantity: Number(e.target.value) || 1 })}
+                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                    title="Số lượng"
+                    placeholder="SL"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) || 0 })}
+                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                    title="Đơn giá"
+                    placeholder="79000"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="rounded-lg px-2 text-sm text-outline hover:bg-surface-container-lowest hover:text-red-500"
+                  >
+                    Xóa
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    value={item.color || ''}
+                    onChange={(e) => updateItem(index, { color: e.target.value })}
+                    placeholder="vd: hồng · 2 xanh dương 3 hồng"
+                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                  />
+                  <p className="flex items-center justify-end px-1 text-sm font-medium text-on-surface">
+                    {formatMoney(lineTotal)}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
       <p className="text-right text-sm font-semibold text-on-surface">
-        Thu vào (tạm tính): {formatMoney(subtotal)}
+        Tổng giá sản phẩm: {formatMoney(subtotal)}
       </p>
     </div>
   )

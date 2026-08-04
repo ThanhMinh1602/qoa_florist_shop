@@ -178,22 +178,6 @@ export function isAdminSectionActive(pathname, section) {
   return (section.children || []).some((item) => isAdminNavItemActive(pathname, item))
 }
 
-/** delivery | delivery_qr */
-export const ORDER_CREATE_MODES = [
-  {
-    id: 'delivery',
-    label: 'Chỉ giao hoa',
-    description: 'Đơn giao hàng — không tạo thiệp QR.',
-    icon: 'local_shipping',
-  },
-  {
-    id: 'delivery_qr',
-    label: 'Giao hoa + thiệp QR',
-    description: 'Đơn giao kèm thiệp số cho người nhận.',
-    icon: 'qr_code_2',
-  },
-]
-
 export const PAYMENT_STATUS_LABELS = {
   unpaid: {
     label: 'Chưa thanh toán',

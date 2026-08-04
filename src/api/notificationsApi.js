@@ -69,3 +69,16 @@ export function updateCustomRequestApi(id, data) {
     body: JSON.stringify(data),
   })
 }
+
+export function deleteCustomRequestApi(id) {
+  return request(`/custom-requests/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export function bulkDeleteCustomRequestsApi(ids) {
+  return request('/custom-requests/bulk-delete', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  })
+}

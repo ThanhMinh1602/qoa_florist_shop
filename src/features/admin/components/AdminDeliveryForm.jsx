@@ -1,140 +1,158 @@
 const fieldClassName =
-  'w-full rounded-xl border border-outline-variant/25 px-4 py-3 text-sm text-on-surface outline-none transition placeholder:text-outline focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
+  'w-full rounded-lg border border-outline-variant/25 px-3 py-2 text-sm text-on-surface outline-none transition placeholder:text-outline/55 focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
 
-function AdminDeliveryForm({ values, onChange }) {
-  function handleChange(field) {
-    return (event) => {
-      onChange(field, event.target.value)
-    }
+function makeFieldChange(onChange) {
+  return (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
+    onChange(field, value)
   }
+}
+
+export function OrderCustomerFields({ values, onChange }) {
+  const handleChange = makeFieldChange(onChange)
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h4 className="text-sm font-semibold text-on-surface">Khách đặt hàng</h4>
-        <p className="mt-1 text-xs text-on-surface-variant">Người gọi / đặt tại quầy — dùng để liên hệ xác nhận.</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-on-surface">
-              Tên khách <span className="text-primary">*</span>
-            </span>
-            <input
-              type="text"
-              value={values.customerName}
-              onChange={handleChange('customerName')}
-              className={fieldClassName}
-              placeholder="Nguyễn Văn A"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-on-surface">
-              SĐT khách <span className="text-primary">*</span>
-            </span>
-            <input
-              type="tel"
-              value={values.customerPhone}
-              onChange={handleChange('customerPhone')}
-              className={fieldClassName}
-              placeholder="0901 234 567"
-              required
-            />
-          </label>
-        </div>
-      </section>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">
+          Tên KH <span className="text-primary">*</span>
+        </span>
+        <input
+          type="text"
+          value={values.customerName}
+          onChange={handleChange('customerName')}
+          className={fieldClassName}
+          placeholder="vd: My, Thu Phương, Mẹ Ny"
+          required
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">SĐT</span>
+        <input
+          type="tel"
+          value={values.customerPhone}
+          onChange={handleChange('customerPhone')}
+          className={fieldClassName}
+          placeholder="vd: 0907 155 210"
+        />
+      </label>
+      <label className="block sm:col-span-2">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">Địa chỉ</span>
+        <textarea
+          value={values.deliveryAddress}
+          onChange={handleChange('deliveryAddress')}
+          rows={3}
+          className={`${fieldClassName} resize-y leading-5`}
+          placeholder="vd: 14 Lê Hoàng Phái, P.17, Gò Vấp, TP.HCM"
+        />
+      </label>
+    </div>
+  )
+}
 
-      <section>
-        <h4 className="text-sm font-semibold text-on-surface">Giao hàng</h4>
-        <p className="mt-1 text-xs text-on-surface-variant">Người nhận hoa và địa chỉ giao.</p>
-        <div className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-on-surface">
-                Người nhận hoa <span className="text-primary">*</span>
-              </span>
-              <input
-                type="text"
-                value={values.deliveryRecipientName}
-                onChange={handleChange('deliveryRecipientName')}
-                className={fieldClassName}
-                required
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-on-surface">
-                SĐT người nhận <span className="text-primary">*</span>
-              </span>
-              <input
-                type="tel"
-                value={values.deliveryPhone}
-                onChange={handleChange('deliveryPhone')}
-                className={fieldClassName}
-                required
-              />
-            </label>
-          </div>
+export function OrderScheduleFields({ values, onChange }) {
+  const handleChange = makeFieldChange(onChange)
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-on-surface">
-              Địa chỉ giao <span className="text-primary">*</span>
-            </span>
-            <textarea
-              value={values.deliveryAddress}
-              onChange={handleChange('deliveryAddress')}
-              className={`${fieldClassName} min-h-24 resize-y leading-6`}
-              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
-              required
-            />
-          </label>
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-on-surface-variant">Ngày đặt</span>
+          <input
+            type="date"
+            value={values.orderDate || ''}
+            onChange={handleChange('orderDate')}
+            className={fieldClassName}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-on-surface-variant">Ngày cần</span>
+          <input
+            type="date"
+            value={values.deliveryDate || ''}
+            onChange={handleChange('deliveryDate')}
+            className={fieldClassName}
+          />
+        </label>
+      </div>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">Thời gian ship</span>
+        <input
+          type="text"
+          value={values.deliveryTimeSlot || ''}
+          onChange={handleChange('deliveryTimeSlot')}
+          className={fieldClassName}
+          placeholder="vd: Minh ship · 8h–12h · Sáng"
+        />
+      </label>
+    </div>
+  )
+}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-on-surface">Ngày giao</span>
-              <input
-                type="date"
-                value={values.deliveryDate}
-                onChange={handleChange('deliveryDate')}
-                className={fieldClassName}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-on-surface">Khung giờ</span>
-              <select
-                value={values.deliveryTimeSlot}
-                onChange={handleChange('deliveryTimeSlot')}
-                className={fieldClassName}
-              >
-                <option value="">Chọn khung giờ</option>
-                <option value="8h-12h">8h – 12h</option>
-                <option value="12h-17h">12h – 17h</option>
-                <option value="17h-21h">17h – 21h</option>
-              </select>
-            </label>
-          </div>
+export function OrderNoteFields({ values, onChange }) {
+  const handleChange = makeFieldChange(onChange)
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-on-surface">Ghi chú giao hàng</span>
-            <textarea
-              value={values.deliveryNote}
-              onChange={handleChange('deliveryNote')}
-              className={`${fieldClassName} min-h-20 resize-y leading-6`}
-              placeholder="Gọi trước khi giao, để ở bảo vệ..."
-            />
-          </label>
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">Note đơn</span>
+        <textarea
+          value={values.note}
+          onChange={handleChange('note')}
+          rows={3}
+          className={`${fieldClassName} resize-y leading-5`}
+          placeholder="vd: Tag SN đỏ · Hpbd Mr Tài 24/10 · Khoanh 12/7 màu đỏ"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">Ghi chú giao hàng</span>
+        <textarea
+          value={values.deliveryNote}
+          onChange={handleChange('deliveryNote')}
+          rows={3}
+          className={`${fieldClassName} resize-y leading-5`}
+          placeholder="vd: Gọi trước 15 phút · Để bảo vệ · Không giao trưa"
+        />
+      </label>
+    </div>
+  )
+}
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-on-surface">
-              Ghi chú nội bộ (loại hoa, màu, ngân sách...)
-            </span>
-            <textarea
-              value={values.note}
-              onChange={handleChange('note')}
-              className={`${fieldClassName} min-h-20 resize-y leading-6`}
-              placeholder="Ví dụ: Bó hồng đỏ 30 bông, phụ kiện nơ trắng..."
-            />
-          </label>
-        </div>
-      </section>
+export function OrderTrackingFields({ values, onChange }) {
+  const handleChange = makeFieldChange(onChange)
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-on-surface-variant">Mã vận đơn</span>
+        <input
+          type="text"
+          value={values.shippingTrackingCode || ''}
+          onChange={handleChange('shippingTrackingCode')}
+          className={fieldClassName}
+          placeholder="vd: GHN123… / GHTK…"
+        />
+      </label>
+      <label className="flex h-10 items-center gap-2 text-sm text-on-surface">
+        <input
+          type="checkbox"
+          checked={Boolean(values.monthEndChecked)}
+          onChange={handleChange('monthEndChecked')}
+          className="h-4 w-4 rounded border-outline-variant"
+        />
+        Check cuối tháng
+      </label>
+    </div>
+  )
+}
+
+function AdminDeliveryForm({ values, onChange }) {
+  return (
+    <div className="space-y-4">
+      <OrderCustomerFields values={values} onChange={onChange} />
+      <OrderScheduleFields values={values} onChange={onChange} />
+      <OrderNoteFields values={values} onChange={onChange} />
+      <OrderTrackingFields values={values} onChange={onChange} />
     </div>
   )
 }

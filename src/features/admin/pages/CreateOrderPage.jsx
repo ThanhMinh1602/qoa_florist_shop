@@ -1,107 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
-import MobileFrame from '../../../components/common/MobileFrame'
-import MaterialIcon from '../../../components/common/MaterialIcon'
-import TopicLabel from '../../../components/common/TopicLabel'
 import { submitCustomRequestApi } from '../../../api/customRequestsApi'
 import { fetchProductsApi } from '../../../api/productsApi'
 import {
-  DEFAULT_CARD_STEP,
   DEFAULT_DELIVERY_STEP,
+  EMPTY_ORDER_MONEY,
 } from '../../../constants/customRequestDefaults'
-import { TOPICS } from '../../../constants/topics'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
-import CustomCardStepForm from '../../custom/components/CustomCardStepForm'
-import { ORDER_CREATE_MODES } from '../constants/adminNavItems'
-import AdminDeliveryForm from '../components/AdminDeliveryForm'
+import { calcOrderMoney } from '../../../utils/orderMoney'
+import {
+  OrderCustomerFields,
+  OrderNoteFields,
+  OrderScheduleFields,
+  OrderTrackingFields,
+} from '../components/AdminDeliveryForm'
 import CreateOrderSuccess from '../components/CreateOrderSuccess'
 import OrderItemsEditor, { calcItemsSubtotal } from '../components/OrderItemsEditor'
 import OrderMoneyFields from '../components/OrderMoneyFields'
 import CreateOrderMobileView from '../mobile/CreateOrderMobileView'
 
-const EMPTY_MONEY = {
-  deposit: '',
-  shippingFee: '',
-  codAmount: '',
-  paidAmount: '',
-  paymentStatus: 'unpaid',
-  paymentNote: '',
-  shipDate: '',
-  subtotalOverride: '',
-}
-
-function OrderModePicker({ mode, onChange }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {ORDER_CREATE_MODES.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onChange(item.id)}
-          className={[
-            'rounded-2xl border px-4 py-4 text-left transition',
-            mode === item.id
-              ? 'border-primary/40 bg-primary-container/15 ring-1 ring-primary/20'
-              : 'border-outline-variant/25 bg-surface-container-lowest hover:bg-surface-container-low/70',
-          ].join(' ')}
-        >
-          <span className="flex items-center gap-2 text-base font-semibold text-on-surface">
-            <MaterialIcon name={item.icon} className="text-xl text-primary" />
-            {item.label}
-          </span>
-          <span className="mt-1 block text-sm text-on-surface-variant">{item.description}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 function CreateOrderPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const availableTopics = TOPICS.filter((topic) => topic.available)
-  const modeParam = searchParams.get('mode')
-  const initialMode = ORDER_CREATE_MODES.some((item) => item.id === modeParam)
-    ? modeParam
-    : 'delivery_qr'
-
-  const [mode, setMode] = useState(initialMode)
-  const [step, setStep] = useState(1)
-  const [topicId, setTopicId] = useState(availableTopics[0]?.id ?? 'birthday')
-  const [cardData, setCardData] = useState(DEFAULT_CARD_STEP)
   const [deliveryData, setDeliveryData] = useState(DEFAULT_DELIVERY_STEP)
   const [products, setProducts] = useState([])
   const [items, setItems] = useState([])
-  const [money, setMoney] = useState(EMPTY_MONEY)
+  const [money, setMoney] = useState(EMPTY_ORDER_MONEY)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [savedRequest, setSavedRequest] = useState(null)
   const isLgUp = useIsLgUp()
 
-  const withQr = mode === 'delivery_qr'
-  const itemsSubtotal = useMemo(() => calcItemsSubtotal(items), [items])
-  const subtotal =
-    money.subtotalOverride !== '' && money.subtotalOverride !== undefined
-      ? Number(money.subtotalOverride) || 0
-      : itemsSubtotal
+  const productsTotal = useMemo(() => calcItemsSubtotal(items), [items])
+  const totals = useMemo(
+    () =>
+      calcOrderMoney({
+        productsTotal,
+        addOnAmount: money.addOnAmount,
+        deposit: money.deposit,
+        shippingFee: money.shippingFee,
+        actualShippingFee: money.actualShippingFee,
+        incidentalAmount: money.incidentalAmount,
+        codOverride: money.codManual ? money.codAmount : undefined,
+      }),
+    [productsTotal, money],
+  )
 
   useEffect(() => {
     fetchProductsApi(true)
       .then((result) => setProducts(result.data || []))
       .catch(() => setProducts([]))
-  }, [])
-
-  useEffect(() => {
-    if (modeParam && ORDER_CREATE_MODES.some((item) => item.id === modeParam)) {
-      setMode(modeParam)
-    } else if (modeParam === 'card') {
-      setMode('delivery_qr')
-    }
-  }, [modeParam])
-
-  const handleCardChange = useCallback((field, value) => {
-    setError('')
-    setCardData((previous) => ({ ...previous, [field]: value }))
   }, [])
 
   const handleDeliveryChange = useCallback((field, value) => {
@@ -123,76 +68,52 @@ function CreateOrderPage() {
     })
   }, [])
 
-  function handleModeChange(nextMode) {
-    setMode(nextMode)
-    setStep(1)
-    setError('')
-    const next = new URLSearchParams(searchParams)
-    if (nextMode === 'delivery_qr') next.delete('mode')
-    else next.set('mode', nextMode)
-    setSearchParams(next, { replace: true })
-  }
-
-  function validateCard() {
-    if (!cardData.recipientName.trim() || !cardData.message.trim()) {
-      setError('Vui lòng nhập tên người nhận và lời chúc.')
-      return false
-    }
-    return true
-  }
-
   function validateDelivery() {
-    if (
-      !deliveryData.customerName.trim() ||
-      !deliveryData.customerPhone.trim() ||
-      !deliveryData.deliveryRecipientName.trim() ||
-      !deliveryData.deliveryPhone.trim() ||
-      !deliveryData.deliveryAddress.trim()
-    ) {
-      setError('Vui lòng nhập đầy đủ thông tin khách và giao hàng.')
+    if (!deliveryData.customerName.trim()) {
+      setError('Vui lòng nhập tên khách hàng.')
       return false
     }
     return true
-  }
-
-  function handleContinueToStep2() {
-    if (withQr && !validateCard()) return
-    setDeliveryData((previous) => ({
-      ...previous,
-      deliveryRecipientName:
-        previous.deliveryRecipientName || (withQr ? cardData.recipientName.trim() : ''),
-    }))
-    setStep(2)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
-    if (withQr && !validateCard()) return
     if (!validateDelivery()) return
 
     setIsSubmitting(true)
     try {
-      const moneyPayload = {
+      const customerName = deliveryData.customerName.trim()
+      const customerPhone = deliveryData.customerPhone.trim()
+      const result = await submitCustomRequestApi({
+        withQr: false,
+        source: 'admin',
+        customerName,
+        customerPhone,
+        deliveryRecipientName: customerName,
+        deliveryPhone: customerPhone,
+        deliveryAddress: deliveryData.deliveryAddress.trim(),
+        deliveryDate: deliveryData.deliveryDate || '',
+        deliveryTimeSlot: deliveryData.deliveryTimeSlot || '',
+        deliveryNote: deliveryData.deliveryNote || '',
+        note: deliveryData.note || '',
+        orderDate: deliveryData.orderDate || undefined,
+        shipDate: deliveryData.deliveryDate || undefined,
+        shippingTrackingCode: deliveryData.shippingTrackingCode || '',
+        monthEndChecked: Boolean(deliveryData.monthEndChecked),
         items,
-        subtotal,
-        deposit: Number(money.deposit) || 0,
-        shippingFee: Number(money.shippingFee) || 0,
-        codAmount: Number(money.codAmount) || 0,
-        paidAmount: Number(money.paidAmount) || 0,
+        addOnAmount: totals.addOnAmount,
+        subtotal: totals.orderTotal,
+        deposit: totals.deposit,
+        shippingFee: totals.shippingFee,
+        actualShippingFee: totals.actualShippingFee,
+        incidentalAmount: totals.incidentalAmount,
+        codAmount: totals.codAmount,
+        paidAmount: Number(money.paidAmount) || totals.deposit,
         paymentStatus: money.paymentStatus,
         paymentNote: money.paymentNote,
-        shipDate: money.shipDate || undefined,
-        deliveryDate: money.shipDate || deliveryData.deliveryDate,
-      }
-
-      const payload = withQr
-        ? { withQr: true, topicId, ...cardData, ...deliveryData, ...moneyPayload }
-        : { withQr: false, ...deliveryData, ...moneyPayload }
-
-      const result = await submitCustomRequestApi(payload)
+      })
       setSavedRequest(result.data)
-      setStep(1)
     } catch (err) {
       setError(err.message || 'Không thể lên đơn. Vui lòng thử lại.')
     } finally {
@@ -201,59 +122,27 @@ function CreateOrderPage() {
   }
 
   function handleCreateAnother() {
-    setStep(1)
-    setCardData(DEFAULT_CARD_STEP)
-    setDeliveryData(DEFAULT_DELIVERY_STEP)
+    setDeliveryData({ ...DEFAULT_DELIVERY_STEP })
     setItems([])
-    setMoney(EMPTY_MONEY)
+    setMoney({ ...EMPTY_ORDER_MONEY })
     setSavedRequest(null)
     setError('')
   }
 
-  const submitLabel = withQr ? 'Tạo đơn hàng & tạo QR' : 'Tạo đơn hàng giao'
-  const commerceSection = (
-    <>
-      <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.06)] md:p-6">
-        <h3 className="text-lg font-semibold text-on-surface">Sản phẩm</h3>
-        <p className="mt-1 text-sm text-on-surface-variant">Chọn từ catalog giá cost hoặc nhập tùy chỉnh.</p>
-        <div className="mt-4">
-          <OrderItemsEditor products={products} items={items} onChange={setItems} />
-        </div>
-      </section>
-      <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.06)] md:p-6">
-        <h3 className="text-lg font-semibold text-on-surface">Tiền & giao</h3>
-        <div className="mt-4">
-          <OrderMoneyFields values={money} onChange={handleMoneyChange} subtotal={itemsSubtotal} />
-        </div>
-      </section>
-    </>
-  )
-
   if (!isLgUp) {
     return (
       <CreateOrderMobileView
-        mode={mode}
-        onModeChange={handleModeChange}
-        step={step}
-        topicId={topicId}
-        availableTopics={availableTopics}
-        cardData={cardData}
         deliveryData={deliveryData}
         products={products}
         items={items}
         money={money}
-        itemsSubtotal={itemsSubtotal}
+        productsTotal={productsTotal}
         error={error}
         isSubmitting={isSubmitting}
         savedRequest={savedRequest}
-        submitLabel={submitLabel}
-        onTopicSelect={setTopicId}
-        onCardChange={handleCardChange}
         onDeliveryChange={handleDeliveryChange}
         onItemsChange={setItems}
         onMoneyChange={handleMoneyChange}
-        onContinue={handleContinueToStep2}
-        onBack={() => setStep(1)}
         onSubmit={handleSubmit}
         onCreateAnother={handleCreateAnother}
       />
@@ -276,109 +165,98 @@ function CreateOrderPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-6 py-5 backdrop-blur md:px-8">
-        <h2 className="font-display text-3xl text-primary">Tạo đơn hàng mới</h2>
-        <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-          Chọn sản phẩm, tiền (cọc/ship/COD) và tùy chọn thiệp QR.
-        </p>
+      <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-5 py-4 backdrop-blur md:px-8">
+        <div>
+          <h2 className="font-display text-2xl text-primary md:text-3xl">Tạo đơn hàng mới</h2>
+          <p className="mt-0.5 text-sm text-on-surface-variant">Theo sổ đơn QOA</p>
+        </div>
+        <button
+          type="submit"
+          form="admin-create-order"
+          disabled={isSubmitting}
+          className="hidden rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
+        >
+          {isSubmitting ? 'Đang lên đơn...' : 'Tạo đơn hàng'}
+        </button>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl items-start p-6 lg:p-8">
-        <form
-          onSubmit={handleSubmit}
-          className={[
-            'min-w-0 flex-1 space-y-6 transition-[max-width] duration-300 ease-out',
-            withQr ? 'max-w-none' : 'mx-auto max-w-3xl',
-          ].join(' ')}
-        >
-          <section className="glass-card rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-on-surface">Loại đơn</h3>
-            <div className="mt-4">
-              <OrderModePicker mode={mode} onChange={handleModeChange} />
-            </div>
-          </section>
-
-          {commerceSection}
-
-          <div
-            className={[
-              'grid transition-[grid-template-rows] duration-300 ease-out',
-              withQr ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-            ].join(' ')}
-            aria-hidden={!withQr}
-          >
-            <div className="min-h-0 overflow-hidden">
-              <section className="mb-6 glass-card rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-on-surface">Nội dung thiệp QR</h3>
-                <div className="mt-5 mb-6">
-                  <span className="mb-1.5 block text-sm font-medium text-on-surface-variant">Chủ đề</span>
-                  <div className="flex flex-wrap gap-2">
-                    {availableTopics.map((topic) => (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        onClick={() => setTopicId(topic.id)}
-                        tabIndex={withQr ? undefined : -1}
-                        className={[
-                          'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
-                          topicId === topic.id
-                            ? 'border-primary/40 bg-primary-container/15 text-primary ring-1 ring-primary/20'
-                            : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low/70',
-                        ].join(' ')}
-                      >
-                        <TopicLabel topic={topic} />
-                      </button>
-                    ))}
+      <div className="mx-auto w-full max-w-7xl p-4 md:p-6 lg:p-8">
+        <form id="admin-create-order" onSubmit={handleSubmit}>
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.9fr)] xl:items-start">
+            <div className="space-y-5">
+              <section className="overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm">
+                <div className="grid gap-0 lg:grid-cols-2">
+                  <div className="border-b border-outline-variant/20 p-4 lg:border-b-0 lg:border-r lg:p-5">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                      Khách hàng
+                    </h3>
+                    <div className="mt-3">
+                      <OrderCustomerFields values={deliveryData} onChange={handleDeliveryChange} />
+                    </div>
+                  </div>
+                  <div className="p-4 lg:p-5">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                      Lịch giao
+                    </h3>
+                    <div className="mt-3">
+                      <OrderScheduleFields values={deliveryData} onChange={handleDeliveryChange} />
+                    </div>
+                    <div className="mt-4">
+                      <OrderTrackingFields values={deliveryData} onChange={handleDeliveryChange} />
+                    </div>
                   </div>
                 </div>
-                <CustomCardStepForm values={cardData} onChange={handleCardChange} />
+              </section>
+
+              <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm md:p-5">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                  Sản phẩm
+                </h3>
+                <div className="mt-3">
+                  <OrderItemsEditor products={products} items={items} onChange={setItems} />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm md:p-5">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                  Note
+                </h3>
+                <div className="mt-3">
+                  <OrderNoteFields values={deliveryData} onChange={handleDeliveryChange} />
+                </div>
               </section>
             </div>
+
+            <aside className="space-y-4 xl:sticky xl:top-24">
+              <section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm md:p-5">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
+                  Tiền đơn
+                </h3>
+                <div className="mt-3">
+                  <OrderMoneyFields
+                    values={money}
+                    onChange={handleMoneyChange}
+                    productsTotal={productsTotal}
+                  />
+                </div>
+              </section>
+
+              {error ? (
+                <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? 'Đang lên đơn...' : 'Tạo đơn hàng'}
+              </button>
+            </aside>
           </div>
-
-          <section className="glass-card rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-on-surface">Thông tin giao hàng</h3>
-            <div className="mt-6">
-              <AdminDeliveryForm values={deliveryData} onChange={handleDeliveryChange} />
-            </div>
-          </section>
-
-          {error ? (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {isSubmitting ? 'Đang lên đơn...' : submitLabel}
-          </button>
         </form>
-
-        <div
-          className={[
-            'hidden shrink-0 overflow-hidden lg:block',
-            'transition-[width,opacity,margin] duration-300 ease-out',
-            withQr ? 'ml-8 w-[360px] opacity-100' : 'pointer-events-none ml-0 w-0 opacity-0',
-          ].join(' ')}
-          aria-hidden={!withQr}
-        >
-          <div className="w-[360px] lg:sticky lg:top-6">
-            <MobileFrame label="Xem trước thiệp QR">
-              <TopicGreetingScreen
-                topicId={topicId}
-                preview
-                autoStart
-                senderName={cardData.senderName}
-                recipientName={cardData.recipientName}
-                message={cardData.message}
-              />
-            </MobileFrame>
-          </div>
-        </div>
       </div>
     </div>
   )

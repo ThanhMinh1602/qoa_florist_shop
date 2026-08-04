@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import RequestQrPanel from './RequestQrPanel'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 
 function CreateOrderSuccess({ request, onCreateAnother, compact = false }) {
-  const hasQr = Boolean(request?.cardId)
-
   return (
     <div
       className={[
@@ -27,34 +24,7 @@ function CreateOrderSuccess({ request, onCreateAnother, compact = false }) {
           Khách: <span className="font-medium text-on-surface">{request.customerName}</span>
           {request.customerPhone ? ` · ${request.customerPhone}` : ''}
         </p>
-
-        <p className="mt-2">
-          <span
-            className={[
-              'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1',
-              hasQr
-                ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-                : 'bg-surface-container text-on-surface-variant ring-slate-200',
-            ].join(' ')}
-          >
-            <MaterialIcon
-              name={hasQr ? 'qr_code_2' : 'local_shipping'}
-              className="text-[0.95rem]"
-            />
-            {hasQr ? 'Giao + QR' : 'Chỉ giao hoa'}
-          </span>
-        </p>
       </div>
-
-      {hasQr ? (
-        <div className="mt-5">
-          <RequestQrPanel request={request} />
-        </div>
-      ) : (
-        <p className="mt-5 rounded-xl border border-dashed border-outline-variant/40 bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant">
-          Đơn này không kèm thiệp QR.
-        </p>
-      )}
 
       <div className={['mt-5 grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2'].join(' ')}>
         <Link
