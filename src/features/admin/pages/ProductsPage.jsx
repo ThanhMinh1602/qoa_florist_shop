@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
@@ -6,11 +6,11 @@ import {
   createProductApi,
   deactivateProductApi,
   deleteProductApi,
-  fetchProductsApi,
   updateProductApi,
 } from '../../../api/productsApi'
 import { deleteUploadedImageApi, uploadImagesApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
+import { useProducts } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { resizeImageFiles } from '../../../utils/resizeImage'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
@@ -466,35 +466,26 @@ function ProductThumb({ product }) {
 
 function ProductsPage() {
   const { alert, confirm } = useDialog()
-  const [products, setProducts] = useState([])
+  const {
+    products,
+    isLoading,
+    error: productsError,
+    mutate: mutateProducts,
+  } = useProducts()
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [isBusy, setIsBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
-  const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [search, setSearch] = useState('')
   const isLgUp = useIsLgUp()
   const removedPublicIdsRef = useRef([])
+  const error = productsError?.message || ''
 
   const load = useCallback(async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      const result = await fetchProductsApi()
-      setProducts(result.data || [])
-    } catch (err) {
-      setError(err.message || 'Không thể tải sản phẩm.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+    await mutateProducts()
+  }, [mutateProducts])
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()

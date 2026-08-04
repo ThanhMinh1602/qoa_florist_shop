@@ -10,20 +10,26 @@ import LoginPage from './features/admin/pages/LoginPage'
 import ProductsPage from './features/admin/pages/ProductsPage'
 import QrListPage from './features/admin/pages/QrListPage'
 import SiteSettingsPage from './features/admin/pages/SiteSettingsPage'
+import GalaxyOfLoveScreen from './features/greeting/GalaxyOfLoveScreen'
 import GreetingPage from './features/greeting/pages/GreetingPage'
 import LandingPage from './features/landing/pages/LandingPage'
+import ShopLayout from './features/shop/layouts/ShopLayout'
+import ShopCatalogPage from './features/shop/pages/ShopCatalogPage'
+import ShopProductPage from './features/shop/pages/ShopProductPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
   return (
     <Routes>
-      {/* Khách: tạm chỉ mở home. QR thiệp vẫn giữ. */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/q/:uuid" element={<GreetingPage />} />
+      <Route path="/demo/galaxy" element={<GalaxyOfLoveScreen />} />
+      <Route path="/demo/galaxy-of-love" element={<GalaxyOfLoveScreen />} />
 
-      <Route path="/custom" element={<Navigate to="/" replace />} />
-      <Route path="/demo/*" element={<Navigate to="/" replace />} />
-      <Route path="/shop/*" element={<Navigate to="/" replace />} />
+      <Route path="/shop" element={<ShopLayout />}>
+        <Route index element={<ShopCatalogPage />} />
+        <Route path="product/:id" element={<ShopProductPage />} />
+      </Route>
 
       <Route path="/admin/login" element={<LoginPage />} />
 

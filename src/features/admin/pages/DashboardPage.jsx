@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import { fetchStatsOverviewApi } from '../../../api/statsApi'
+import { useStatsOverview } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { ORDER_STATUS_LABELS } from '../../../constants/orderStatus'
@@ -28,26 +27,8 @@ function KpiCard({ icon, label, value, hint, accent = 'primary' }) {
 }
 
 function DashboardPage() {
-  const [data, setData] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      const result = await fetchStatsOverviewApi()
-      setData(result.data)
-    } catch (err) {
-      setError(err.message || 'Không thể tải dashboard.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const { data, isLoading, error } = useStatsOverview()
+  const errorMessage = error?.message || ''
 
   const maxRevenue = Math.max(...(data?.chartMonths?.map((m) => m.revenue) || [1]), 1)
 
@@ -75,9 +56,9 @@ function DashboardPage() {
       </header>
 
       <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-        {error ? (
+        {errorMessage ? (
           <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
-            {error}
+            {errorMessage}
           </p>
         ) : null}
 

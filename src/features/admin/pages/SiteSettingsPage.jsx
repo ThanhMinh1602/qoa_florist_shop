@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchLandingSettingsApi, updateLandingSettingsApi } from '../../../api/settingsApi'
+import { useEffect, useRef, useState } from 'react'
+import { updateLandingSettingsApi } from '../../../api/settingsApi'
 import { deleteUploadedImageApi, uploadImagesApi } from '../../../api/uploadsApi'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useDialog } from '../../../context/DialogContext'
+import { useLandingSettings } from '../../../hooks/swr'
 import { resizeImageFiles } from '../../../utils/resizeImage'
 import LandingHeroCarousel from '../../landing/components/LandingHeroCarousel'
 
@@ -19,43 +20,43 @@ function revokePreviewUrl(image) {
 
 function SiteSettingsPage() {
   const { alert } = useDialog()
+  const {
+    settings,
+    isLoading,
+    error: settingsError,
+    mutate: mutateSettings,
+  } = useLandingSettings()
   const [images, setImages] = useState([])
   const [autoPlayMs, setAutoPlayMs] = useState(5000)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [dragId, setDragId] = useState('')
   const removedPublicIdsRef = useRef([])
   const imagesRef = useRef(images)
+  const hydratedRef = useRef(false)
   imagesRef.current = images
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      const result = await fetchLandingSettingsApi()
-      setImages((previous) => {
-        previous.forEach(revokePreviewUrl)
-        return (result.data?.heroImages || []).map((image) => ({
-          id: image.id,
-          url: image.url,
-          publicId: image.publicId || '',
-          file: null,
-          previewUrl: null,
-        }))
-      })
-      setAutoPlayMs(result.data?.heroAutoPlayMs || 5000)
-      removedPublicIdsRef.current = []
-    } catch (err) {
-      setError(err.message || 'Không tải được cài đặt.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  useEffect(() => {
+    if (!settings || hydratedRef.current) return
+    hydratedRef.current = true
+    setImages(
+      (settings.heroImages || []).map((image) => ({
+        id: image.id,
+        url: image.url,
+        publicId: image.publicId || '',
+        file: null,
+        previewUrl: null,
+      })),
+    )
+    setAutoPlayMs(settings.heroAutoPlayMs || 5000)
+    removedPublicIdsRef.current = []
+  }, [settings])
 
   useEffect(() => {
-    load()
-  }, [load])
+    if (settingsError) {
+      setError(settingsError.message || 'Không tải được cài đặt.')
+    }
+  }, [settingsError])
 
   useEffect(() => {
     return () => {
@@ -189,8 +190,12 @@ function SiteSettingsPage() {
       )
 
       images.forEach(revokePreviewUrl)
+      const nextSettings = {
+        heroImages: result.data?.heroImages || heroImages,
+        heroAutoPlayMs: result.data?.heroAutoPlayMs || autoPlayMs,
+      }
       setImages(
-        (result.data?.heroImages || heroImages).map((image) => ({
+        nextSettings.heroImages.map((image) => ({
           id: image.id,
           url: image.url,
           publicId: image.publicId || '',
@@ -198,7 +203,8 @@ function SiteSettingsPage() {
           previewUrl: null,
         })),
       )
-      setAutoPlayMs(result.data?.heroAutoPlayMs || autoPlayMs)
+      setAutoPlayMs(nextSettings.heroAutoPlayMs)
+      await mutateSettings(nextSettings, { revalidate: false })
 
       await alert({
         title: 'Đã lưu',

@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import {
-  createCashEntryApi,
-  deleteCashEntryApi,
-  fetchCashbookApi,
-} from '../../../api/cashbookApi'
+import { createCashEntryApi, deleteCashEntryApi } from '../../../api/cashbookApi'
 import { useDialog } from '../../../context/DialogContext'
+import { useCashbook } from '../../../hooks/swr'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
 
 const EMPTY = {
@@ -23,47 +20,33 @@ function CashbookPage() {
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
-  const [entries, setEntries] = useState([])
-  const [totals, setTotals] = useState({ income: 0, expense: 0, balance: 0 })
   const [form, setForm] = useState(EMPTY)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      const params = { month, year }
-      if (typeFilter !== 'all') params.type = typeFilter
-      const result = await fetchCashbookApi(params)
-      setEntries(result.data || [])
-      setTotals(result.totals || { income: 0, expense: 0, balance: 0 })
-    } catch (err) {
-      setError(err.message || 'Không thể tải sổ thu chi.')
-    } finally {
-      setIsLoading(false)
-    }
+  const cashParams = useMemo(() => {
+    const params = { month, year }
+    if (typeFilter !== 'all') params.type = typeFilter
+    return params
   }, [month, year, typeFilter])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  const { entries, totals, isLoading, error: cashError, mutate } = useCashbook(cashParams)
+  const error = formError || cashError?.message || ''
 
   async function handleSubmit(event) {
     event.preventDefault()
     setIsSaving(true)
-    setError('')
+    setFormError('')
     try {
       await createCashEntryApi({
         ...form,
         amount: Number(form.amount) || 0,
       })
       setForm({ ...EMPTY, date: toDateInputValue(new Date()) })
-      await load()
+      await mutate()
     } catch (err) {
-      setError(err.message || 'Không thể lưu bút toán.')
+      setFormError(err.message || 'Không thể lưu bút toán.')
     } finally {
       setIsSaving(false)
     }
@@ -79,7 +62,7 @@ function CashbookPage() {
     if (!ok) return
     try {
       await deleteCashEntryApi(id)
-      await load()
+      await mutate()
     } catch (err) {
       await alert({
         title: 'Không thể xóa',

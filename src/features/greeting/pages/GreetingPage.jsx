@@ -1,47 +1,14 @@
-import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchCardById } from '../../../api/cardsApi'
 import BrandLogoCenter from '../../../components/common/BrandLogoCenter'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import { useCard } from '../../../hooks/swr'
 import TopicGreetingScreen from '../TopicGreetingScreen'
 import { GreetingLoadingMobile, GreetingNotFoundMobile } from '../mobile/GreetingMobileViews'
 
 function GreetingPage() {
   const { uuid } = useParams()
-  const [card, setCard] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const { card, isLoading, notFound } = useCard(uuid)
   const isLgUp = useIsLgUp()
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadCard() {
-      setIsLoading(true)
-      setNotFound(false)
-
-      try {
-        const result = await fetchCardById(uuid)
-        if (!cancelled) {
-          setCard(result.data)
-        }
-      } catch {
-        if (!cancelled) {
-          setNotFound(true)
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    loadCard()
-
-    return () => {
-      cancelled = true
-    }
-  }, [uuid])
 
   if (isLoading) {
     if (!isLgUp) {
@@ -68,10 +35,10 @@ function GreetingPage() {
           Mã QR này không tồn tại hoặc đã bị xóa. Vui lòng liên hệ shop hoa để được hỗ trợ.
         </p>
         <Link
-          to="/demo"
+          to="/"
           className="mt-6 rounded-xl border border-rose-400/40 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-950"
         >
-          Xem demo thiệp
+          Về trang chủ
         </Link>
       </div>
     )

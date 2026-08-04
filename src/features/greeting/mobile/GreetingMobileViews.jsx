@@ -24,10 +24,10 @@ function GreetingNotFoundMobile() {
       </div>
 
       <Link
-        to="/demo"
+        to="/"
         className="mb-2 block w-full rounded-xl border border-rose-400/40 px-4 py-3.5 text-center text-sm font-medium text-rose-200 transition active:bg-rose-950"
       >
-        Xem demo thiệp
+        Về trang chủ
       </Link>
     </div>
   )
