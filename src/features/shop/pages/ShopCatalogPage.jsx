@@ -77,7 +77,7 @@ function ShopCatalogPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tên, mã, nguyên liệu..."
+              placeholder="Tên, mã, nguyên liệu, mô tả..."
               className="input-glass pl-10"
             />
           </div>

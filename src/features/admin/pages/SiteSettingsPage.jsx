@@ -380,7 +380,7 @@ function SiteSettingsPage() {
               <LandingHeroCarousel images={images} autoPlayMs={autoPlayMs} preview />
             </div>
             <p className="text-xs text-on-surface-variant">
-              Preview dùng ảnh local ngay khi chọn. Chỉ khi Lưu mới upload Cloudinary + ghi DB.
+              Preview hiện ngay khi chọn ảnh. Bấm Lưu để áp dụng lên trang chủ.
             </p>
           </section>
         </div>

@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   code: '',
   name: '',
   materials: '',
+  description: '',
   images: [],
   categoryIds: [],
   costPrice: '',
@@ -96,11 +97,67 @@ async function prepareImagesPayload(images = []) {
 const inputClass =
   'w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20'
 
+const actionBtnClass =
+  'inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/55 bg-white/40 px-2.5 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
+
+function ProductActionButtons({ product, disabled, onEdit, onToggleActive, onDelete }) {
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onEdit(product)}
+        className={`${actionBtnClass} text-primary`}
+        title="Sửa"
+      >
+        <MaterialIcon name="edit" className="text-base" />
+        <span className="hidden sm:inline">Sửa</span>
+      </button>
+
+      {product.active ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onToggleActive(product, false)}
+          className={`${actionBtnClass} text-on-surface-variant`}
+          title="Ngừng bán"
+        >
+          <MaterialIcon name="visibility_off" className="text-base" />
+          <span className="hidden sm:inline">Ngừng</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onToggleActive(product, true)}
+          className={`${actionBtnClass} text-emerald-700`}
+          title="Bán lại"
+        >
+          <MaterialIcon name="visibility" className="text-base" />
+          <span className="hidden sm:inline">Bán lại</span>
+        </button>
+      )}
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onDelete(product)}
+        className={`${actionBtnClass} text-red-600 hover:border-red-200 hover:bg-red-50/70`}
+        title="Xóa"
+      >
+        <MaterialIcon name="delete" className="text-base" />
+        <span className="hidden sm:inline">Xóa</span>
+      </button>
+    </div>
+  )
+}
+
 function toForm(product) {
   return {
     code: product.code || '',
     name: product.name || '',
     materials: product.materials || '',
+    description: product.description || '',
     images: Array.isArray(product.images)
       ? product.images.map((image) => ({
           id: image.id,
@@ -170,7 +227,7 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
         <div>
           <p className="text-sm font-medium text-on-surface">Hình ảnh sản phẩm</p>
           <p className="text-xs text-outline">
-            Chọn ảnh hiện ngay · resize + Cloudinary khi bấm Lưu
+            Chọn ảnh hiện ngay · ảnh sẽ được tối ưu khi bấm Lưu
           </p>
         </div>
         <button
@@ -308,7 +365,7 @@ function ProductFormDialog({
             <h3 id="product-form-title" className="text-lg font-semibold text-on-surface">
               {title}
             </h3>
-            <p className="mt-1 text-sm text-on-surface-variant">Thông tin lưu vào database.</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Thông tin sẽ được lưu khi bạn bấm Lưu.</p>
           </div>
           <button
             type="button"
@@ -365,8 +422,23 @@ function ProductFormDialog({
                 rows={2}
                 value={values.materials}
                 onChange={(e) => onChange('materials', e.target.value)}
+                placeholder="Ví dụ: 50 bông, giấy gói, ruy băng..."
                 className={inputClass}
               />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium text-on-surface">Mô tả sản phẩm</span>
+              <textarea
+                rows={4}
+                value={values.description}
+                onChange={(e) => onChange('description', e.target.value)}
+                placeholder={'Hỗ trợ Markdown, ví dụ:\n**In đậm**, *in nghiêng*\n- Mục 1\n- Mục 2'}
+                className={inputClass}
+              />
+              <span className="mt-1 block text-xs text-outline">
+                Hỗ trợ Markdown (in đậm, list, link…) — hiển thị đẹp trên trang chi tiết.
+              </span>
             </label>
 
             <div>
@@ -472,7 +544,7 @@ function ProductFormDialog({
               type="submit"
               className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"
             >
-              Lưu vào database
+              Lưu
             </button>
             <button
               type="button"
@@ -487,7 +559,7 @@ function ProductFormDialog({
                 onClick={onDelete}
                 className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 sm:ml-auto"
               >
-                Xóa khỏi DB
+                Xóa sản phẩm
               </button>
             ) : null}
           </div>
@@ -538,7 +610,7 @@ function ProductsPage() {
     const keyword = search.trim().toLowerCase()
     if (!keyword) return products
     return products.filter((item) =>
-      [item.code, item.name, item.materials, ...(item.categories || []).map((c) => c.name)]
+      [item.code, item.name, item.description, item.materials, ...(item.categories || []).map((c) => c.name)]
         .join(' ')
         .toLowerCase()
         .includes(keyword),
@@ -665,8 +737,8 @@ function ProductsPage() {
       await alert({
         title: wasEdit ? 'Đã cập nhật' : 'Đã thêm sản phẩm',
         message: wasEdit
-          ? 'Thông tin sản phẩm đã được lưu vào database.'
-          : 'Sản phẩm mới đã được thêm vào database.',
+          ? 'Thông tin sản phẩm đã được cập nhật.'
+          : 'Sản phẩm mới đã được thêm.',
         variant: 'success',
       })
     } catch (err) {
@@ -684,7 +756,7 @@ function ProductsPage() {
     if (isBusy) return
     const ok = await confirm({
       title: 'Ngừng bán sản phẩm',
-      message: `Ngừng bán “${product.name}”? Sản phẩm vẫn còn trong database.`,
+      message: `Ngừng bán “${product.name}”? Sản phẩm vẫn còn trong danh sách, chỉ không hiện trên shop.`,
       confirmLabel: 'Ngừng bán',
       variant: 'danger',
     })
@@ -719,8 +791,8 @@ function ProductsPage() {
     if (isBusy) return
     const ok = await confirm({
       title: 'Xóa sản phẩm',
-      message: `Xóa hẳn “${product.name}” khỏi database?\nThao tác này không hoàn tác được.`,
-      confirmLabel: 'Xóa khỏi DB',
+      message: `Xóa hẳn “${product.name}”?\nThao tác này không hoàn tác được.`,
+      confirmLabel: 'Xóa sản phẩm',
       variant: 'danger',
     })
     if (!ok) return
@@ -739,7 +811,7 @@ function ProductsPage() {
       setIsBusy(false)
       await alert({
         title: 'Đã xóa',
-        message: `“${product.name}” đã được xóa khỏi database.`,
+        message: `“${product.name}” đã được xóa.`,
         variant: 'success',
       })
     } catch (err) {
@@ -756,7 +828,7 @@ function ProductsPage() {
     if (isBusy || selectedIds.length === 0) return
     const ok = await confirm({
       title: 'Xóa nhiều sản phẩm',
-      message: `Xóa hẳn ${selectedIds.length} sản phẩm đã chọn khỏi database?\nThao tác này không hoàn tác được.`,
+      message: `Xóa hẳn ${selectedIds.length} sản phẩm đã chọn?\nThao tác này không hoàn tác được.`,
       confirmLabel: `Xóa ${selectedIds.length} SP`,
       variant: 'danger',
     })
@@ -811,7 +883,7 @@ function ProductsPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm mã, tên, nguyên liệu, danh mục..."
+            placeholder="Tìm mã, tên, nguyên liệu, mô tả, danh mục..."
             className="input-glass w-full max-w-md"
           />
           {selectedCount > 0 ? (
@@ -905,7 +977,9 @@ function ProductsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-on-surface">{product.name}</p>
-                          <p className="max-w-xs truncate text-xs text-on-surface-variant">{product.materials}</p>
+                          <p className="max-w-xs truncate text-xs text-on-surface-variant">
+                            {product.materials || product.description || '—'}
+                          </p>
                         </td>
                         <td className="max-w-[180px] px-4 py-3 text-xs text-on-surface-variant">
                           {(product.categories || []).length
@@ -923,37 +997,15 @@ function ProductsPage() {
                           {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(product)}
-                            className="mr-2 text-sm font-medium text-primary hover:text-primary"
-                          >
-                            Sửa
-                          </button>
-                          {product.active ? (
-                            <button
-                              type="button"
-                              onClick={() => handleDeactivate(product)}
-                              className="mr-2 text-sm text-outline hover:text-on-surface-variant"
-                            >
-                              Ngừng
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleActivate(product)}
-                              className="mr-2 text-sm text-emerald-600 hover:text-emerald-700"
-                            >
-                              Bán lại
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(product)}
-                            className="text-sm text-red-500 hover:text-red-600"
-                          >
-                            Xóa
-                          </button>
+                          <ProductActionButtons
+                            product={product}
+                            disabled={isBusy}
+                            onEdit={openEdit}
+                            onToggleActive={(item, active) =>
+                              active ? handleActivate(item) : handleDeactivate(item)
+                            }
+                            onDelete={handleDelete}
+                          />
                         </td>
                       </tr>
                     )
@@ -1016,38 +1068,16 @@ function ProductsPage() {
                       </div>
                     </button>
                   </div>
-                  <div className="mt-3 flex gap-3 border-t border-surface-container pt-3 pl-7">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(product)}
-                      className="text-sm font-medium text-primary"
-                    >
-                      Sửa
-                    </button>
-                    {product.active ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivate(product)}
-                        className="text-sm text-on-surface-variant"
-                      >
-                        Ngừng
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleActivate(product)}
-                        className="text-sm text-emerald-600"
-                      >
-                        Bán lại
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(product)}
-                      className="text-sm text-red-500"
-                    >
-                      Xóa
-                    </button>
+                  <div className="mt-3 border-t border-surface-container pt-3 pl-7">
+                    <ProductActionButtons
+                      product={product}
+                      disabled={isBusy}
+                      onEdit={openEdit}
+                      onToggleActive={(item, active) =>
+                        active ? handleActivate(item) : handleDeactivate(item)
+                      }
+                      onDelete={handleDelete}
+                    />
                   </div>
                 </div>
               )

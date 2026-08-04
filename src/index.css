@@ -39,9 +39,9 @@
   --color-on-error: #ffffff;
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
-  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
-  --font-display: 'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
   --radius-glass: 1.5rem;
   --radius-control: 0.75rem;
   --shadow-glass: 0 12px 40px rgba(74, 48, 32, 0.08);
@@ -99,6 +99,116 @@ body {
   line-height: 1.2;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.markdown-body {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body pre {
+  margin: 0.65em 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 1em 0 0.4em;
+  color: var(--color-on-surface);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.markdown-body h1 {
+  font-size: 1.25rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.1rem;
+}
+
+.markdown-body h3,
+.markdown-body h4 {
+  font-size: 1rem;
+}
+
+.markdown-body strong {
+  color: var(--color-on-surface);
+  font-weight: 600;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.25rem;
+}
+
+.markdown-body ul {
+  list-style: disc;
+}
+
+.markdown-body ol {
+  list-style: decimal;
+}
+
+.markdown-body li {
+  margin: 0.25em 0;
+}
+
+.markdown-body a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--color-outline-variant);
+  padding-left: 0.85rem;
+  color: var(--color-outline);
+}
+
+.markdown-body code {
+  border-radius: 0.35rem;
+  background: rgb(74 48 32 / 0.06);
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+.markdown-body pre {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: rgb(74 48 32 / 0.06);
+  padding: 0.75rem 1rem;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.markdown-body hr {
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-outline-variant);
 }
 
 /* Glass surfaces */

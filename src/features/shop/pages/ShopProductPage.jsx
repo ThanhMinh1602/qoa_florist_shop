@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import MarkdownContent from '../../../components/common/MarkdownContent'
 import { useCatalogProduct } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { useEffect, useState } from 'react'
@@ -88,6 +89,13 @@ function ShopProductPage() {
               {formatMoney(product.price)}
             </p>
           </div>
+
+          {product.description ? (
+            <div>
+              <p className="text-sm font-medium text-on-surface">Mô tả</p>
+              <MarkdownContent className="mt-2">{product.description}</MarkdownContent>
+            </div>
+          ) : null}
 
           {product.materials ? (
             <div>
