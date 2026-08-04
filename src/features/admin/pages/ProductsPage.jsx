@@ -64,7 +64,7 @@ async function prepareImagesPayload(images = []) {
       pending.map((image) => image.file),
       { maxWidth: 1600, maxHeight: 1600, quality: 0.82 },
     )
-    const result = await uploadImagesApi(resized)
+    const result = await uploadImagesApi(resized, { folder: 'products' })
     uploaded = result.data || []
     if (uploaded.length !== pending.length) {
       throw new Error('Upload ảnh không đủ số lượng.')
@@ -409,11 +409,6 @@ function ProductFormDialog({
 }) {
   if (!open) return null
 
-  const suggested = Math.round((Number(values.costPrice) || 0) * 1.7)
-  const profit =
-    (Number(values.sellPrice) || 0) -
-    (Number(values.costPrice) || 0) -
-    (Number(values.otherCost) || 0)
   const selectedIds = Array.isArray(values.categoryIds) ? values.categoryIds : []
 
   function toggleCategory(categoryId) {
@@ -592,14 +587,6 @@ function ProductFormDialog({
                 </label>
               ))}
             </div>
-
-            <p className="rounded-xl bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">
-              Gợi ý giá bán ≈ cost × 1.7:{' '}
-              <span className="font-medium text-on-surface">{formatMoney(suggested)}</span>
-              {' · '}
-              Lợi nhuận:{' '}
-              <span className="font-semibold text-emerald-700">{formatMoney(profit)}</span>
-            </p>
 
             <label className="flex items-center gap-2 text-sm text-on-surface">
               <input

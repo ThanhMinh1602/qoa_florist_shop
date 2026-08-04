@@ -153,7 +153,7 @@ function SiteSettingsPage() {
           pending.map((image) => image.file),
           { maxWidth: 1920, maxHeight: 1920, quality: 0.85 },
         )
-        const result = await uploadImagesApi(resized)
+        const result = await uploadImagesApi(resized, { folder: 'settings' })
         uploadedByIndex = result.data || []
         if (uploadedByIndex.length !== pending.length) {
           throw new Error('Upload ảnh không đủ số lượng.')
@@ -206,6 +206,7 @@ function SiteSettingsPage() {
       setAutoPlayMs(nextSettings.heroAutoPlayMs)
       await mutateSettings(nextSettings, { revalidate: false })
 
+      setIsSaving(false)
       await alert({
         title: 'Đã lưu',
         message: 'Cài đặt hero landing đã được cập nhật.',
@@ -214,13 +215,12 @@ function SiteSettingsPage() {
     } catch (err) {
       const message = err.message || 'Không lưu được cài đặt.'
       setError(message)
+      setIsSaving(false)
       await alert({
         title: 'Lưu thất bại',
         message,
         variant: 'error',
       })
-    } finally {
-      setIsSaving(false)
     }
   }
 
