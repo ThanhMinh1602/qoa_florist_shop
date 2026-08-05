@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../../components/common/BrandLogo'
 import MaterialIcon from '../../components/common/MaterialIcon'
 
-const NAV_OFFSET = 80
+/** Chiều cao header nổi + khoảng cách mép trên — dùng khi cuộn tới section */
+export const NAV_OFFSET = 108
 const SCROLL_LOCK_MS = 900
 
 /** Tab điều hướng chung Home / Shop */
@@ -171,101 +172,108 @@ function SiteHeader({ variant = 'page', activeId, scrollSections = [] }) {
   const mobileBar = isHero ? 'bg-white' : 'bg-primary'
 
   return (
-    <nav className={['fixed top-0 z-50 w-full border-b', barClass].join(' ')}>
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:h-20 sm:px-8 lg:px-16">
-        <button
-          type="button"
-          aria-label="QOA Florist"
-          className="inline-flex items-center"
-          onClick={() => handleNav(SITE_NAV_ITEMS[0])}
-        >
-          <BrandLogo size="sm" />
-        </button>
-
-        <div className="flex items-center gap-2">
-          <div ref={navListRef} className="relative hidden items-center gap-2 md:flex">
-            {SITE_NAV_ITEMS.map((item) => {
-              const isActive = resolvedActive === item.id
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-nav-id={item.id}
-                  aria-current={isActive ? 'true' : undefined}
-                  className={[
-                    'label-caps relative px-3 py-2 transition-colors duration-200',
-                    isActive ? activeClass : inactiveClass,
-                  ].join(' ')}
-                  onClick={() => handleNav(item)}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
-            <span
-              aria-hidden="true"
-              className={[
-                'pointer-events-none absolute bottom-0 h-0.5 rounded-full',
-                underlineClass,
-                'transition-[left,width,opacity] duration-300 ease-out',
-                underline.ready ? 'opacity-100' : 'opacity-0',
-              ].join(' ')}
-              style={{ left: underline.left, width: underline.width }}
-            />
-          </div>
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4 lg:px-8">
+      <nav
+        className={[
+          'pointer-events-auto mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border',
+          barClass,
+        ].join(' ')}
+      >
+        <div className="flex h-16 items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
           <button
             type="button"
-            className={['rounded-xl p-2 md:hidden', menuBtnClass].join(' ')}
-            aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
+            aria-label="QOA Florist"
+            className="inline-flex items-center"
+            onClick={() => handleNav(SITE_NAV_ITEMS[0])}
           >
-            <MaterialIcon name={menuOpen ? 'close' : 'menu'} />
+            <BrandLogo size="sm" />
           </button>
-        </div>
-      </div>
 
-      <AnimatePresence initial={false}>
-        {menuOpen ? (
-          <motion.div
-            key="mobile-nav"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={['overflow-hidden border-t md:hidden', mobilePanelClass].join(' ')}
-          >
-            <div className="flex flex-col gap-1 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div ref={navListRef} className="relative hidden items-center gap-2 md:flex">
               {SITE_NAV_ITEMS.map((item) => {
                 const isActive = resolvedActive === item.id
                 return (
                   <button
                     key={item.id}
                     type="button"
+                    data-nav-id={item.id}
                     aria-current={isActive ? 'true' : undefined}
                     className={[
-                      'label-caps relative rounded-xl px-3 py-2.5 text-left transition-colors duration-200',
-                      isActive ? mobileActive : mobileInactive,
+                      'label-caps relative px-3 py-2 transition-colors duration-200',
+                      isActive ? activeClass : inactiveClass,
                     ].join(' ')}
                     onClick={() => handleNav(item)}
                   >
                     {item.label}
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        'absolute inset-y-1.5 left-0 w-0.5 rounded-full transition-opacity duration-200',
-                        mobileBar,
-                        isActive ? 'opacity-100' : 'opacity-0',
-                      ].join(' ')}
-                    />
                   </button>
                 )
               })}
+              <span
+                aria-hidden="true"
+                className={[
+                  'pointer-events-none absolute bottom-0 h-0.5 rounded-full',
+                  underlineClass,
+                  'transition-[left,width,opacity] duration-300 ease-out',
+                  underline.ready ? 'opacity-100' : 'opacity-0',
+                ].join(' ')}
+                style={{ left: underline.left, width: underline.width }}
+              />
             </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </nav>
+            <button
+              type="button"
+              className={['rounded-xl p-2 md:hidden', menuBtnClass].join(' ')}
+              aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <MaterialIcon name={menuOpen ? 'close' : 'menu'} />
+            </button>
+          </div>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {menuOpen ? (
+            <motion.div
+              key="mobile-nav"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className={['overflow-hidden border-t md:hidden', mobilePanelClass].join(' ')}
+            >
+              <div className="flex flex-col gap-1 px-5 py-4">
+                {SITE_NAV_ITEMS.map((item) => {
+                  const isActive = resolvedActive === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-current={isActive ? 'true' : undefined}
+                      className={[
+                        'label-caps relative rounded-xl px-3 py-2.5 text-left transition-colors duration-200',
+                        isActive ? mobileActive : mobileInactive,
+                      ].join(' ')}
+                      onClick={() => handleNav(item)}
+                    >
+                      {item.label}
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          'absolute inset-y-1.5 left-0 w-0.5 rounded-full transition-opacity duration-200',
+                          mobileBar,
+                          isActive ? 'opacity-100' : 'opacity-0',
+                        ].join(' ')}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </nav>
+    </div>
   )
 }
 

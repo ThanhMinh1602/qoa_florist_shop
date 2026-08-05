@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import SiteHeader from '../../../components/common/SiteHeader'
+import SiteHeader, { NAV_OFFSET } from '../../../components/common/SiteHeader'
 import { LANDING_IMAGES, LANDING_STEPS } from '../../../constants/landingImagery'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
@@ -37,7 +37,7 @@ function LandingPage() {
             onCustom={() => {
               const el = document.getElementById('custom-card')
               if (!el) return
-              const top = el.getBoundingClientRect().top + window.scrollY - 80
+              const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET
               window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
             }}
           />
@@ -67,7 +67,7 @@ function LandingPage() {
 
         <section
           id="featured"
-          className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-16"
+          className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
         >
           <div className="mb-12 flex items-end justify-between gap-4">
             <div>
@@ -140,7 +140,7 @@ function LandingPage() {
 
         <section
           id="custom-card"
-          className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-16"
+          className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
         >
           <div className="glass-card flex flex-col items-center gap-12 rounded-2xl p-8 md:flex-row md:p-16">
             <div className="flex-1">

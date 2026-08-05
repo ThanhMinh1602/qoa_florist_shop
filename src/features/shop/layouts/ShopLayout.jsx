@@ -17,7 +17,7 @@ function ShopLayout() {
 
       <SiteHeader variant="page" activeId="products" />
 
-      <main className="pt-16 sm:pt-20">
+      <main className="pt-24 sm:pt-28">
         <Outlet />
       </main>
 
