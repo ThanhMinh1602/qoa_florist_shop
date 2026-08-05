@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import MobileFrame from '../../../components/common/MobileFrame'
-import { CollapsiblePreview } from '../../../components/mobile/CollapsiblePreview'
 import { TOPICS } from '../../../constants/topics'
 import {
   getEmptyFormValues,
@@ -10,9 +10,10 @@ import {
   normalizePhraseList,
 } from '../../../constants/topicQrForms'
 import { useCards } from '../../../context/CardsContext'
-import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
 import TopicQrForm from '../../admin/components/TopicQrForm'
+
+const easeOut = [0.22, 1, 0.36, 1]
 
 function toPublicFields(fields = []) {
   return fields.map((field) => {
@@ -21,17 +22,17 @@ function toPublicFields(fields = []) {
         ...field,
         label: 'Tên của bạn',
         placeholder: 'VD: Minh',
-        help: 'Shop dùng tên này để nhận diện thiệp khi bạn đặt hoa.',
+        help: undefined,
       }
     }
     if (field.name === 'phone') {
       return {
         ...field,
-        label: 'Số điện thoại (tuỳ chọn)',
-        help: 'Để shop liên hệ khi ghép thiệp vào đơn hoa.',
+        label: 'Số điện thoại',
+        help: undefined,
       }
     }
-    return field
+    return { ...field, help: undefined }
   })
 }
 
@@ -46,27 +47,22 @@ function resolvePublicLabel(formData) {
 function CreateCardPage() {
   const availableTopics = useMemo(() => TOPICS.filter((topic) => topic.available), [])
   const [topicId, setTopicId] = useState(availableTopics[0]?.id ?? 'birthday')
-  const selectedTopic = useMemo(
-    () => availableTopics.find((topic) => topic.id === topicId),
-    [availableTopics, topicId],
-  )
   const formConfig = getTopicQrForm(topicId)
-  const publicFields = useMemo(
-    () => toPublicFields(formConfig?.fields || []),
-    [formConfig],
-  )
+  const publicFields = useMemo(() => toPublicFields(formConfig?.fields || []), [formConfig])
   const [formData, setFormData] = useState(() => getEmptyFormValues(topicId))
   const [savedCard, setSavedCard] = useState(null)
   const [saveError, setSaveError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [previewKey, setPreviewKey] = useState(0)
   const { createCard } = useCards()
-  const isLgUp = useIsLgUp()
 
   const handleTopicSelect = useCallback((nextTopicId) => {
     setTopicId(nextTopicId)
     setFormData(getEmptyFormValues(nextTopicId))
     setSavedCard(null)
     setSaveError('')
+    setPreviewKey((current) => current + 1)
   }, [])
 
   const handleFieldChange = useCallback((field, value) => {
@@ -96,12 +92,30 @@ function CreateCardPage() {
 
   function handleCreateAnother() {
     setSavedCard(null)
+    setCopied(false)
     setFormData(getEmptyFormValues(topicId))
     setSaveError('')
   }
 
+  async function copyCode() {
+    const code = savedCard?.code || savedCard?.id
+    if (!code) return
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1800)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  function replayPreview() {
+    setPreviewKey((current) => current + 1)
+  }
+
   const preview = (
     <TopicGreetingScreen
+      key={`${topicId}-${previewKey}`}
       topicId={topicId}
       preview
       autoStart
@@ -115,95 +129,96 @@ function CreateCardPage() {
 
   if (savedCard) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8 lg:px-16">
-        <div className="rounded-[2rem] border border-outline-variant/20 bg-white/80 px-6 py-10 text-center shadow-[0_20px_50px_rgba(74,48,32,0.08)] backdrop-blur-xl sm:px-10">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-fixed text-primary">
-            <MaterialIcon name="check" className="text-3xl" />
-          </div>
-          <h1 className="font-display mt-5 text-3xl text-on-surface">Thiệp đã sẵn sàng</h1>
+      <motion.div
+        className="mx-auto max-w-lg px-5 py-14 sm:px-8"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: easeOut }}
+      >
+        <div className="text-center">
+          <p className="label-caps text-primary">Hoàn tất</p>
+          <h1 className="font-display mt-2 text-3xl text-on-surface">Thiệp đã sẵn sàng</h1>
           <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-            Thiệp chưa xuất mã QR. Hãy mua hoa tại QOA để nhận bó hoa kèm thiệp QR — người nhận
-            quét mã trên hoa sẽ mở đúng lời chúc này.
+            Mua hoa tại QOA và nhắc mã thiệp bên dưới để shop gắn QR lên bó hoa.
           </p>
-          <div className="mt-5 rounded-2xl bg-surface-container-low px-4 py-4">
-            <p className="text-xs font-semibold tracking-wide text-outline uppercase">Mã thiệp</p>
-            <p className="mt-1 font-mono text-2xl font-bold tracking-[0.18em] text-primary">
+          <div className="mt-8 border-y border-outline-variant/20 py-6">
+            <p className="text-xs tracking-[0.18em] text-outline uppercase">Mã thiệp</p>
+            <p className="mt-2 font-mono text-3xl font-bold tracking-[0.2em] text-primary">
               {savedCard.code || savedCard.id}
             </p>
-            {savedCard.label ? (
-              <p className="mt-2 text-sm text-on-surface">
-                Tên thiệp:{' '}
-                <span className="font-semibold">{savedCard.label.replace(/ · web$/, '')}</span>
-              </p>
-            ) : null}
-            <p className="mt-2 text-xs text-outline">
-              Nhắc shop mã thiệp này khi đặt hoa để ghép đúng lời chúc vào đơn.
-            </p>
+            <button
+              type="button"
+              onClick={copyCode}
+              className="mt-3 text-sm font-semibold text-primary hover:underline"
+            >
+              {copied ? 'Đã sao chép' : 'Sao chép mã'}
+            </button>
           </div>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/shop" className="btn-primary flex-1 py-4">
+          <div className="mt-8 flex flex-col gap-3">
+            <Link to="/shop" className="btn-primary py-4">
               Mua hoa kèm thiệp QR
             </Link>
-            <button type="button" onClick={handleCreateAnother} className="btn-glass flex-1 py-4">
+            <button type="button" onClick={handleCreateAnother} className="btn-glass py-4">
               Tạo thiệp khác
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10 lg:px-16">
-      <div className="mb-8 max-w-2xl">
-        <p className="label-caps text-primary">Thiệp số</p>
-        <h1 className="font-display mt-1 text-3xl text-on-surface sm:text-4xl">Tạo thiệp lời chúc</h1>
-        <p className="mt-2 text-sm text-on-surface-variant">
-          Soạn thiệp và xem trước. Không xuất QR tại đây — QR sẽ được gắn trên bó hoa khi bạn đặt
-          hàng.
+    <div className="mx-auto max-w-6xl px-5 pb-20 pt-6 sm:px-8 lg:px-10">
+      <div className="mb-8 lg:mb-10">
+        <h1 className="font-display text-3xl text-on-surface sm:text-4xl">Tạo thiệp</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Soạn lời chúc, xem trước, rồi mua hoa để nhận QR trên bó hoa.
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-12">
-        <div className="space-y-4">
-          <section className="rounded-2xl border border-outline-variant/20 bg-white/75 p-4 shadow-[0_12px_40px_rgba(74,48,32,0.06)] backdrop-blur-xl sm:p-5">
-            <h2 className="text-sm font-semibold text-on-surface">1. Chọn chủ đề</h2>
-            <div className="relative mt-3">
-              <MaterialIcon
-                name={selectedTopic?.icon ?? 'category'}
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-secondary"
-              />
-              <select
-                value={topicId}
-                onChange={(event) => handleTopicSelect(event.target.value)}
-                className="w-full appearance-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest py-3 pr-10 pl-11 text-sm font-medium text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
-              >
-                {availableTopics.map((topic) => (
-                  <option key={topic.id} value={topic.id}>
-                    {topic.name}
-                  </option>
-                ))}
-              </select>
-              <MaterialIcon
-                name="expand_more"
-                className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-outline"
-              />
-            </div>
-            {selectedTopic?.description ? (
-              <p className="mt-2 text-xs text-on-surface-variant">{selectedTopic.description}</p>
-            ) : null}
-          </section>
+      <div className="grid items-start gap-10 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+        <section className="order-1 lg:sticky lg:top-28 lg:order-none">
+          <div className="flex justify-center lg:justify-start">
+            <MobileFrame label="">{preview}</MobileFrame>
+          </div>
+          <button
+            type="button"
+            onClick={replayPreview}
+            className="mx-auto mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline lg:mx-0"
+          >
+            <MaterialIcon name="replay" className="text-lg" />
+            Chạy lại từ đầu
+          </button>
+        </section>
+
+        <section className="order-2 min-w-0">
+          <div className="flex flex-wrap gap-2">
+            {availableTopics.map((topic) => {
+              const selected = topic.id === topicId
+              return (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() => handleTopicSelect(topic.id)}
+                  className={[
+                    'rounded-full px-4 py-2 text-sm font-semibold transition',
+                    selected
+                      ? 'bg-primary text-on-primary'
+                      : 'bg-white/70 text-on-surface-variant hover:text-primary',
+                  ].join(' ')}
+                >
+                  {topic.name}
+                </button>
+              )
+            })}
+          </div>
 
           {formConfig ? (
-            <section className="rounded-2xl border border-outline-variant/20 bg-white/75 p-4 shadow-[0_12px_40px_rgba(74,48,32,0.06)] backdrop-blur-xl sm:p-5">
-              <h2 className="text-sm font-semibold text-on-surface">2. {formConfig.title}</h2>
-              <p className="mt-1 text-xs text-on-surface-variant">{formConfig.hint}</p>
-              <div className="mt-5">
-                <TopicQrForm fields={publicFields} values={formData} onChange={handleFieldChange} />
-              </div>
+            <div className="mt-8">
+              <TopicQrForm fields={publicFields} values={formData} onChange={handleFieldChange} />
 
               {saveError ? (
-                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+                <p className="mt-4 text-sm text-red-600" role="alert">
                   {saveError}
                 </p>
               ) : null}
@@ -212,28 +227,18 @@ function CreateCardPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="btn-primary mt-6 w-full py-3.5 sm:w-auto"
+                className="btn-primary mt-8 w-full py-4 sm:w-auto sm:min-w-[220px]"
               >
-                <MaterialIcon name="favorite" className="text-lg" />
-                {isSaving ? 'Đang lưu thiệp...' : 'Hoàn tất thiệp'}
+                {isSaving ? 'Đang lưu...' : 'Hoàn tất thiệp'}
               </button>
-            </section>
+              <p className="mt-3 text-xs text-outline">
+                Không xuất QR tại đây. Bạn sẽ nhận mã thiệp để gửi shop khi đặt hoa.
+              </p>
+            </div>
           ) : (
-            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Chủ đề này chưa mở tạo thiệp.
-            </p>
+            <p className="mt-8 text-sm text-amber-800">Chủ đề này chưa mở tạo thiệp.</p>
           )}
-        </div>
-
-        {isLgUp ? (
-          <section className="lg:sticky lg:top-28">
-            <MobileFrame label="Xem trước thiệp">{preview}</MobileFrame>
-          </section>
-        ) : (
-          <CollapsiblePreview label="Xem trước thiệp">
-            <MobileFrame label="Xem trước thiệp">{preview}</MobileFrame>
-          </CollapsiblePreview>
-        )}
+        </section>
       </div>
     </div>
   )

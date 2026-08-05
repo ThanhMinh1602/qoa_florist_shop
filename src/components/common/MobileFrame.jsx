@@ -1,7 +1,7 @@
 function MobileFrame({ label = 'Live Preview', children }) {
   return (
     <div className="flex flex-col items-center">
-      <p className="mb-4 text-sm font-medium text-on-surface-variant">{label}</p>
+      {label ? <p className="mb-4 text-sm font-medium text-on-surface-variant">{label}</p> : null}
 
       <div className="relative rounded-[2.5rem] border-[10px] border-slate-900 bg-on-surface p-2 shadow-2xl shadow-on-surface/20">
         <div
