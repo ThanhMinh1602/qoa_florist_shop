@@ -13,33 +13,52 @@ import { buildGreetingUrl } from '../../../constants/app'
 import CardQrPanel from '../components/CardQrPanel'
 import TopicQrForm from '../components/TopicQrForm'
 
-function contentPreview(card) {
-  if (card.topicId === 'galaxy_love') {
-    return (
-      (card.keywords || []).filter(Boolean).slice(0, 3).join(' · ') ||
-      (card.messages || [])[0] ||
-      '—'
-    )
-  }
-  return card.recipientName || '—'
+function formatCreatedAt(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
-function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
+function cardSource(card) {
+  return String(card.label || '').includes('· web') ? 'Web' : 'Shop'
+}
+
+function displayLabel(card) {
+  return (card.label || '').replace(/\s*·\s*web$/i, '').trim() || '(Chưa đặt tên)'
+}
+
+function messagePreview(card) {
+  if (card.topicId === 'galaxy_love') {
+    const keywords = (card.keywords || []).filter(Boolean).slice(0, 3).join(' · ')
+    const firstMessage = (card.messages || []).filter(Boolean)[0] || card.message || ''
+    return [keywords, firstMessage].filter(Boolean).join(' — ') || '—'
+  }
+  return card.message || '—'
+}
+
+function QrDetailModal({ card, onClose, onDelete, onUpdated, startInEdit = false }) {
   const { updateCard } = useCards()
   const topic = getTopicById(card.topicId)
   const formConfig = getTopicQrForm(card.topicId)
   const greetingUrl = buildGreetingUrl(card.id)
 
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(startInEdit)
   const [formData, setFormData] = useState(() => cardToFormValues(card))
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     setFormData(cardToFormValues(card))
-    setEditing(false)
+    setEditing(startInEdit)
     setSaveError('')
-  }, [card])
+  }, [card, startInEdit])
 
   useEffect(() => {
     function onKey(event) {
@@ -99,7 +118,14 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
             <h3 className="mt-1 truncate text-xl font-semibold text-on-surface sm:text-2xl">
               {card.label || card.recipientName || 'Thiệp QR'}
             </h3>
-            <p className="mt-1 text-base text-on-surface-variant">{topic?.name ?? card.topicId}</p>
+            <p className="mt-1 text-base text-on-surface-variant">
+              {card.code ? (
+                <span className="mr-2 font-mono font-semibold tracking-wide text-primary">
+                  {card.code}
+                </span>
+              ) : null}
+              {topic?.name ?? card.topicId}
+            </p>
           </div>
           <button
             type="button"
@@ -128,6 +154,14 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated }) {
           ) : (
             <>
               <dl className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
+                    Mã thiệp
+                  </dt>
+                  <dd className="mt-1 font-mono text-base font-semibold tracking-wide text-primary">
+                    {card.code || '—'}
+                  </dd>
+                </div>
                 <div className="sm:col-span-2">
                   <dt className="text-xs font-semibold uppercase tracking-wide text-outline">
                     {card.topicId === 'galaxy_love' ? 'Tên khách hàng' : 'Tên gợi nhớ'}
@@ -285,7 +319,16 @@ function QrListPage() {
   const { confirm, alert } = useDialog()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
+  const [startInEdit, setStartInEdit] = useState(false)
   const isLgUp = useIsLgUp()
+
+  const actionBtnClass =
+    'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/30 text-on-surface-variant transition hover:bg-surface-container-low'
+
+  function openDetail(card, edit = false) {
+    setStartInEdit(edit)
+    setSelected(card)
+  }
 
   const load = useCallback(async () => {
     await fetchCards(search.trim() ? { search: search.trim() } : {})
@@ -298,7 +341,7 @@ function QrListPage() {
   async function handleDelete(card) {
     const ok = await confirm({
       title: 'Xóa QR',
-      message: `Xóa “${card.label || card.recipientName}”? Link QR sẽ không còn dùng được.`,
+      message: `Xóa thiệp ${card.code ? `“${card.code}”` : ''} ${card.label || card.recipientName || ''}? Link QR sẽ không còn dùng được.`,
       confirmLabel: 'Xóa',
       variant: 'danger',
     })
@@ -337,7 +380,7 @@ function QrListPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm tên khách, keyword, lời nhắn..."
+            placeholder="Tìm mã thiệp, tên khách, SĐT, lời nhắn..."
             className="w-full max-w-md rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/15"
           />
         </div>
@@ -357,90 +400,156 @@ function QrListPage() {
             </Link>
           </div>
         ) : (
-          <div className="glass-card overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm">
             {isLgUp ? (
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-outline-variant/25 bg-surface-container-low/60 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-                  <tr>
-                    <th className="px-4 py-3">Tên khách / gợi nhớ</th>
-                    <th className="px-4 py-3">Chủ đề</th>
-                    <th className="px-4 py-3">Nội dung</th>
-                    <th className="px-4 py-3">Tạo</th>
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-container">
-                  {cards.map((card) => (
-                    <tr
-                      key={card.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelected(card)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          setSelected(card)
-                        }
-                      }}
-                      className="cursor-pointer transition hover:bg-surface-container-low/50"
-                    >
-                      <td className="px-4 py-3 font-semibold text-on-surface">
-                        {card.label || '(Chưa đặt tên)'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <TopicLabel topicId={card.topicId} />
-                      </td>
-                      <td className="px-4 py-3 text-on-surface-variant">{contentPreview(card)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
-                        {formatTimeAgo(card.createdAt)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            handleDelete(card)
-                          }}
-                          className="text-sm text-red-500 hover:text-red-600"
-                        >
-                          Xóa
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="min-w-[1180px] w-full text-left text-sm">
+                  <thead className="border-b border-outline-variant/25 bg-surface-container-low text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
+                    <tr>
+                      <th className="whitespace-nowrap px-3 py-2.5">Mã thiệp</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Tên / gợi nhớ</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Chủ đề</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Người nhận</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Người gửi</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">SĐT</th>
+                      <th className="px-3 py-2.5">Nội dung</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Nguồn</th>
+                      <th className="whitespace-nowrap px-3 py-2.5">Ngày tạo</th>
+                      <th className="px-3 py-2.5" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container">
+                    {cards.map((card) => (
+                      <tr
+                        key={card.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openDetail(card)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            openDetail(card)
+                          }
+                        }}
+                        className="cursor-pointer align-top transition hover:bg-surface-container-low/50"
+                      >
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <span className="font-mono text-sm font-semibold tracking-wide text-primary">
+                            {card.code || '—'}
+                          </span>
+                        </td>
+                        <td className="max-w-[12rem] px-3 py-3 font-semibold text-on-surface">
+                          <p className="truncate">{displayLabel(card)}</p>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <TopicLabel topicId={card.topicId} />
+                        </td>
+                        <td className="max-w-[9rem] truncate px-3 py-3 text-on-surface">
+                          {card.recipientName || '—'}
+                        </td>
+                        <td className="max-w-[9rem] truncate px-3 py-3 text-on-surface-variant">
+                          {card.senderName || '—'}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3 text-on-surface-variant">
+                          {card.phone || '—'}
+                        </td>
+                        <td className="max-w-[18rem] px-3 py-3 text-on-surface-variant">
+                          <p className="line-clamp-2">{messagePreview(card)}</p>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <span
+                            className={[
+                              'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                              cardSource(card) === 'Web'
+                                ? 'bg-primary-fixed text-primary'
+                                : 'bg-surface-container-high text-on-surface-variant',
+                            ].join(' ')}
+                          >
+                            {cardSource(card)}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3 text-on-surface-variant">
+                          <p>{formatCreatedAt(card.createdAt)}</p>
+                          <p className="text-[11px] text-outline">{formatTimeAgo(card.createdAt)}</p>
+                        </td>
+                        <td
+                          className="whitespace-nowrap px-3 py-3 text-right"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => openDetail(card, true)}
+                              className={`${actionBtnClass} text-primary`}
+                              title="Sửa"
+                              aria-label="Sửa"
+                            >
+                              <MaterialIcon name="edit" className="text-base" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(card)}
+                              className={`${actionBtnClass} text-red-600 hover:border-red-200 hover:bg-red-50/70`}
+                              title="Xóa"
+                              aria-label="Xóa"
+                            >
+                              <MaterialIcon name="delete" className="text-base" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <ul className="divide-y divide-surface-container">
                 {cards.map((card) => (
-                  <li key={card.id}>
+                  <li key={card.id} className="p-4">
                     <button
                       type="button"
-                      onClick={() => setSelected(card)}
-                      className="w-full p-4 text-left transition hover:bg-surface-container-low/40"
+                      onClick={() => openDetail(card)}
+                      className="w-full text-left"
                     >
-                      <p className="font-semibold text-on-surface">
-                        {card.label || '(Chưa đặt tên)'}
+                      <p className="font-mono text-sm font-semibold tracking-wide text-primary">
+                        {card.code || 'Chưa có mã'}
                       </p>
+                      <p className="mt-1 font-semibold text-on-surface">{displayLabel(card)}</p>
                       <p className="mt-1 text-xs text-on-surface-variant">
-                        <TopicLabel topicId={card.topicId} /> · {contentPreview(card)} ·{' '}
-                        {formatTimeAgo(card.createdAt)}
+                        <TopicLabel topicId={card.topicId} /> · {cardSource(card)}
+                      </p>
+                      <p className="mt-2 text-sm text-on-surface">
+                        Nhận: {card.recipientName || '—'}
+                        {card.senderName ? ` · Gửi: ${card.senderName}` : ''}
+                      </p>
+                      {card.phone ? (
+                        <p className="mt-0.5 text-sm text-on-surface-variant">{card.phone}</p>
+                      ) : null}
+                      <p className="mt-2 line-clamp-2 text-sm text-on-surface-variant">
+                        {messagePreview(card)}
+                      </p>
+                      <p className="mt-2 text-xs text-outline">
+                        {formatCreatedAt(card.createdAt)} · {formatTimeAgo(card.createdAt)}
                       </p>
                     </button>
-                    <div className="flex gap-3 px-4 pb-3">
+                    <div className="mt-3 flex justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelected(card)}
-                        className="text-sm font-medium text-primary"
+                        onClick={() => openDetail(card, true)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/30 text-primary"
+                        aria-label="Sửa"
+                        title="Sửa"
                       >
-                        Xem / Sửa
+                        <MaterialIcon name="edit" className="text-base" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(card)}
-                        className="text-sm text-red-500"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-200/80 bg-red-50/50 text-red-600"
+                        aria-label="Xóa"
+                        title="Xóa"
                       >
-                        Xóa
+                        <MaterialIcon name="delete" className="text-base" />
                       </button>
                     </div>
                   </li>
@@ -454,9 +563,16 @@ function QrListPage() {
       {selected ? (
         <QrDetailModal
           card={selected}
-          onClose={() => setSelected(null)}
+          startInEdit={startInEdit}
+          onClose={() => {
+            setSelected(null)
+            setStartInEdit(false)
+          }}
           onDelete={handleDelete}
-          onUpdated={(card) => setSelected(card)}
+          onUpdated={(card) => {
+            setSelected(card)
+            setStartInEdit(false)
+          }}
         />
       ) : null}
     </div>

@@ -54,6 +54,7 @@ function CreateQrPage() {
       return
     }
     setSavedCard(result.card)
+    setFormData(getEmptyFormValues(topicId))
   }
 
   return (

@@ -15,7 +15,10 @@ function ShopLayout() {
         <div className="mesh-wash absolute inset-0" />
       </div>
 
-      <SiteHeader variant="page" activeId="products" />
+      <SiteHeader
+        variant="page"
+        activeId={location.pathname.startsWith('/shop/card') ? 'custom-card' : 'products'}
+      />
 
       <main className="pt-24 sm:pt-28">
         <Outlet />

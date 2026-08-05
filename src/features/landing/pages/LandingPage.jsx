@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import SiteHeader, { NAV_OFFSET } from '../../../components/common/SiteHeader'
+import SiteHeader from '../../../components/common/SiteHeader'
 import { LANDING_IMAGES, LANDING_STEPS } from '../../../constants/landingImagery'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
@@ -34,12 +34,7 @@ function LandingPage() {
             images={heroImages}
             autoPlayMs={heroAutoPlayMs}
             onExplore={() => navigate('/shop')}
-            onCustom={() => {
-              const el = document.getElementById('custom-card')
-              if (!el) return
-              const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET
-              window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
-            }}
+            onCustom={() => navigate('/shop/card')}
           />
         </section>
 
@@ -152,14 +147,9 @@ function LandingPage() {
                 niệm, hoặc viết một lá thư tay kỹ thuật số. Người nhận chỉ cần quét mã QR đính kèm
                 để mở ra những điều bất ngờ.
               </p>
-              <button
-                type="button"
-                className="btn-primary inline-flex cursor-default px-8 py-4 opacity-70"
-                disabled
-                title="Tạm thời chưa mở"
-              >
+              <Link to="/shop/card" className="btn-primary inline-flex px-8 py-4">
                 Tạo thiệp ngay
-              </button>
+              </Link>
             </div>
             <div className="relative flex flex-1 justify-center">
               <div className="relative z-10 h-[420px] w-56 overflow-hidden rounded-[32px] border-8 border-surface-container-high bg-surface-container-lowest shadow-2xl sm:h-[500px] sm:w-64">
@@ -194,9 +184,9 @@ function LandingPage() {
           <Link to="/shop" className="label-caps text-on-surface-variant hover:text-primary">
             Sản phẩm
           </Link>
-          <a href="/#custom-card" className="label-caps text-on-surface-variant hover:text-primary">
+          <Link to="/shop/card" className="label-caps text-on-surface-variant hover:text-primary">
             Tạo thiệp
-          </a>
+          </Link>
           <a
             href="mailto:hello@qoaflorist.com"
             className="label-caps text-on-surface-variant hover:text-primary"

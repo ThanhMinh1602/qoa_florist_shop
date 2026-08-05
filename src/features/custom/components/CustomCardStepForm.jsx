@@ -23,14 +23,14 @@ function CustomCardStepForm({ values, onChange }) {
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-on-surface">
-          Tên người nhận <span className="text-primary">*</span>
+          Nhật Ny <span className="text-primary">*</span>
         </span>
         <input
           type="text"
           value={values.recipientName}
           onChange={handleChange('recipientName')}
           className={fieldClassName}
-          placeholder="Ví dụ: Lan Anh"
+          placeholder="Ví dụ: Nhật Ny"
           required
         />
       </label>

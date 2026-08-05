@@ -15,6 +15,7 @@ import GalaxyOfLoveScreen from './features/greeting/GalaxyOfLoveScreen'
 import GreetingPage from './features/greeting/pages/GreetingPage'
 import LandingPage from './features/landing/pages/LandingPage'
 import ShopLayout from './features/shop/layouts/ShopLayout'
+import CreateCardPage from './features/custom/pages/CreateCardPage'
 import ShopCatalogPage from './features/shop/pages/ShopCatalogPage'
 import ShopProductPage from './features/shop/pages/ShopProductPage'
 import ProtectedRoute from './routes/ProtectedRoute'
@@ -30,6 +31,7 @@ function App() {
       <Route path="/shop" element={<ShopLayout />}>
         <Route index element={<ShopCatalogPage />} />
         <Route path="product/:id" element={<ShopProductPage />} />
+        <Route path="card" element={<CreateCardPage />} />
       </Route>
 
       <Route path="/admin/login" element={<LoginPage />} />

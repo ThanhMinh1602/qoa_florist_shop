@@ -89,9 +89,9 @@ export const TOPIC_QR_FORMS = {
       },
       {
         name: 'recipientName',
-        label: 'Tên người nhận',
+        label: 'Nhật Ny',
         required: true,
-        placeholder: 'VD: Lan Anh',
+        placeholder: 'VD: Nhật Ny',
       },
       {
         name: 'senderName',

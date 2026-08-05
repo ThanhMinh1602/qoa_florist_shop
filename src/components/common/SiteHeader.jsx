@@ -13,7 +13,7 @@ export const SITE_NAV_ITEMS = [
   { id: 'home', label: 'Home', type: 'hash', hash: 'home' },
   { id: 'featured', label: 'Bán chạy', type: 'hash', hash: 'featured' },
   { id: 'products', label: 'Sản phẩm', type: 'route', to: '/shop' },
-  { id: 'custom-card', label: 'Tạo thiệp', type: 'hash', hash: 'custom-card' },
+  { id: 'custom-card', label: 'Tạo thiệp', type: 'route', to: '/shop/card' },
 ]
 
 function normalizeHash(hash) {
