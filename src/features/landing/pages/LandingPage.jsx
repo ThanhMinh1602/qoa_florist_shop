@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import SiteHeader from '../../../components/common/SiteHeader'
+import { Reveal, Stagger, StaggerItem } from '../../../components/motion/Reveal'
 import { LANDING_IMAGES, LANDING_STEPS } from '../../../constants/landingImagery'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
@@ -39,11 +40,11 @@ function LandingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-16">
-          <div className="grid gap-6 md:grid-cols-3">
+          <Stagger className="grid gap-6 md:grid-cols-3">
             {LANDING_STEPS.map((step, index) => (
-              <div
+              <StaggerItem
                 key={step.title}
-                className="glass-card flex flex-col items-center rounded-xl p-8 text-center"
+                className="glass-card lift-card flex flex-col items-center rounded-xl p-8 text-center"
               >
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-variant">
                   <MaterialIcon
@@ -55,16 +56,16 @@ function LandingPage() {
                   {step.title.replace(/^\d+\.\s*/, '')}
                 </h3>
                 <p className="text-sm text-on-surface-variant">{step.description}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </section>
 
         <section
           id="featured"
           className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
         >
-          <div className="mb-12 flex items-end justify-between gap-4">
+          <Reveal className="mb-12 flex items-end justify-between gap-4">
             <div>
               <p className="label-caps text-primary">Gợi ý hôm nay</p>
               <h2 className="font-display mt-1 text-3xl text-primary md:text-[2rem]">Bán chạy</h2>
@@ -72,7 +73,7 @@ function LandingPage() {
             <Link to="/shop" className="label-caps shrink-0 text-primary hover:underline">
               Xem thêm
             </Link>
-          </div>
+          </Reveal>
 
           {productsError ? (
             <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
@@ -88,9 +89,9 @@ function LandingPage() {
               <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
             </div>
           ) : (
-            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" faster>
               {products.map((product) => (
-                <li key={product.id} className="glass-card overflow-hidden">
+                <StaggerItem key={product.id} className="glass-card lift-card overflow-hidden">
                   <Link to={`/shop/product/${product.id}`} className="block">
                     <div className="relative aspect-[4/5] overflow-hidden bg-surface-container-low">
                       {product.mainImage ? (
@@ -127,9 +128,9 @@ function LandingPage() {
                       </div>
                     </div>
                   </Link>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </Stagger>
           )}
         </section>
 
@@ -137,7 +138,7 @@ function LandingPage() {
           id="custom-card"
           className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
         >
-          <div className="glass-card flex flex-col items-center gap-12 rounded-2xl p-8 md:flex-row md:p-16">
+          <Reveal className="glass-card flex flex-col items-center gap-12 rounded-2xl p-8 md:flex-row md:p-16">
             <div className="flex-1">
               <h2 className="mb-6 font-display text-3xl text-primary md:text-[2rem]">
                 Thiệp số, cảm xúc thật
@@ -168,7 +169,7 @@ function LandingPage() {
                 aria-hidden="true"
               />
             </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 

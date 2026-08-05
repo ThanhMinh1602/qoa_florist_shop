@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { easeOut } from '../../../lib/motion'
 import { CATALOG_PAGE_SIZE, CATALOG_PRICE_FILTERS } from '../../../constants/catalogFilters'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalogInfinite, usePublicCategories } from '../../../hooks/swr'
@@ -12,8 +13,6 @@ const SORT_OPTIONS = [
   { id: 'price_asc', label: 'Giá thấp đến cao' },
   { id: 'price_desc', label: 'Giá cao đến thấp' },
 ]
-
-const easeOut = [0.22, 1, 0.36, 1]
 
 function FilterRow({ selected, onClick, children }) {
   return (
@@ -202,7 +201,21 @@ function ShopCatalogPage() {
             </span>
             <MaterialIcon name={filtersOpen ? 'expand_less' : 'expand_more'} />
           </button>
-          <div className={filtersOpen ? 'block' : 'hidden lg:block'}>{filterPanel}</div>
+          <div className="hidden lg:block">{filterPanel}</div>
+          <AnimatePresence initial={false}>
+            {filtersOpen ? (
+              <motion.div
+                key="mobile-filters"
+                className="lg:hidden"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: easeOut }}
+              >
+                {filterPanel}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </aside>
 
         <section>
@@ -247,7 +260,7 @@ function ShopCatalogPage() {
                     transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.04, ease: easeOut }}
                   >
                     <Link to={`/shop/product/${product.id}`} className="group block">
-                      <div className="relative overflow-hidden rounded-2xl bg-surface-container-low shadow-[0_10px_30px_rgba(74,48,32,0.08)]">
+                      <div className="lift-card relative overflow-hidden rounded-2xl bg-surface-container-low shadow-[0_10px_30px_rgba(74,48,32,0.08)]">
                         <div className="aspect-[4/5]">
                           {product.mainImage ? (
                             <img

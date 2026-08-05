@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { overlayFade, sheetEnter } from '../../../lib/motion'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   activateProductApi,
@@ -407,8 +409,6 @@ function ProductFormDialog({
   formError,
   title,
 }) {
-  if (!open) return null
-
   const selectedIds = Array.isArray(values.categoryIds) ? values.categoryIds : []
 
   function toggleCategory(categoryId) {
@@ -419,7 +419,12 @@ function ProductFormDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <AnimatePresence>
+      {open ? (
+    <motion.div
+      className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4"
+      {...overlayFade}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-on-surface/50"
@@ -427,11 +432,12 @@ function ProductFormDialog({
         onClick={onClose}
       />
 
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-form-title"
         className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+        {...sheetEnter}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">
           <div>
@@ -629,8 +635,10 @@ function ProductFormDialog({
             ) : null}
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }
 
@@ -1021,6 +1029,7 @@ function ProductsPage() {
                       <tr
                         key={product.id}
                         className={[
+                          'transition-colors hover:bg-surface-container-low/60',
                           !product.active ? 'opacity-50' : '',
                           checked ? 'bg-primary/5' : '',
                         ].join(' ')}

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { fadeUp, staggerFast } from '../../../lib/motion'
 import { createCashEntryApi, deleteCashEntryApi } from '../../../api/cashbookApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useCashbook } from '../../../hooks/swr'
@@ -87,8 +89,13 @@ function CashbookPage() {
         </a>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3 md:gap-6">
-        <div className="glass-card relative overflow-hidden rounded-xl p-6">
+      <motion.section
+        className="grid gap-4 md:grid-cols-3 md:gap-6"
+        initial="hidden"
+        animate="show"
+        variants={staggerFast}
+      >
+        <motion.div className="glass-card relative overflow-hidden rounded-xl p-6" variants={fadeUp}>
           <MaterialIcon
             name="trending_up"
             className="pointer-events-none absolute top-3 right-3 text-[4rem] text-primary opacity-20"
@@ -97,8 +104,8 @@ function CashbookPage() {
           <p className="font-display relative z-10 text-2xl text-primary md:text-3xl">
             {formatMoney(totals.income)}
           </p>
-        </div>
-        <div className="glass-card relative overflow-hidden rounded-xl p-6">
+        </motion.div>
+        <motion.div className="glass-card relative overflow-hidden rounded-xl p-6" variants={fadeUp}>
           <MaterialIcon
             name="trending_down"
             className="pointer-events-none absolute top-3 right-3 text-[4rem] text-secondary opacity-20"
@@ -107,8 +114,8 @@ function CashbookPage() {
           <p className="font-display relative z-10 text-2xl text-secondary md:text-3xl">
             {formatMoney(totals.expense)}
           </p>
-        </div>
-        <div className="glass-card relative overflow-hidden rounded-xl border-primary/30 bg-primary-container/20 p-6">
+        </motion.div>
+        <motion.div className="glass-card relative overflow-hidden rounded-xl border-primary/30 bg-primary-container/20 p-6" variants={fadeUp}>
           <MaterialIcon
             name="account_balance"
             className="pointer-events-none absolute top-3 right-3 text-[4rem] text-primary opacity-20"
@@ -117,8 +124,8 @@ function CashbookPage() {
           <p className="font-display relative z-10 text-2xl font-semibold text-primary md:text-3xl">
             {formatMoney(totals.balance)}
           </p>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       <form
         id="cash-entry-form"

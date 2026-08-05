@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import SiteHeader from '../../../components/common/SiteHeader'
+import AnimatedOutlet from '../../../components/motion/AnimatedOutlet'
 
 function ShopLayout() {
   const location = useLocation()
@@ -21,7 +22,7 @@ function ShopLayout() {
       />
 
       <main className="pt-24 sm:pt-28">
-        <Outlet />
+        <AnimatedOutlet variant="shop" />
       </main>
 
       <footer className="relative mt-16 border-t border-white/55">

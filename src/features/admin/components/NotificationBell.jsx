@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useNotifications } from '../../../context/NotificationsContext'
+import { popoverEnter } from '../../../lib/motion'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 
 function NotificationBell() {
@@ -67,14 +69,23 @@ function NotificationBell() {
       >
         <MaterialIcon name="notifications" className="text-[1.4rem]" />
         {unreadCount > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
+          <motion.span
+            key={unreadCount}
+            initial={{ scale: 0.7 }}
+            animate={{ scale: 1 }}
+            className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white"
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+          </motion.span>
         ) : null}
       </button>
 
+      <AnimatePresence>
       {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-2xl shadow-primary/10 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto">
+        <motion.div
+          className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-2xl shadow-primary/10 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto"
+          {...popoverEnter}
+        >
           <div className="flex items-center justify-between border-b border-surface-container px-4 py-3">
             <h3 className="text-sm font-semibold text-on-surface">Thông báo</h3>
             {unreadCount > 0 ? (
@@ -150,8 +161,9 @@ function NotificationBell() {
               Xem tất cả đơn hàng
             </button>
           </div>
-        </div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </div>
   )
 }

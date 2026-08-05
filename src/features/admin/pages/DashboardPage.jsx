@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useStatsOverview } from '../../../hooks/swr'
+import { easeOut, fadeUp, staggerFast } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { ORDER_STATUS_LABELS } from '../../../constants/orderStatus'
@@ -13,7 +15,7 @@ function KpiCard({ icon, label, value, hint, accent = 'primary' }) {
   }
 
   return (
-    <div className="glass-card p-5">
+    <motion.div className="glass-card p-5" variants={fadeUp} whileHover={{ y: -2 }}>
       <div className="flex items-center justify-between gap-2">
         <p className="label-caps text-on-surface-variant">{label}</p>
         <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
@@ -22,7 +24,7 @@ function KpiCard({ icon, label, value, hint, accent = 'primary' }) {
       </div>
       <p className="font-display mt-3 text-3xl text-on-surface">{value}</p>
       {hint ? <p className="mt-1 text-xs text-outline">{hint}</p> : null}
-    </div>
+    </motion.div>
   )
 }
 
@@ -66,7 +68,12 @@ function DashboardPage() {
           <p className="py-16 text-center text-sm text-on-surface-variant">Đang tải thống kê...</p>
         ) : (
           <>
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <motion.section
+              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+              initial="hidden"
+              animate="show"
+              variants={staggerFast}
+            >
               <KpiCard
                 icon="qr_code_2"
                 label="Doanh thu hôm nay"
@@ -93,10 +100,15 @@ function DashboardPage() {
                 hint={`Thu ${formatMoney(data.month.cashIncome)} · Chi ${formatMoney(data.month.cashExpense)}`}
                 accent="muted"
               />
-            </section>
+            </motion.section>
 
-            <section className="grid gap-4 lg:grid-cols-2">
-              <div className="glass-card p-5">
+            <motion.section
+              className="grid gap-4 lg:grid-cols-2"
+              initial="hidden"
+              animate="show"
+              variants={staggerFast}
+            >
+              <motion.div className="glass-card p-5" variants={fadeUp}>
                 <h3 className="font-display text-xl text-primary">Tháng này</h3>
                 <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -124,9 +136,9 @@ function DashboardPage() {
                     </dd>
                   </div>
                 </dl>
-              </div>
+              </motion.div>
 
-              <div className="glass-card p-5">
+              <motion.div className="glass-card p-5" variants={fadeUp}>
                 <h3 className="font-display text-xl text-primary">Năm nay</h3>
                 <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -154,16 +166,24 @@ function DashboardPage() {
                     </dd>
                   </div>
                 </dl>
-              </div>
-            </section>
+              </motion.div>
+            </motion.section>
 
-            <section className="glass-card p-5">
+            <motion.section
+              className="glass-card p-5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: easeOut, delay: 0.08 }}
+            >
               <h3 className="font-display text-xl text-primary">Doanh thu 6 tháng gần nhất</h3>
               <div className="mt-4 flex h-44 items-end gap-2">
-                {data.chartMonths.map((month) => (
+                {data.chartMonths.map((month, index) => (
                   <div key={month.key} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full rounded-t-xl bg-primary/75 transition"
+                    <motion.div
+                      className="w-full origin-bottom rounded-t-xl bg-primary/75"
+                      initial={{ scaleY: 0 }}
+                      animate={{ scaleY: 1 }}
+                      transition={{ duration: 0.55, delay: 0.12 + index * 0.05, ease: easeOut }}
                       style={{
                         height: `${Math.max(4, (month.revenue / maxRevenue) * 100)}%`,
                       }}
@@ -173,7 +193,7 @@ function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </section>
+            </motion.section>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <section className="glass-card p-5">

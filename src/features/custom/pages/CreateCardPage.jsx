@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import MobileFrame from '../../../components/common/MobileFrame'
+import { easeOut } from '../../../lib/motion'
 import { TOPICS } from '../../../constants/topics'
 import {
   getEmptyFormValues,
@@ -12,8 +13,6 @@ import {
 import { useCards } from '../../../context/CardsContext'
 import TopicGreetingScreen from '../../greeting/TopicGreetingScreen'
 import TopicQrForm from '../../admin/components/TopicQrForm'
-
-const easeOut = [0.22, 1, 0.36, 1]
 
 function toPublicFields(fields = []) {
   return fields.map((field) => {
@@ -169,15 +168,25 @@ function CreateCardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pb-20 pt-6 sm:px-8 lg:px-10">
-      <div className="mb-8 lg:mb-10">
+      <motion.div
+        className="mb-8 lg:mb-10"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: easeOut }}
+      >
         <h1 className="font-display text-3xl text-on-surface sm:text-4xl">Tạo thiệp</h1>
         <p className="mt-1 text-sm text-on-surface-variant">
           Soạn lời chúc, xem trước, rồi mua hoa để nhận QR trên bó hoa.
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
-        <section className="order-1 lg:sticky lg:top-28 lg:order-none">
+        <motion.section
+          className="order-1 lg:sticky lg:top-28 lg:order-none"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: easeOut }}
+        >
           <div className="flex justify-center lg:justify-start">
             <MobileFrame label="">{preview}</MobileFrame>
           </div>
@@ -189,9 +198,14 @@ function CreateCardPage() {
             <MaterialIcon name="replay" className="text-lg" />
             Chạy lại từ đầu
           </button>
-        </section>
+        </motion.section>
 
-        <section className="order-2 min-w-0">
+        <motion.section
+          className="order-2 min-w-0"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.06, ease: easeOut }}
+        >
           <div className="flex flex-wrap gap-2">
             {availableTopics.map((topic) => {
               const selected = topic.id === topicId
@@ -238,7 +252,7 @@ function CreateCardPage() {
           ) : (
             <p className="mt-8 text-sm text-amber-800">Chủ đề này chưa mở tạo thiệp.</p>
           )}
-        </section>
+        </motion.section>
       </div>
     </div>
   )

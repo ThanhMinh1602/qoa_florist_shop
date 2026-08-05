@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { overlayFade, sheetEnter } from '../../../lib/motion'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import {
   SHIPPING_STATUS_LABELS,
@@ -133,10 +135,16 @@ function OrderDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-on-surface/50 p-0 sm:items-center sm:p-4">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-on-surface/50 p-0 sm:items-center sm:p-4"
+      {...overlayFade}
+    >
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Đóng" />
 
-      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl">
+      <motion.div
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+        {...sheetEnter}
+      >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">
           <div className="min-w-0">
             <p className="font-mono text-xs font-bold tracking-wide text-on-surface-variant">
@@ -343,8 +351,8 @@ function OrderDetailModal({
 
           <RequestShippingPanel request={request} onUpdated={onUpdated} />
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 

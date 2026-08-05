@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useSWRConfig } from 'swr'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { overlayFade, sheetEnter } from '../../../lib/motion'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   bulkDeleteCategoriesApi,
@@ -42,10 +44,13 @@ function CategoryFormDialog({
     return () => window.clearTimeout(timer)
   }, [open])
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <AnimatePresence>
+      {open ? (
+    <motion.div
+      className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4"
+      {...overlayFade}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm"
@@ -53,11 +58,12 @@ function CategoryFormDialog({
         onClick={onClose}
       />
 
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby="category-form-title"
         className="relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl border border-white/50 bg-surface-container-lowest/90 shadow-2xl backdrop-blur-2xl sm:rounded-2xl"
+        {...sheetEnter}
       >
         <div className="flex items-start justify-between gap-3 border-b border-white/40 px-5 py-4">
           <div>
@@ -134,8 +140,10 @@ function CategoryFormDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }
 

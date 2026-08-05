@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../components/common/MaterialIcon'
+import { overlayFade, sheetEnter } from '../lib/motion'
 
 const DialogContext = createContext(null)
 
@@ -31,24 +33,28 @@ const VARIANT_META = {
 }
 
 function AppDialog({ dialog, onResolve }) {
-  if (!dialog) return null
-
-  const meta = VARIANT_META[dialog.variant] || VARIANT_META.info
-  const isConfirm = dialog.mode === 'confirm'
+  const meta = VARIANT_META[dialog?.variant] || VARIANT_META.info
+  const isConfirm = dialog?.mode === 'confirm'
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <AnimatePresence>
+      {dialog ? (
+    <motion.div
+      className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4"
+      {...overlayFade}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-on-surface/50"
         aria-label="Đóng"
         onClick={() => onResolve(false)}
       />
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby="app-dialog-title"
         className="relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+        {...sheetEnter}
       >
         <div className="p-5 sm:p-6">
           <div className="flex gap-3">
@@ -88,8 +94,10 @@ function AppDialog({ dialog, onResolve }) {
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }
 

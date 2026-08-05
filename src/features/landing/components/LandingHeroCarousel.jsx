@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { fadeUp, stagger } from '../../../lib/motion'
 
 /**
  * Hero carousel — dùng chung Landing + preview admin.
@@ -119,8 +121,14 @@ function LandingHeroCarousel({
         </>
       ) : null}
 
-      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center py-16">
-        <h1
+      <motion.div
+        className="relative z-10 mx-auto flex max-w-4xl flex-col items-center py-16"
+        initial={preview ? false : 'hidden'}
+        animate="show"
+        variants={stagger}
+      >
+        <motion.h1
+          variants={fadeUp}
           className={[
             'mb-6 font-display font-semibold leading-[1.08] tracking-[-0.03em]',
             preview ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-6xl md:text-[5.25rem]',
@@ -132,8 +140,9 @@ function LandingHeroCarousel({
           Hoa tươi chọn tay.
           <br />
           Thiệp số gắn QR.
-        </h1>
-        <p
+        </motion.h1>
+        <motion.p
+          variants={fadeUp}
           className={[
             'mb-10 max-w-2xl text-base sm:text-lg',
             hasSlides
@@ -143,8 +152,8 @@ function LandingHeroCarousel({
         >
           Trải nghiệm tặng hoa hoàn toàn mới với thông điệp cá nhân hóa được mã hóa qua QR code,
           mang đến bất ngờ tinh tế cho người nhận.
-        </p>
-        <div className="flex flex-col gap-4 sm:flex-row">
+        </motion.p>
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row">
           {preview || !onExplore ? (
             <span className="btn-primary pointer-events-none px-8 py-4 shadow-lg shadow-black/25 opacity-90">
               Khám phá bộ sưu tập
@@ -182,8 +191,8 @@ function LandingHeroCarousel({
               Tạo thiệp lời chúc
             </button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }

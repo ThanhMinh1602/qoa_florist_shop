@@ -5,19 +5,8 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import MarkdownContent from '../../../components/common/MarkdownContent'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useCatalogProduct } from '../../../hooks/swr'
+import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
-
-const easeOut = [0.22, 1, 0.36, 1]
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: easeOut } },
-}
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.08 } },
-}
 
 function splitMaterials(value) {
   return String(value || '')

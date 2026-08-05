@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useAuth } from '../../../context/AuthContext'
+import { easeOut } from '../../../lib/motion'
 
 function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth()
@@ -53,7 +55,12 @@ function LoginPage() {
         style={{ animationDelay: '2s' }}
       />
 
-      <main className="relative z-10 w-full max-w-[440px]">
+      <motion.main
+        className="relative z-10 w-full max-w-[440px]"
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: easeOut }}
+      >
         <div className="glass-card flex flex-col items-center p-8 md:p-12">
           <div className="mb-10 w-full text-center">
             <h1 className="font-display mb-2 text-[2.5rem] leading-tight tracking-[-0.02em] text-primary md:text-[3rem]">
@@ -135,7 +142,7 @@ function LoginPage() {
             </div>
           </form>
         </div>
-      </main>
+      </motion.main>
     </div>
   )
 }

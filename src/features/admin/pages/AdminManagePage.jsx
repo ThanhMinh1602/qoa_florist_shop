@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   bulkDeleteCustomRequestsApi,
@@ -384,43 +385,50 @@ function AdminManagePage() {
             <p className="text-sm text-on-surface-variant">Đang tải...</p>
           </div>
         ) : isLgUp ? (
-          <ManageUnifiedTable
-            items={filteredItems}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAll={toggleSelectAll}
-            onSelect={setSelectedItem}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onShippingStatusChange={handleShippingStatusChange}
-            busy={busy}
-            updatingId={updatingId}
-          />
+          <div className="animate-fade-in">
+            <ManageUnifiedTable
+              items={filteredItems}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+              onSelect={setSelectedItem}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onShippingStatusChange={handleShippingStatusChange}
+              busy={busy}
+              updatingId={updatingId}
+            />
+          </div>
         ) : (
-          <ManageUnifiedListMobile
-            items={filteredItems}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onSelect={setSelectedItem}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onShippingStatusChange={handleShippingStatusChange}
-            busy={busy}
-            updatingId={updatingId}
-          />
+          <div className="animate-fade-in">
+            <ManageUnifiedListMobile
+              items={filteredItems}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onSelect={setSelectedItem}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onShippingStatusChange={handleShippingStatusChange}
+              busy={busy}
+              updatingId={updatingId}
+            />
+          </div>
         )}
       </div>
 
-      {selectedItem?.kind === 'order' ? (
-        <OrderDetailModal
-          request={selectedItem.raw}
-          onClose={() => setSelectedItem(null)}
-          onStatusChange={handleStatusChange}
-          onShippingStatusChange={handleShippingStatusChange}
-          onUpdated={handleOrderUpdated}
-          isUpdating={updatingId === selectedItem.id}
-        />
-      ) : null}
+      <AnimatePresence>
+        {selectedItem?.kind === 'order' ? (
+          <OrderDetailModal
+            key={selectedItem.id}
+            request={selectedItem.raw}
+            onClose={() => setSelectedItem(null)}
+            onStatusChange={handleStatusChange}
+            onShippingStatusChange={handleShippingStatusChange}
+            onUpdated={handleOrderUpdated}
+            isUpdating={updatingId === selectedItem.id}
+          />
+        ) : null}
+      </AnimatePresence>
 
       <LoadingOverlay open={busy} message={busyMessage} />
     </div>

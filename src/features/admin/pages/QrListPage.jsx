@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { overlayFade, sheetEnter } from '../../../lib/motion'
 import TopicLabel from '../../../components/common/TopicLabel'
 import { getTopicById } from '../../../constants/topics'
 import { cardToFormValues, getTopicQrForm } from '../../../constants/topicQrForms'
@@ -98,17 +100,21 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated, startInEdit = false
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+      {...overlayFade}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-on-surface/50 backdrop-blur-[2px]"
         aria-label="Đóng"
         onClick={onClose}
       />
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         className="relative z-10 flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-xl sm:rounded-3xl"
+        {...sheetEnter}
       >
         <div className="flex items-start justify-between gap-3 border-b border-outline-variant/25 px-6 py-5 sm:px-8">
           <div className="min-w-0">
@@ -309,8 +315,8 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated, startInEdit = false
             </>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -560,21 +566,24 @@ function QrListPage() {
         )}
       </div>
 
-      {selected ? (
-        <QrDetailModal
-          card={selected}
-          startInEdit={startInEdit}
-          onClose={() => {
-            setSelected(null)
-            setStartInEdit(false)
-          }}
-          onDelete={handleDelete}
-          onUpdated={(card) => {
-            setSelected(card)
-            setStartInEdit(false)
-          }}
-        />
-      ) : null}
+      <AnimatePresence>
+        {selected ? (
+          <QrDetailModal
+            key={selected.id}
+            card={selected}
+            startInEdit={startInEdit}
+            onClose={() => {
+              setSelected(null)
+              setStartInEdit(false)
+            }}
+            onDelete={handleDelete}
+            onUpdated={(card) => {
+              setSelected(card)
+              setStartInEdit(false)
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

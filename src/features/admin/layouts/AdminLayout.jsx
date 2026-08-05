@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
 import { NotificationsProvider } from '../../../context/NotificationsContext'
+import AnimatedOutlet from '../../../components/motion/AnimatedOutlet'
 import AdminHeader from '../components/AdminHeader'
 import AdminSidebar from '../components/AdminSidebar'
 import AdminMobileBottomNav from '../mobile/AdminMobileBottomNav'
@@ -47,7 +47,7 @@ function AdminLayout() {
           </div>
 
           <main className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
-            <Outlet />
+            <AnimatedOutlet variant="admin" />
           </main>
         </div>
 
