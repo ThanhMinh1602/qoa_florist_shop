@@ -225,11 +225,11 @@ function SiteSettingsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-5 md:p-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-3xl text-primary">Cài đặt web</h2>
-          <p className="mt-1 text-sm text-on-surface-variant md:text-base">
+    <div className="flex flex-1 flex-col gap-4 p-4 pb-24 lg:gap-6 lg:p-10 lg:pb-10">
+      <header className="flex flex-wrap items-center justify-between gap-3 lg:items-end lg:gap-4">
+        <div className="min-w-0">
+          <h2 className="font-display text-xl text-primary lg:text-3xl">Cài đặt web</h2>
+          <p className="mt-0.5 text-xs text-on-surface-variant lg:mt-1 lg:text-base">
             Chọn ảnh để xem trước — chỉ upload khi bấm Lưu cài đặt.
           </p>
         </div>
@@ -237,7 +237,7 @@ function SiteSettingsPage() {
           type="button"
           onClick={handleSave}
           disabled={isSaving || isLoading}
-          className="btn-primary disabled:opacity-60"
+          className="btn-primary hidden disabled:opacity-60 lg:inline-flex"
         >
           {isSaving ? 'Đang lưu...' : 'Lưu cài đặt'}
         </button>
@@ -387,6 +387,17 @@ function SiteSettingsPage() {
       )}
 
       <LoadingOverlay open={isSaving} message="Đang upload & lưu cài đặt..." />
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant/20 bg-surface-container-lowest/95 px-4 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving || isLoading}
+          className="btn-primary w-full !py-3 text-[10px] disabled:opacity-60"
+        >
+          {isSaving ? 'Đang lưu...' : 'Lưu cài đặt'}
+        </button>
+      </div>
     </div>
   )
 }

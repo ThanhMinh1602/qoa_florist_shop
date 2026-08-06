@@ -15,15 +15,19 @@ function KpiCard({ icon, label, value, hint, accent = 'primary' }) {
   }
 
   return (
-    <motion.div className="glass-card p-5" variants={fadeUp} whileHover={{ y: -2 }}>
+    <motion.div className="glass-card p-3.5 lg:p-5" variants={fadeUp} whileHover={{ y: -2 }}>
       <div className="flex items-center justify-between gap-2">
-        <p className="label-caps text-on-surface-variant">{label}</p>
-        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
-          <MaterialIcon name={icon} className="text-xl" />
+        <p className="label-caps text-[10px] text-on-surface-variant lg:text-xs">{label}</p>
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-xl lg:h-9 lg:w-9 ${accents[accent]}`}
+        >
+          <MaterialIcon name={icon} className="text-lg lg:text-xl" />
         </span>
       </div>
-      <p className="font-display mt-3 text-3xl text-on-surface">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-outline">{hint}</p> : null}
+      <p className="font-display mt-2 text-xl leading-tight text-on-surface lg:mt-3 lg:text-3xl">
+        {value}
+      </p>
+      {hint ? <p className="mt-0.5 text-[10px] text-outline lg:mt-1 lg:text-xs">{hint}</p> : null}
     </motion.div>
   )
 }
@@ -36,20 +40,20 @@ function DashboardPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/20 bg-surface-container-lowest/70 px-4 py-5 backdrop-blur-xl md:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-3xl text-primary md:text-4xl">Tổng quan Boutique</h2>
-            <p className="mt-1 text-sm text-on-surface-variant">
+      <header className="border-b border-outline-variant/20 bg-surface-container-lowest/70 px-4 py-3 backdrop-blur-xl lg:px-8 lg:py-5">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
+          <div className="min-w-0">
+            <h2 className="font-display text-xl text-primary lg:text-4xl">Tổng quan Boutique</h2>
+            <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block">
               Dưới đây là thông tin hoạt động kinh doanh hoa tươi ngày hôm nay.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/admin/qr/new" className="btn-glass !py-2.5">
+          <div className="flex flex-wrap gap-1.5 lg:gap-2">
+            <Link to="/admin/qr/new" className="btn-glass !px-3 !py-2 text-[10px] lg:!py-2.5 lg:text-xs">
               <MaterialIcon name="qr_code_2" className="text-lg" />
-              Tạo QR
+              <span className="hidden sm:inline">Tạo QR</span>
             </Link>
-            <Link to="/admin/orders/new" className="btn-primary !py-2.5">
+            <Link to="/admin/orders/new" className="btn-primary !px-3 !py-2 text-[10px] lg:!py-2.5 lg:text-xs">
               <MaterialIcon name="add" className="text-lg" />
               Tạo đơn
             </Link>
@@ -57,7 +61,7 @@ function DashboardPage() {
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
+      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-8">
         {errorMessage ? (
           <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
             {errorMessage}
@@ -69,7 +73,7 @@ function DashboardPage() {
         ) : (
           <>
             <motion.section
-              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+              className="grid grid-cols-2 gap-2.5 lg:gap-4 xl:grid-cols-4"
               initial="hidden"
               animate="show"
               variants={staggerFast}
@@ -108,8 +112,8 @@ function DashboardPage() {
               animate="show"
               variants={staggerFast}
             >
-              <motion.div className="glass-card p-5" variants={fadeUp}>
-                <h3 className="font-display text-xl text-primary">Tháng này</h3>
+              <motion.div className="glass-card p-4 lg:p-5" variants={fadeUp}>
+                <h3 className="font-display text-lg text-primary lg:text-xl">Tháng này</h3>
                 <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <dt className="label-caps text-outline">Doanh thu</dt>
@@ -138,8 +142,8 @@ function DashboardPage() {
                 </dl>
               </motion.div>
 
-              <motion.div className="glass-card p-5" variants={fadeUp}>
-                <h3 className="font-display text-xl text-primary">Năm nay</h3>
+              <motion.div className="glass-card p-4 lg:p-5" variants={fadeUp}>
+                <h3 className="font-display text-lg text-primary lg:text-xl">Năm nay</h3>
                 <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <dt className="label-caps text-outline">Doanh thu</dt>
@@ -170,13 +174,13 @@ function DashboardPage() {
             </motion.section>
 
             <motion.section
-              className="glass-card p-5"
+              className="glass-card p-4 lg:p-5"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: easeOut, delay: 0.08 }}
             >
-              <h3 className="font-display text-xl text-primary">Doanh thu 6 tháng gần nhất</h3>
-              <div className="mt-4 flex h-44 items-end gap-2">
+              <h3 className="font-display text-lg text-primary lg:text-xl">Doanh thu 6 tháng gần nhất</h3>
+              <div className="mt-3 flex h-36 items-end gap-1.5 lg:mt-4 lg:h-44 lg:gap-2">
                 {data.chartMonths.map((month, index) => (
                   <div key={month.key} className="flex flex-1 flex-col items-center gap-1">
                     <motion.div
@@ -196,9 +200,9 @@ function DashboardPage() {
             </motion.section>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <section className="glass-card p-5">
+              <section className="glass-card p-4 lg:p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-display text-xl text-primary">Hoạt động gần đây</h3>
+                  <h3 className="font-display text-lg text-primary lg:text-xl">Hoạt động gần đây</h3>
                   <Link to="/admin/manage" className="label-caps text-primary hover:text-primary-container">
                     Xem tất cả →
                   </Link>
@@ -236,8 +240,8 @@ function DashboardPage() {
                 </ul>
               </section>
 
-              <section className="glass-card p-5">
-                <h3 className="font-display text-xl text-primary">Sản phẩm nổi bật</h3>
+              <section className="glass-card p-4 lg:p-5">
+                <h3 className="font-display text-lg text-primary lg:text-xl">Sản phẩm nổi bật</h3>
                 <ul className="mt-4 space-y-3">
                   {(data.topProducts || []).slice(0, 5).map((product) => (
                     <li

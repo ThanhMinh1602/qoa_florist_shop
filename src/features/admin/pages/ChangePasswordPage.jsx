@@ -37,15 +37,15 @@ function ChangePasswordPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8 md:py-5">
-        <h2 className="text-2xl font-semibold text-on-surface">Đổi mật khẩu</h2>
-        <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-5">
+        <h2 className="font-display text-xl text-primary lg:text-2xl">Đổi mật khẩu</h2>
+        <p className="mt-1 text-xs text-on-surface-variant lg:mt-2 lg:max-w-2xl lg:text-sm">
           Tài khoản hiện tại: <span className="font-medium text-on-surface">{username}</span>
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col p-4 md:p-8">
-        <section className="mx-auto w-full max-w-lg rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm shadow-[0_12px_40px_rgba(74,48,32,0.05)]">
+      <div className="flex flex-1 flex-col p-4 lg:p-8">
+        <section className="glass-card mx-auto w-full max-w-lg rounded-2xl p-4 sm:p-6">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-on-surface">
@@ -55,7 +55,7 @@ function ChangePasswordPage() {
                 type="password"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
-                className="w-full rounded-xl border border-outline-variant/25 px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+                className="input-glass w-full !py-3 text-base sm:text-sm"
                 autoComplete="current-password"
                 required
               />
@@ -67,7 +67,7 @@ function ChangePasswordPage() {
                 type="password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                className="w-full rounded-xl border border-outline-variant/25 px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+                className="input-glass w-full !py-3 text-base sm:text-sm"
                 autoComplete="new-password"
                 minLength={6}
                 required
@@ -83,7 +83,7 @@ function ChangePasswordPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                className="w-full rounded-xl border border-outline-variant/25 px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+                className="input-glass w-full !py-3 text-base sm:text-sm"
                 autoComplete="new-password"
                 minLength={6}
                 required
@@ -91,7 +91,7 @@ function ChangePasswordPage() {
             </label>
 
             {error ? (
-              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+              <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container" role="alert">
                 {error}
               </p>
             ) : null}
@@ -105,7 +105,7 @@ function ChangePasswordPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary w-full !py-3.5 text-[11px] disabled:opacity-60 sm:text-xs"
             >
               {isSubmitting ? 'Đang lưu...' : 'Cập nhật mật khẩu'}
             </button>

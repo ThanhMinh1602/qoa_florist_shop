@@ -152,11 +152,11 @@ function CreateOrderPage() {
   if (savedRequest) {
     return (
       <div className="flex flex-1 flex-col">
-        <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-6 py-5 backdrop-blur md:px-8">
-          <h2 className="font-display text-3xl text-primary">Tạo đơn hàng mới</h2>
-          <p className="mt-2 text-sm text-on-surface-variant">Đơn đã được tạo.</p>
+        <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-5">
+          <h2 className="font-display text-xl text-primary lg:text-3xl">Tạo đơn hàng mới</h2>
+          <p className="mt-1 text-xs text-on-surface-variant lg:mt-2 lg:text-sm">Đơn đã được tạo.</p>
         </header>
-        <div className="mx-auto w-full max-w-2xl p-6 md:p-8">
+        <div className="mx-auto w-full max-w-2xl p-4 lg:p-8">
           <CreateOrderSuccess request={savedRequest} onCreateAnother={handleCreateAnother} />
         </div>
       </div>
@@ -165,10 +165,10 @@ function CreateOrderPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-5 py-4 backdrop-blur md:px-8">
+      <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
         <div>
-          <h2 className="font-display text-2xl text-primary md:text-3xl">Tạo đơn hàng mới</h2>
-          <p className="mt-0.5 text-sm text-on-surface-variant">Theo sổ đơn QOA</p>
+          <h2 className="font-display text-xl text-primary lg:text-3xl">Tạo đơn hàng mới</h2>
+          <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:block">Theo sổ đơn QOA</p>
         </div>
         <button
           type="submit"

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
 import { easeOut } from '../../../lib/motion'
 
@@ -19,7 +20,7 @@ function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="mist-bg relative flex min-h-screen items-center justify-center overflow-hidden">
+      <div className="mist-bg relative flex min-h-dvh items-center justify-center overflow-hidden px-5 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <p className="relative text-sm text-on-surface-variant">Đang kiểm tra phiên đăng nhập...</p>
       </div>
     )
@@ -46,77 +47,76 @@ function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] font-body">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] font-body sm:px-5">
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-surface-bright via-background to-surface-dim opacity-80" />
-      <div className="animate-blob absolute top-[-10%] left-[-10%] z-0 h-[614px] w-[614px] rounded-full bg-primary-fixed-dim/30 mix-blend-multiply blur-[80px] filter" />
-      <div className="animate-blob-slow absolute top-[20%] right-[-20%] z-0 h-[716px] w-[716px] rounded-full bg-surface-variant/50 mix-blend-multiply blur-[100px] filter" />
-      <div
-        className="animate-blob absolute bottom-[-15%] left-[10%] z-0 h-[512px] w-[512px] rounded-full bg-inverse-primary/20 mix-blend-multiply blur-[60px] filter"
-        style={{ animationDelay: '2s' }}
-      />
+      <div className="pointer-events-none absolute top-[-20%] left-[-30%] z-0 h-72 w-72 rounded-full bg-primary-fixed-dim/25 blur-3xl sm:h-[28rem] sm:w-[28rem]" />
+      <div className="pointer-events-none absolute right-[-25%] bottom-[-15%] z-0 h-64 w-64 rounded-full bg-surface-variant/40 blur-3xl sm:h-96 sm:w-96" />
 
       <motion.main
-        className="relative z-10 w-full max-w-[440px]"
-        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        className="relative z-10 w-full max-w-[400px]"
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.45, ease: easeOut }}
+        transition={{ duration: 0.4, ease: easeOut }}
       >
-        <div className="glass-card flex flex-col items-center p-8 md:p-12">
-          <div className="mb-10 w-full text-center">
-            <h1 className="font-display mb-2 text-[2.5rem] leading-tight tracking-[-0.02em] text-primary md:text-[3rem]">
+        <div className="glass-card flex flex-col items-center rounded-2xl p-5 sm:rounded-[1.75rem] sm:p-8 md:p-10">
+          <div className="mb-6 flex w-full flex-col items-center text-center sm:mb-8">
+            <BrandLogo size="sm" center className="mb-3 sm:mb-4" />
+            <h1 className="font-display text-2xl leading-tight tracking-[-0.02em] text-primary sm:text-[2.5rem]">
               QOA Florist
             </h1>
-            <h2 className="font-display text-[1.75rem] leading-snug text-on-surface md:text-[2rem]">
-              Đăng nhập Admin
-            </h2>
+            <p className="mt-1 text-sm text-on-surface-variant sm:mt-2 sm:text-base">
+              Đăng nhập quản trị
+            </p>
           </div>
 
-          <form className="flex w-full flex-col space-y-6" onSubmit={handleSubmit}>
-            <div className="relative flex flex-col gap-2">
-              <label className="label-caps pl-1 text-on-surface-variant" htmlFor="username">
+          <form className="flex w-full flex-col space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+            <div className="relative flex flex-col gap-1.5">
+              <label className="label-caps pl-1 text-[10px] text-on-surface-variant sm:text-xs" htmlFor="username">
                 Tên đăng nhập
               </label>
               <div className="group relative">
                 <MaterialIcon
                   name="person"
-                  className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-[1.25rem] text-primary/50 transition-colors group-focus-within:text-primary"
+                  className="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-[1.2rem] text-primary/50 transition-colors group-focus-within:text-primary"
                 />
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  className="input-glass with-leading-icon"
+                  className="input-glass with-leading-icon !py-3 text-base sm:text-sm"
                   placeholder="Nhập tên tài khoản"
                   autoComplete="username"
                   required
+                  enterKeyHint="next"
                 />
               </div>
             </div>
 
-            <div className="relative flex flex-col gap-2">
-              <label className="label-caps pl-1 text-on-surface-variant" htmlFor="password">
+            <div className="relative flex flex-col gap-1.5">
+              <label className="label-caps pl-1 text-[10px] text-on-surface-variant sm:text-xs" htmlFor="password">
                 Mật khẩu
               </label>
               <div className="group relative">
                 <MaterialIcon
                   name="lock"
-                  className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-[1.25rem] text-primary/50 transition-colors group-focus-within:text-primary"
+                  className="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-[1.2rem] text-primary/50 transition-colors group-focus-within:text-primary"
                 />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="input-glass with-leading-icon with-trailing-icon"
+                  className="input-glass with-leading-icon with-trailing-icon !py-3 text-base sm:text-sm"
                   placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
                   required
+                  enterKeyHint="go"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute top-1/2 right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-primary/50 transition-colors hover:bg-primary/5 hover:text-primary"
+                  className="absolute top-1/2 right-2.5 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-primary/50 transition-colors hover:bg-primary/5 hover:text-primary"
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   tabIndex={-1}
                 >
@@ -129,17 +129,19 @@ function LoginPage() {
             </div>
 
             {error ? (
-              <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container" role="alert">
+              <p className="rounded-xl bg-error-container px-3.5 py-2.5 text-sm text-on-error-container" role="alert">
                 {error}
               </p>
             ) : null}
 
-            <div className="w-full pt-2">
-              <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-4">
-                <span>{isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</span>
-                {!isSubmitting ? <MaterialIcon name="arrow_forward" className="text-[18px]" /> : null}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary mt-1 w-full !py-3.5 text-[11px] sm:text-xs"
+            >
+              <span>{isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</span>
+              {!isSubmitting ? <MaterialIcon name="arrow_forward" className="text-[18px]" /> : null}
+            </button>
           </form>
         </div>
       </motion.main>

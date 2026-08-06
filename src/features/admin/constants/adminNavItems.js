@@ -1,4 +1,4 @@
-/** Bottom nav mobile — các mục thao tác nhanh */
+/** Bottom nav mobile — bao quát chức năng chính */
 export const ADMIN_NAV_ITEMS = [
   {
     to: '/admin',
@@ -8,31 +8,43 @@ export const ADMIN_NAV_ITEMS = [
     end: true,
   },
   {
-    to: '/admin/qr/new',
-    label: 'Tạo QR mới',
-    shortLabel: 'Tạo QR',
-    icon: 'qr_code_2',
+    to: '/admin/manage',
+    label: 'Đơn hàng',
+    shortLabel: 'Đơn',
+    icon: 'receipt_long',
+    /** Active cả khi đang lên đơn */
+    matchPrefixes: ['/admin/manage', '/admin/orders'],
   },
   {
     to: '/admin/qr',
-    label: 'Danh sách QR',
+    label: 'Thiệp QR',
     shortLabel: 'QR',
-    icon: 'list_alt',
-    end: true,
+    icon: 'qr_code_2',
+    matchPrefixes: ['/admin/qr'],
   },
   {
-    to: '/admin/orders/new',
-    label: 'Tạo đơn hàng',
-    shortLabel: 'Lên đơn',
-    icon: 'edit_note',
+    to: '/admin/products',
+    label: 'Sản phẩm',
+    shortLabel: 'SP',
+    icon: 'inventory_2',
+    matchPrefixes: ['/admin/products', '/admin/categories'],
   },
   {
-    to: '/admin/manage',
-    label: 'Quản lý đơn',
-    shortLabel: 'Đơn',
-    icon: 'receipt_long',
+    to: '/admin/cashbook',
+    label: 'Sổ quỹ',
+    shortLabel: 'Quỹ',
+    icon: 'account_balance_wallet',
+  },
+  {
+    id: 'more',
+    type: 'menu',
+    label: 'Thêm',
+    shortLabel: 'Thêm',
+    icon: 'apps',
+    matchPrefixes: ['/admin/settings', '/admin/change-password'],
   },
 ]
+
 
 /**
  * Sidebar / drawer — nhóm accordion.
@@ -166,7 +178,15 @@ export const ADMIN_DRAWER_ITEMS = [
 ]
 
 export function isAdminNavItemActive(pathname, item) {
-  if (!item?.to) return false
+  if (!item) return false
+
+  if (item.matchPrefixes?.length) {
+    return item.matchPrefixes.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    )
+  }
+
+  if (!item.to) return false
   if (item.end) return pathname === item.to
   return pathname === item.to || pathname.startsWith(`${item.to}/`)
 }

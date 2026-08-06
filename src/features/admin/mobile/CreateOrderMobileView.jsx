@@ -33,8 +33,9 @@ function CreateOrderMobileView({
 
   return (
     <div className="flex flex-col">
-      <div className="border-b border-outline-variant/25 bg-surface-container-lowest px-4 py-3">
-        <h2 className="text-lg font-semibold text-on-surface">Lên đơn</h2>
+      <div className="border-b border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5">
+        <h2 className="font-display text-xl text-primary">Lên đơn</h2>
+        <p className="text-[11px] text-on-surface-variant">Theo sổ đơn QOA</p>
       </div>
 
       <div className="px-3 py-3 pb-[calc(9.5rem+env(safe-area-inset-bottom))]">

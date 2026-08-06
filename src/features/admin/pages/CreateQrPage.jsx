@@ -59,20 +59,20 @@ function CreateQrPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8 md:py-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-3xl text-primary">Tạo QR thiệp</h2>
-            <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-5">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
+          <div className="min-w-0">
+            <h2 className="font-display text-xl text-primary lg:text-3xl">Tạo QR thiệp</h2>
+            <p className="mt-1 hidden max-w-2xl text-sm text-on-surface-variant lg:block">
               Chọn chủ đề animation → nhập form tương ứng → tạo QR gửi khách. Không gắn đơn giao.
             </p>
           </div>
           <Link
             to="/admin/qr"
-            className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-sm font-medium text-primary hover:bg-surface-container-low"
+            className="btn-glass inline-flex items-center gap-1 !px-3 !py-2 text-[10px] lg:text-xs"
           >
             <MaterialIcon name="list" className="text-lg" />
-            Danh sách QR
+            Danh sách
           </Link>
         </div>
       </header>

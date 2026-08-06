@@ -362,20 +362,20 @@ function QrListPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-4 backdrop-blur md:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-3xl text-primary">Danh sách QR</h2>
-            <p className="mt-1 text-sm text-on-surface-variant">
+      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
+          <div className="min-w-0">
+            <h2 className="font-display text-xl text-primary lg:text-3xl">Danh sách QR</h2>
+            <p className="mt-1 hidden text-sm text-on-surface-variant lg:block">
               Quản lý và theo dõi các mã QR thiệp đính kèm hoa.
             </p>
           </div>
           <Link
             to="/admin/qr/new"
-            className="inline-flex items-center gap-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"
+            className="btn-primary inline-flex items-center gap-1 !px-3 !py-2 text-[10px] lg:!px-4 lg:!py-2.5 lg:text-xs"
           >
             <MaterialIcon name="add" className="text-lg" />
-            Tạo QR mới
+            Tạo QR
           </Link>
         </div>
       </header>
