@@ -7,7 +7,7 @@ import { useCatalog, useLandingSettings } from '../../../hooks/swr'
 import LandingHeroCarousel from '../components/LandingHeroCarousel'
 import FeaturedProductsRail from '../components/FeaturedProductsRail'
 
-const STEP_ICONS = ['local_florist', 'qr_code_2', 'local_shipping']
+const STEP_ICONS = ['local_florist', 'qr_code_2', 'local_shipping', 'auto_awesome']
 const LANDING_SCROLL_SECTIONS = ['home', 'featured', 'custom-card']
 
 function LandingPage() {
@@ -29,7 +29,7 @@ function LandingPage() {
       <SiteHeader variant="hero" scrollSections={LANDING_SCROLL_SECTIONS} />
 
       <main>
-        <section id="home">
+        <section id="home" className="pt-12 md:pt-0">
           <LandingHeroCarousel
             images={heroImages}
             autoPlayMs={heroAutoPlayMs}
@@ -38,23 +38,25 @@ function LandingPage() {
           />
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-16">
-          <Stagger className="grid gap-6 md:grid-cols-3">
+        <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-16 lg:px-16">
+          <Stagger className="grid grid-cols-2 gap-3 sm:gap-6">
             {LANDING_STEPS.map((step, index) => (
               <StaggerItem
                 key={step.title}
-                className="glass-card lift-card flex flex-col items-center rounded-xl p-8 text-center"
+                className="glass-card lift-card flex flex-col items-center rounded-xl p-3.5 text-center sm:p-8"
               >
-                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-variant">
+                <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-surface-variant sm:mb-6 sm:h-16 sm:w-16">
                   <MaterialIcon
                     name={STEP_ICONS[index] || 'local_florist'}
-                    className="text-[32px] text-primary"
+                    className="text-[20px] text-primary sm:text-[32px]"
                   />
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-primary">
+                <h3 className="text-xs font-semibold leading-snug text-primary sm:mb-3 sm:text-xl">
                   {step.title.replace(/^\d+\.\s*/, '')}
                 </h3>
-                <p className="text-sm text-on-surface-variant">{step.description}</p>
+                <p className="hidden text-sm text-on-surface-variant sm:block">
+                  {step.description}
+                </p>
               </StaggerItem>
             ))}
           </Stagger>
@@ -62,20 +64,20 @@ function LandingPage() {
 
         <section
           id="featured"
-          className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
+          className="mx-auto max-w-7xl scroll-mt-14 py-10 md:scroll-mt-32 sm:px-8 sm:py-16 lg:px-16"
         >
-          <Reveal className="mb-10 flex items-end justify-between gap-4">
-            <div>
-              <p className="label-caps text-primary">Gợi ý hôm nay</p>
-              <h2 className="font-display mt-1 text-3xl text-primary md:text-[2rem]">Bán chạy</h2>
-            </div>
-            <Link to="/shop" className="label-caps shrink-0 text-primary hover:underline">
+          <Reveal className="mb-5 flex items-center justify-between gap-3 px-5 sm:mb-10 sm:px-0">
+            <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">Bán chạy</h2>
+            <Link
+              to="/shop"
+              className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
+            >
               Xem thêm
             </Link>
           </Reveal>
 
           {productsError ? (
-            <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+            <p className="mx-5 rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container sm:mx-0">
               {productsError}
             </p>
           ) : null}
@@ -83,7 +85,7 @@ function LandingPage() {
           {productsLoading ? (
             <p className="py-16 text-center text-sm text-on-surface-variant">Đang tải sản phẩm...</p>
           ) : products.length === 0 ? (
-            <div className="glass-card px-6 py-20 text-center">
+            <div className="glass-card mx-5 px-6 py-20 text-center sm:mx-0">
               <MaterialIcon name="local_florist" className="text-4xl text-primary-fixed-dim" />
               <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
             </div>
@@ -94,26 +96,29 @@ function LandingPage() {
 
         <section
           id="custom-card"
-          className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
+          className="mx-auto max-w-7xl scroll-mt-14 px-5 py-10 md:scroll-mt-32 sm:px-8 sm:py-16 lg:px-16"
         >
-          <Reveal className="glass-card flex flex-col items-center gap-12 rounded-2xl p-8 md:flex-row md:p-16">
-            <div className="flex-1">
-              <h2 className="mb-6 font-display text-3xl text-primary md:text-[2rem]">
+          <Reveal className="glass-card flex flex-row items-center gap-3.5 rounded-2xl p-3.5 sm:gap-8 sm:p-8 md:gap-12 md:p-16">
+            <div className="min-w-0 flex-1 text-left">
+              <h2 className="mb-1.5 font-display text-xl leading-snug text-primary sm:mb-4 sm:text-3xl md:mb-6 md:text-[2rem]">
                 Thiệp số, cảm xúc thật
               </h2>
-              <p className="mb-8 text-base text-on-surface-variant">
+              <p className="mb-3 line-clamp-3 text-[11px] leading-relaxed text-on-surface-variant sm:mb-6 sm:line-clamp-none sm:text-sm md:mb-8 md:text-base">
                 Biến mỗi bó hoa thành một thông điệp độc nhất. Ghi âm giọng nói, tải lên video kỷ
                 niệm, hoặc viết một lá thư tay kỹ thuật số. Người nhận chỉ cần quét mã QR đính kèm
                 để mở ra những điều bất ngờ.
               </p>
-              <Link to="/shop/card" className="btn-primary inline-flex px-8 py-4">
+              <Link
+                to="/shop/card"
+                className="btn-primary inline-flex px-3.5 py-2 text-[10px] sm:px-6 sm:py-3 sm:text-[10px] md:px-8 md:py-4 md:text-xs"
+              >
                 Tạo thiệp ngay
               </Link>
             </div>
-            <div className="relative flex flex-1 justify-center">
-              <div className="relative z-10 h-[420px] w-56 overflow-hidden rounded-[32px] border-8 border-surface-container-high bg-surface-container-lowest shadow-2xl sm:h-[500px] sm:w-64">
-                <div className="flex h-10 w-full items-end justify-center bg-surface-container-high pb-2">
-                  <div className="h-4 w-20 rounded-full bg-on-surface" />
+            <div className="relative flex shrink-0 justify-center">
+              <div className="relative z-10 h-[148px] w-[72px] overflow-hidden rounded-[14px] border-[3px] border-surface-container-high bg-surface-container-lowest shadow-lg sm:h-[280px] sm:w-[120px] sm:rounded-[24px] sm:border-[5px] sm:shadow-xl md:h-[420px] md:w-56 md:rounded-[32px] md:border-8 md:shadow-2xl">
+                <div className="flex h-4 w-full items-end justify-center bg-surface-container-high pb-0.5 sm:h-7 sm:pb-1 md:h-10 md:pb-2">
+                  <div className="h-1.5 w-7 rounded-full bg-on-surface sm:h-2.5 sm:w-12 md:h-4 md:w-20" />
                 </div>
                 <img
                   src={LANDING_IMAGES.qrCard}
@@ -123,7 +128,7 @@ function LandingPage() {
                 />
               </div>
               <div
-                className="absolute top-1/2 left-1/2 -z-0 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container/20 blur-3xl"
+                className="absolute top-1/2 left-1/2 -z-0 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container/20 blur-2xl sm:h-56 sm:w-56 sm:blur-3xl md:h-80 md:w-80"
                 aria-hidden="true"
               />
             </div>
@@ -131,24 +136,33 @@ function LandingPage() {
         </section>
       </main>
 
-      <footer className="flex w-full flex-col items-center justify-center gap-4 border-t border-white/55 px-5 py-16 sm:px-8">
-        <p className="font-display text-2xl text-primary">QOA Florist</p>
-        <p className="text-sm text-on-surface-variant">
+      <footer className="flex w-full flex-col items-center justify-center gap-3 border-t border-white/55 px-5 py-12 sm:gap-4 sm:px-8 sm:py-16">
+        <p className="font-display text-xl text-primary sm:text-2xl">QOA Florist</p>
+        <p className="text-center text-xs text-on-surface-variant sm:text-sm">
           © {new Date().getFullYear()} QOA Florist. Đánh thức vẻ đẹp tự nhiên.
         </p>
-        <div className="flex flex-wrap justify-center gap-6">
-          <Link to="/#featured" className="label-caps text-on-surface-variant hover:text-primary">
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
+          <Link
+            to="/#featured"
+            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
+          >
             Bán chạy
           </Link>
-          <Link to="/shop" className="label-caps text-on-surface-variant hover:text-primary">
+          <Link
+            to="/shop"
+            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
+          >
             Sản phẩm
           </Link>
-          <Link to="/shop/card" className="label-caps text-on-surface-variant hover:text-primary">
+          <Link
+            to="/shop/card"
+            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
+          >
             Tạo thiệp
           </Link>
           <a
             href="mailto:hello@qoaflorist.com"
-            className="label-caps text-on-surface-variant hover:text-primary"
+            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
           >
             Liên hệ
           </a>

@@ -53,4 +53,11 @@ export const LANDING_STEPS = [
     src: LANDING_IMAGES.delivery,
     alt: 'Giao bó hoa tận tay người nhận',
   },
+  {
+    title: '4. Quét & Mở Lời Chúc',
+    description:
+      'Người nhận quét mã trên bó hoa để mở thiệp số — lời chúc hiện ra như một bất ngờ riêng tư.',
+    src: LANDING_IMAGES.qrCard,
+    alt: 'Quét mã QR trên bó hoa để mở thiệp',
+  },
 ]

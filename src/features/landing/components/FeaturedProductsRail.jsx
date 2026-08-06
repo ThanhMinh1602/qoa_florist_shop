@@ -8,7 +8,7 @@ function ProductCard({ product, onClickCapture }) {
   return (
     <Link
       to={`/shop/product/${product.id}`}
-      className="glass-card block w-[15.5rem] shrink-0 overflow-hidden sm:w-[17rem]"
+      className="glass-card block w-[11.5rem] shrink-0 overflow-hidden sm:w-[15.5rem] lg:w-[17rem]"
       onClickCapture={onClickCapture}
       draggable={false}
     >
@@ -30,19 +30,21 @@ function ProductCard({ product, onClickCapture }) {
               aria-hidden="true"
               draggable={false}
             />
-            <MaterialIcon name="local_florist" className="relative text-5xl text-white" />
+            <MaterialIcon name="local_florist" className="relative text-4xl text-white sm:text-5xl" />
           </div>
         )}
-        <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/55 bg-surface-container-lowest/55 p-3 backdrop-blur-xl">
+        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/55 bg-surface-container-lowest/55 p-2 backdrop-blur-xl sm:inset-x-3 sm:bottom-3 sm:rounded-2xl sm:p-3">
           {product.code ? (
-            <p className="font-mono text-[10px] font-bold tracking-wider text-outline">
+            <p className="font-mono text-[8px] font-bold tracking-wider text-outline sm:text-[10px]">
               {product.code}
             </p>
           ) : null}
-          <h3 className="font-display mt-0.5 line-clamp-2 text-lg leading-tight text-on-surface sm:text-xl">
+          <h3 className="font-display mt-0.5 line-clamp-2 text-[13px] leading-tight text-on-surface sm:text-lg lg:text-xl">
             {product.name}
           </h3>
-          <p className="mt-1 text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
+          <p className="mt-0.5 text-[11px] font-semibold text-primary sm:mt-1 sm:text-sm">
+            {formatMoney(product.price)}
+          </p>
         </div>
       </div>
     </Link>
@@ -152,7 +154,7 @@ function FeaturedProductsRail({ products = [] }) {
     >
       <div
         ref={trackRef}
-        className="flex gap-5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -168,11 +170,11 @@ function FeaturedProductsRail({ products = [] }) {
       </div>
 
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-background to-transparent sm:w-14"
+        className="pointer-events-none absolute inset-y-0 left-0 hidden w-14 bg-gradient-to-r from-background to-transparent sm:block"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent sm:w-14"
+        className="pointer-events-none absolute inset-y-0 right-0 hidden w-14 bg-gradient-to-l from-background to-transparent sm:block"
         aria-hidden="true"
       />
     </div>

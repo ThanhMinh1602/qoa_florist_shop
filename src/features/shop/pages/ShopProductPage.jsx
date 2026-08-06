@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Link, useParams } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
@@ -7,6 +7,8 @@ import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useCatalogProduct } from '../../../hooks/swr'
 import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
+
+const SWIPE_THRESHOLD = 48
 
 function splitMaterials(value) {
   return String(value || '')
@@ -19,6 +21,7 @@ function ShopProductPage() {
   const { id } = useParams()
   const { product, isLoading, error } = useCatalogProduct(id)
   const [activeIndex, setActiveIndex] = useState(0)
+  const swipeRef = useRef({ x: 0, y: 0, tracking: false })
 
   const images = useMemo(() => {
     if (!product) return []
@@ -26,6 +29,14 @@ function ShopProductPage() {
     if (product.mainImage) return [{ id: 'main', url: product.mainImage }]
     return []
   }, [product])
+
+  const goImage = useCallback(
+    (direction) => {
+      if (images.length < 2) return
+      setActiveIndex((current) => (current + direction + images.length) % images.length)
+    },
+    [images.length],
+  )
 
   useEffect(() => {
     setActiveIndex(0)
@@ -43,14 +54,35 @@ function ShopProductPage() {
   useEffect(() => {
     if (images.length < 2) return undefined
     function onKey(event) {
-      if (event.key === 'ArrowRight') setActiveIndex((current) => (current + 1) % images.length)
-      if (event.key === 'ArrowLeft') {
-        setActiveIndex((current) => (current - 1 + images.length) % images.length)
-      }
+      if (event.key === 'ArrowRight') goImage(1)
+      if (event.key === 'ArrowLeft') goImage(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [images.length])
+  }, [goImage, images.length])
+
+  function onGalleryPointerDown(event) {
+    if (images.length < 2) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    swipeRef.current = { x: event.clientX, y: event.clientY, tracking: true }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  function onGalleryPointerUp(event) {
+    if (!swipeRef.current.tracking) return
+    const dx = event.clientX - swipeRef.current.x
+    const dy = event.clientY - swipeRef.current.y
+    swipeRef.current.tracking = false
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return
+    if (Math.abs(dx) < Math.abs(dy) * 1.15) return
+    goImage(dx < 0 ? 1 : -1)
+  }
+
+  function onGalleryPointerCancel(event) {
+    swipeRef.current.tracking = false
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+  }
 
   const categoryId = product?.categories?.[0]?.id
   const { products: relatedSource } = useCatalog(
@@ -75,15 +107,14 @@ function ShopProductPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-16">
-        <div className="h-4 w-28 animate-pulse rounded-full bg-surface-container-high" />
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12">
-          <div className="aspect-[4/5] animate-pulse rounded-[2rem] bg-surface-container-high" />
-          <div className="space-y-4">
-            <div className="h-3 w-24 animate-pulse rounded-full bg-surface-container-high" />
-            <div className="h-10 w-3/4 animate-pulse rounded-2xl bg-surface-container-high" />
-            <div className="h-8 w-40 animate-pulse rounded-xl bg-surface-container-high" />
-            <div className="h-40 animate-pulse rounded-3xl bg-surface-container-high" />
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-8 lg:px-16">
+        <div className="h-3 w-20 animate-pulse rounded-full bg-surface-container-high sm:h-4 sm:w-28" />
+        <div className="mt-4 grid gap-5 lg:mt-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12">
+          <div className="-mx-4 aspect-[4/5] animate-pulse bg-surface-container-high sm:mx-0 sm:rounded-[2rem]" />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="h-7 w-3/4 animate-pulse rounded-xl bg-surface-container-high sm:h-10 sm:rounded-2xl" />
+            <div className="h-6 w-28 animate-pulse rounded-lg bg-surface-container-high sm:h-8 sm:w-40 sm:rounded-xl" />
+            <div className="h-28 animate-pulse rounded-2xl bg-surface-container-high sm:h-40 sm:rounded-3xl" />
           </div>
         </div>
       </div>
@@ -92,14 +123,16 @@ function ShopProductPage() {
 
   if (error || !product) {
     return (
-      <div className="mx-auto max-w-3xl px-5 py-20 text-center sm:px-8">
-        <div className="glass-card rounded-[2rem] px-6 py-12">
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-8 sm:py-20">
+        <div className="glass-card rounded-2xl px-5 py-10 sm:rounded-[2rem] sm:px-6 sm:py-12">
           <MaterialIcon name="local_florist" className="text-4xl text-primary-fixed-dim" />
-          <p className="mt-4 text-lg font-semibold text-on-surface">Không tìm thấy sản phẩm</p>
+          <p className="mt-4 text-base font-semibold text-on-surface sm:text-lg">
+            Không tìm thấy sản phẩm
+          </p>
           <p className="mt-2 text-sm text-on-surface-variant">
             {error?.message || 'Bó hoa này có thể đã được ẩn hoặc đổi mã.'}
           </p>
-          <Link to="/shop" className="btn-primary mt-6">
+          <Link to="/shop" className="btn-primary mt-6 !px-5 !py-2.5 text-[10px] sm:text-xs">
             Về danh sách sản phẩm
           </Link>
         </div>
@@ -110,17 +143,17 @@ function ShopProductPage() {
   return (
     <motion.div
       key={product.id}
-      className="mx-auto max-w-7xl px-5 pb-20 pt-4 sm:px-8 sm:pt-6 lg:px-16"
+      className="mx-auto max-w-7xl px-4 pb-[5.5rem] pt-3 sm:px-8 sm:pb-20 sm:pt-6 lg:px-16"
       initial="hidden"
       animate="show"
       variants={stagger}
     >
       <motion.nav
         variants={fadeUp}
-        className="mb-6 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant"
+        className="mb-3 flex flex-wrap items-center gap-1.5 text-xs text-on-surface-variant sm:mb-6 sm:gap-2 sm:text-sm"
       >
-        <Link to="/shop" className="inline-flex items-center gap-1 transition hover:text-primary">
-          <MaterialIcon name="arrow_back" className="text-base" />
+        <Link to="/shop" className="inline-flex items-center gap-0.5 transition hover:text-primary sm:gap-1">
+          <MaterialIcon name="arrow_back" className="text-sm sm:text-base" />
           Sản phẩm
         </Link>
         <span className="text-outline/50">/</span>
@@ -129,28 +162,34 @@ function ShopProductPage() {
 
       <motion.div
         variants={stagger}
-        className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-14"
+        className="grid items-start gap-5 sm:gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-14"
       >
         <motion.div
           variants={{
             hidden: { opacity: 0 },
             show: { opacity: 1, transition: { duration: 0.55, ease: easeOut } },
           }}
-          className="space-y-3 lg:sticky lg:top-28"
+          className="space-y-2.5 sm:space-y-3 lg:sticky lg:top-28"
         >
-          <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 bg-surface-container-low shadow-[0_24px_60px_rgba(74,48,32,0.12)]">
-            <div className="relative aspect-[4/5] sm:aspect-[5/6]">
+          <div className="group relative -mx-4 overflow-hidden border-y border-white/40 bg-surface-container-low shadow-none sm:mx-0 sm:rounded-[2rem] sm:border sm:border-white/60 sm:shadow-[0_24px_60px_rgba(74,48,32,0.12)]">
+            <div
+              className="relative aspect-[4/5] touch-pan-y select-none sm:aspect-[5/6]"
+              onPointerDown={onGalleryPointerDown}
+              onPointerUp={onGalleryPointerUp}
+              onPointerCancel={onGalleryPointerCancel}
+            >
               <AnimatePresence mode="wait">
                 {activeImage ? (
                   <motion.img
                     key={activeImage}
                     src={activeImage}
                     alt={product.name}
-                    initial={{ opacity: 0, scale: 1.04 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.02 }}
-                    transition={{ duration: 0.45, ease: easeOut }}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    draggable={false}
+                    initial={{ opacity: 0, x: 0 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.28, ease: easeOut }}
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                   />
                 ) : (
                   <div className="relative flex h-full items-center justify-center">
@@ -159,8 +198,9 @@ function ShopProductPage() {
                       alt=""
                       className="absolute inset-0 h-full w-full object-cover opacity-50"
                       aria-hidden="true"
+                      draggable={false}
                     />
-                    <MaterialIcon name="local_florist" className="relative text-6xl text-white" />
+                    <MaterialIcon name="local_florist" className="relative text-5xl text-white sm:text-6xl" />
                   </div>
                 )}
               </AnimatePresence>
@@ -172,25 +212,23 @@ function ShopProductPage() {
                   type="button"
                   whileHover={{ scale: 1.06 }}
                   whileTap={{ scale: 0.94 }}
-                  onClick={() =>
-                    setActiveIndex((current) => (current - 1 + images.length) % images.length)
-                  }
-                  className="absolute top-1/2 left-3 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:left-4"
+                  onClick={() => goImage(-1)}
+                  className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:left-4 sm:h-11 sm:w-11"
                   aria-label="Ảnh trước"
                 >
-                  <MaterialIcon name="chevron_left" className="text-2xl" />
+                  <MaterialIcon name="chevron_left" className="text-xl sm:text-2xl" />
                 </motion.button>
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.06 }}
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => setActiveIndex((current) => (current + 1) % images.length)}
-                  className="absolute top-1/2 right-3 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:right-4"
+                  onClick={() => goImage(1)}
+                  className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:right-4 sm:h-11 sm:w-11"
                   aria-label="Ảnh sau"
                 >
-                  <MaterialIcon name="chevron_right" className="text-2xl" />
+                  <MaterialIcon name="chevron_right" className="text-xl sm:text-2xl" />
                 </motion.button>
-                <span className="absolute right-4 bottom-4 rounded-full bg-on-surface/70 px-3 py-1 text-[11px] font-semibold tracking-wide text-white backdrop-blur-md">
+                <span className="absolute right-3 bottom-3 rounded-full bg-on-surface/70 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-md sm:right-4 sm:bottom-4 sm:px-3 sm:py-1 sm:text-[11px]">
                   {activeIndex + 1} / {images.length}
                 </span>
               </>
@@ -198,7 +236,7 @@ function ShopProductPage() {
           </div>
 
           {images.length > 1 ? (
-            <ul className="flex gap-2.5 overflow-x-auto pb-1">
+            <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-2.5 sm:px-0">
               {images.map((image, index) => {
                 const selected = index === activeIndex
                 return (
@@ -210,7 +248,7 @@ function ShopProductPage() {
                       whileHover={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.25, ease: easeOut }}
                       className={[
-                        'h-20 w-16 overflow-hidden rounded-2xl border-2 sm:h-24 sm:w-20',
+                        'h-14 w-11 overflow-hidden rounded-xl border-2 sm:h-24 sm:w-20 sm:rounded-2xl',
                         selected
                           ? 'border-primary shadow-[0_8px_20px_rgba(74,48,32,0.16)]'
                           : 'border-transparent',
@@ -228,20 +266,32 @@ function ShopProductPage() {
         <motion.div variants={fadeUp} className="relative">
           <motion.div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-10 -right-8 h-48 w-48 rounded-full bg-primary/8 blur-3xl"
+            className="pointer-events-none absolute -top-10 -right-8 hidden h-48 w-48 rounded-full bg-primary/8 blur-3xl sm:block"
             animate={{ scale: [1, 1.12, 1], opacity: [0.55, 0.9, 0.55] }}
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
 
-          <motion.div variants={stagger} initial="hidden" animate="show" className="relative space-y-6">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+            className="relative space-y-4 sm:space-y-6"
+          >
             <motion.div variants={fadeUp}>
-              <h1 className="font-display text-4xl leading-[1.08] tracking-[-0.03em] text-on-surface sm:text-5xl">
+              {product.code ? (
+                <p className="mb-1 font-mono text-[10px] font-bold tracking-wider text-outline sm:hidden">
+                  {product.code}
+                </p>
+              ) : null}
+              <h1 className="font-display text-2xl leading-snug tracking-[-0.02em] text-on-surface sm:text-5xl sm:leading-[1.08] sm:tracking-[-0.03em]">
                 {product.name}
               </h1>
-              <div className="mt-4 flex flex-wrap items-end gap-3">
-                <p className="text-3xl font-semibold text-primary">{formatMoney(product.price)}</p>
+              <div className="mt-2.5 flex flex-wrap items-end gap-2 sm:mt-4 sm:gap-3">
+                <p className="text-xl font-semibold text-primary sm:text-3xl">
+                  {formatMoney(product.price)}
+                </p>
                 {hasDiscount ? (
-                  <p className="pb-1 text-sm text-outline line-through">
+                  <p className="pb-0.5 text-xs text-outline line-through sm:pb-1 sm:text-sm">
                     {formatMoney(product.listPrice)}
                   </p>
                 ) : null}
@@ -249,9 +299,12 @@ function ShopProductPage() {
             </motion.div>
 
             {product.description ? (
-              <motion.div variants={fadeUp} className="glass-card rounded-[1.75rem] p-5 sm:p-6">
-                <p className="label-caps text-primary">Mô tả</p>
-                <MarkdownContent className="mt-3 text-[0.95rem] leading-relaxed">
+              <motion.div
+                variants={fadeUp}
+                className="glass-card rounded-2xl p-3.5 sm:rounded-[1.75rem] sm:p-6"
+              >
+                <p className="label-caps text-[10px] text-primary sm:text-xs">Mô tả</p>
+                <MarkdownContent className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-[0.95rem]">
                   {product.description}
                 </MarkdownContent>
               </motion.div>
@@ -259,15 +312,15 @@ function ShopProductPage() {
 
             {materials.length ? (
               <motion.div variants={fadeUp}>
-                <p className="label-caps text-primary">Nguyên liệu</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <p className="label-caps text-[10px] text-primary sm:text-xs">Nguyên liệu</p>
+                <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
                   {materials.map((item, index) => (
                     <motion.span
                       key={item}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25 + index * 0.05, duration: 0.35, ease: easeOut }}
-                      className="rounded-full border border-outline-variant/40 bg-surface-container-lowest/80 px-3 py-1.5 text-sm text-on-surface"
+                      className="rounded-full border border-outline-variant/40 bg-surface-container-lowest/80 px-2.5 py-1 text-[11px] text-on-surface sm:px-3 sm:py-1.5 sm:text-sm"
                     >
                       {item}
                     </motion.span>
@@ -276,7 +329,8 @@ function ShopProductPage() {
               </motion.div>
             ) : null}
 
-            <motion.div variants={fadeUp} className="flex flex-col gap-3 sm:flex-row">
+            {/* Desktop CTAs */}
+            <motion.div variants={fadeUp} className="hidden flex-col gap-3 sm:flex sm:flex-row">
               <motion.a
                 href={orderMail}
                 whileHover={{ y: -2 }}
@@ -292,7 +346,10 @@ function ShopProductPage() {
                 </Link>
               </motion.div>
             </motion.div>
-            <motion.p variants={fadeUp} className="text-xs leading-relaxed text-outline">
+            <motion.p
+              variants={fadeUp}
+              className="hidden text-xs leading-relaxed text-outline sm:block"
+            >
               Inbox hoặc gửi email để chốt màu, lời thiệp QR và giờ giao. Mỗi bó được làm theo đơn,
               nên số lượng có thể thay đổi theo ngày.
             </motion.p>
@@ -302,34 +359,37 @@ function ShopProductPage() {
 
       {related.length ? (
         <motion.section
-          className="mt-16 sm:mt-20"
+          className="mt-10 sm:mt-20"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.18 }}
           variants={stagger}
         >
-          <motion.div variants={fadeUp} className="mb-6 flex items-end justify-between gap-4">
+          <motion.div variants={fadeUp} className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:items-end sm:gap-4">
             <div>
-              <p className="label-caps text-primary">Gợi ý thêm</p>
-              <h2 className="font-display mt-1 text-2xl text-on-surface sm:text-3xl">
+              <p className="label-caps hidden text-primary sm:block">Gợi ý thêm</p>
+              <h2 className="font-display text-xl text-on-surface sm:mt-1 sm:text-3xl">
                 Có thể bạn cũng thích
               </h2>
             </div>
-            <Link to="/shop" className="label-caps shrink-0 text-primary hover:underline">
+            <Link
+              to="/shop"
+              className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
+            >
               Tất cả
             </Link>
           </motion.div>
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-2 gap-2.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
               <motion.li
                 key={item.id}
                 variants={fadeUp}
                 whileHover={{ y: -6 }}
                 transition={{ duration: 0.3, ease: easeOut }}
-                className="glass-card group overflow-hidden hover:bg-surface-container-lowest/80"
+                className="overflow-hidden rounded-xl sm:glass-card sm:rounded-none sm:group sm:hover:bg-surface-container-lowest/80"
               >
-                <Link to={`/shop/product/${item.id}`} className="block">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-surface-container-low">
+                <Link to={`/shop/product/${item.id}`} className="group block">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low shadow-[0_8px_24px_rgba(74,48,32,0.07)] sm:rounded-none sm:shadow-none">
                     {item.mainImage ? (
                       <img
                         src={item.mainImage}
@@ -347,11 +407,21 @@ function ShopProductPage() {
                         />
                         <MaterialIcon
                           name="local_florist"
-                          className="relative text-5xl text-white"
+                          className="relative text-4xl text-white sm:text-5xl"
                         />
                       </div>
                     )}
-                    <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/55 bg-surface-container-lowest/55 p-3 backdrop-blur-xl">
+                    {/* Mobile overlay */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent p-2.5 pt-8 sm:hidden">
+                      <h3 className="font-display line-clamp-2 text-[13px] leading-tight text-white">
+                        {item.name}
+                      </h3>
+                      <p className="mt-0.5 text-[11px] font-semibold text-white/95">
+                        {formatMoney(item.price)}
+                      </p>
+                    </div>
+                    {/* Desktop overlay card */}
+                    <div className="absolute inset-x-3 bottom-3 hidden rounded-2xl border border-white/55 bg-surface-container-lowest/55 p-3 backdrop-blur-xl sm:block">
                       <p className="font-mono text-[10px] font-bold tracking-wider text-outline">
                         {item.code}
                       </p>
@@ -369,6 +439,19 @@ function ShopProductPage() {
           </ul>
         </motion.section>
       ) : null}
+
+      {/* Mobile sticky CTA */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant/20 bg-surface-container-lowest/95 px-4 pt-2.5 pb-[max(0.65rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11px] text-on-surface-variant">{product.name}</p>
+            <p className="text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
+          </div>
+          <a href={orderMail} className="btn-primary shrink-0 !px-4 !py-2.5 text-[10px]">
+            Đặt hoa
+          </a>
+        </div>
+      </div>
     </motion.div>
   )
 }

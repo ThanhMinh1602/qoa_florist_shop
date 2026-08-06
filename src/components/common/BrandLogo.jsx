@@ -1,7 +1,7 @@
 import logoSrc from '../../assets/images/icons/logo.jpg'
 
 const SIZE_CLASS = {
-  xs: 'h-10 w-10',
+  xs: 'h-8 w-8',
   sm: 'h-12 w-12',
   md: 'h-16 w-16',
   lg: 'h-24 w-24',
