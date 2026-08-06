@@ -3,10 +3,9 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import SiteHeader from '../../../components/common/SiteHeader'
 import { Reveal, Stagger, StaggerItem } from '../../../components/motion/Reveal'
 import { LANDING_IMAGES, LANDING_STEPS } from '../../../constants/landingImagery'
-import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
-import { formatMoney } from '../../../utils/money'
 import LandingHeroCarousel from '../components/LandingHeroCarousel'
+import FeaturedProductsRail from '../components/FeaturedProductsRail'
 
 const STEP_ICONS = ['local_florist', 'qr_code_2', 'local_shipping']
 const LANDING_SCROLL_SECTIONS = ['home', 'featured', 'custom-card']
@@ -18,7 +17,7 @@ function LandingPage() {
     products,
     isLoading: productsLoading,
     error: catalogError,
-  } = useCatalog({ sort: 'popular', page: 1, limit: 3 })
+  } = useCatalog({ sort: 'popular', page: 1, limit: 10 })
   const productsError = catalogError?.message || ''
 
   return (
@@ -65,7 +64,7 @@ function LandingPage() {
           id="featured"
           className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 sm:px-8 lg:px-16"
         >
-          <Reveal className="mb-12 flex items-end justify-between gap-4">
+          <Reveal className="mb-10 flex items-end justify-between gap-4">
             <div>
               <p className="label-caps text-primary">Gợi ý hôm nay</p>
               <h2 className="font-display mt-1 text-3xl text-primary md:text-[2rem]">Bán chạy</h2>
@@ -89,48 +88,7 @@ function LandingPage() {
               <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
             </div>
           ) : (
-            <Stagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" faster>
-              {products.map((product) => (
-                <StaggerItem key={product.id} className="glass-card lift-card overflow-hidden">
-                  <Link to={`/shop/product/${product.id}`} className="block">
-                    <div className="relative aspect-[4/5] overflow-hidden bg-surface-container-low">
-                      {product.mainImage ? (
-                        <img
-                          src={product.mainImage}
-                          alt={product.name}
-                          className="h-full w-full object-cover transition duration-700 hover:scale-[1.04]"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="relative flex h-full items-center justify-center">
-                          <img
-                            src={SHOP_IMAGES.moodPink}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-cover opacity-50"
-                            aria-hidden="true"
-                          />
-                          <MaterialIcon
-                            name="local_florist"
-                            className="relative text-5xl text-white"
-                          />
-                        </div>
-                      )}
-                      <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/55 bg-surface-container-lowest/55 p-3 backdrop-blur-xl">
-                        <p className="font-mono text-[10px] font-bold tracking-wider text-outline">
-                          {product.code}
-                        </p>
-                        <h3 className="font-display mt-0.5 line-clamp-2 text-xl leading-tight text-on-surface">
-                          {product.name}
-                        </h3>
-                        <p className="mt-1 text-sm font-semibold text-primary">
-                          {formatMoney(product.price)}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                </StaggerItem>
-              ))}
-            </Stagger>
+            <FeaturedProductsRail products={products} />
           )}
         </section>
 
