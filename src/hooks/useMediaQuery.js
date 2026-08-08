@@ -18,6 +18,20 @@ export function useMediaQuery(query) {
   return matches
 }
 
+export function useIsMdUp() {
+  return useMediaQuery('(min-width: 768px)')
+}
+
 export function useIsLgUp() {
   return useMediaQuery('(min-width: 1024px)')
 }
+
+/** mobile < 768 | tablet 768–1023 | desktop ≥ 1024 */
+export function useDeviceLayout() {
+  const isMdUp = useIsMdUp()
+  const isLgUp = useIsLgUp()
+  if (isLgUp) return 'desktop'
+  if (isMdUp) return 'tablet'
+  return 'mobile'
+}
+

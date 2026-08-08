@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { easeOut, overlayFade, sheetEnter } from '../../../lib/motion'
@@ -299,15 +299,26 @@ function FilterBottomSheet({
 }
 
 function ShopCatalogPage() {
+  const [searchParams] = useSearchParams()
+  const initialPrice = CATALOG_PRICE_FILTERS.some((item) => item.id === searchParams.get('price'))
+    ? searchParams.get('price')
+    : ''
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [priceFilterId, setPriceFilterId] = useState('')
+  const [priceFilterId, setPriceFilterId] = useState(initialPrice)
   const [draftCategoryId, setDraftCategoryId] = useState('')
-  const [draftPriceFilterId, setDraftPriceFilterId] = useState('')
+  const [draftPriceFilterId, setDraftPriceFilterId] = useState(initialPrice)
   const [sort, setSort] = useState('newest')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const { categories } = usePublicCategories()
+
+  useEffect(() => {
+    const nextPrice = searchParams.get('price') || ''
+    if (!nextPrice || !CATALOG_PRICE_FILTERS.some((item) => item.id === nextPrice)) return
+    setPriceFilterId(nextPrice)
+    setDraftPriceFilterId(nextPrice)
+  }, [searchParams])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)

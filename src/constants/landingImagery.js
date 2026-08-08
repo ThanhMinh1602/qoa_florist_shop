@@ -31,33 +31,3 @@ export const LANDING_MOODS = [
     alt: 'Trung tâm bàn tiệc hoa sang trọng',
   },
 ]
-
-export const LANDING_STEPS = [
-  {
-    title: '1. Chọn Hoa',
-    description: 'Lựa chọn thiết kế phù hợp từ bộ sưu tập độc quyền của chúng tôi.',
-    src: LANDING_IMAGES.choose,
-    alt: 'Tay nghệ nhân chọn hoa tươi',
-  },
-  {
-    title: '2. Gắn Thiệp QR',
-    description:
-      'Cá nhân hóa lời chúc bằng video, âm thanh hoặc hình ảnh qua mã QR bảo mật.',
-    src: LANDING_IMAGES.qrCard,
-    alt: 'Thiệp giấy gắn mã QR trên bó hoa',
-  },
-  {
-    title: '3. Giao Tận Tay',
-    description:
-      'Dịch vụ giao hàng chuyên nghiệp, đảm bảo hoa đến tay người nhận trong tình trạng hoàn hảo nhất.',
-    src: LANDING_IMAGES.delivery,
-    alt: 'Giao bó hoa tận tay người nhận',
-  },
-  {
-    title: '4. Quét & Mở Lời Chúc',
-    description:
-      'Người nhận quét mã trên bó hoa để mở thiệp số — lời chúc hiện ra như một bất ngờ riêng tư.',
-    src: LANDING_IMAGES.qrCard,
-    alt: 'Quét mã QR trên bó hoa để mở thiệp',
-  },
-]

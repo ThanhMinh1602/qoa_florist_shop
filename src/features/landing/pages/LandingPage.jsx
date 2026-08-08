@@ -1,18 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import SiteHeader from '../../../components/common/SiteHeader'
-import { Reveal, Stagger, StaggerItem } from '../../../components/motion/Reveal'
-import { LANDING_IMAGES, LANDING_STEPS } from '../../../constants/landingImagery'
+import { Reveal } from '../../../components/motion/Reveal'
+import { LANDING_IMAGES } from '../../../constants/landingImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
 import LandingHeroCarousel from '../components/LandingHeroCarousel'
 import FeaturedProductsRail from '../components/FeaturedProductsRail'
+import PriceTiersSection from '../components/priceTiers/PriceTiersSection'
 
-const STEP_ICONS = ['local_florist', 'qr_code_2', 'local_shipping', 'auto_awesome']
-const LANDING_SCROLL_SECTIONS = ['home', 'featured', 'custom-card']
+const LANDING_SCROLL_SECTIONS = ['home', 'price-tiers', 'featured', 'custom-card']
 
 function LandingPage() {
   const navigate = useNavigate()
-  const { heroImages, heroAutoPlayMs } = useLandingSettings()
+  const { heroImages, heroAutoPlayMs, priceTiers } = useLandingSettings()
   const {
     products,
     isLoading: productsLoading,
@@ -38,29 +38,7 @@ function LandingPage() {
           />
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-16 lg:px-16">
-          <Stagger className="grid grid-cols-2 gap-3 sm:gap-6">
-            {LANDING_STEPS.map((step, index) => (
-              <StaggerItem
-                key={step.title}
-                className="glass-card lift-card flex flex-col items-center rounded-xl p-3.5 text-center sm:p-8"
-              >
-                <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-surface-variant sm:mb-6 sm:h-16 sm:w-16">
-                  <MaterialIcon
-                    name={STEP_ICONS[index] || 'local_florist'}
-                    className="text-[20px] text-primary sm:text-[32px]"
-                  />
-                </div>
-                <h3 className="text-xs font-semibold leading-snug text-primary sm:mb-3 sm:text-xl">
-                  {step.title.replace(/^\d+\.\s*/, '')}
-                </h3>
-                <p className="hidden text-sm text-on-surface-variant sm:block">
-                  {step.description}
-                </p>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </section>
+        <PriceTiersSection priceTiers={priceTiers} />
 
         <section
           id="featured"
