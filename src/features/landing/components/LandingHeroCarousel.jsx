@@ -153,7 +153,7 @@ function LandingHeroCarousel({
         <motion.p
           variants={fadeUp}
           className={[
-            'mb-3 hidden max-w-2xl text-base md:mb-10 md:block md:text-lg',
+            'mb-3 max-w-2xl px-1 text-sm leading-snug md:mb-10 md:text-lg md:leading-relaxed',
             hasSlides
               ? 'text-white/95 [text-shadow:0_1px_12px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.4)]'
               : 'text-on-surface-variant',
@@ -163,17 +163,17 @@ function LandingHeroCarousel({
         </motion.p>
         <motion.div
           variants={fadeUp}
-          className="flex flex-row flex-wrap items-stretch justify-center gap-2 md:gap-4"
+          className="flex w-full max-w-[11.5rem] flex-col items-stretch justify-center gap-1.5 sm:max-w-none sm:w-auto sm:flex-row sm:flex-wrap sm:gap-2 md:gap-4"
         >
           {preview || !onExplore ? (
-            <span className="btn-primary pointer-events-none box-border h-10 min-h-10 border border-transparent !px-4 !py-0 text-[10px] shadow-lg shadow-black/25 opacity-90 md:h-12 md:min-h-12 md:!px-8 md:text-xs">
+            <span className="btn-primary pointer-events-none box-border h-8 min-h-8 w-full border border-transparent !px-3 !py-0 text-[9px] tracking-[0.08em] shadow-lg shadow-black/25 opacity-90 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs">
               {ctaPrimary}
             </span>
           ) : (
             <button
               type="button"
               onClick={onExplore}
-              className="btn-primary box-border h-10 min-h-10 border border-transparent !px-4 !py-0 text-[10px] shadow-lg shadow-black/25 md:h-12 md:min-h-12 md:!px-8 md:text-xs"
+              className="btn-primary box-border h-8 min-h-8 w-full border border-transparent !px-3 !py-0 text-[9px] tracking-[0.08em] shadow-lg shadow-black/25 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs"
             >
               {ctaPrimary}
             </button>
@@ -181,7 +181,7 @@ function LandingHeroCarousel({
           {preview || !onCustom ? (
             <span
               className={[
-                'pointer-events-none box-border inline-flex h-10 min-h-10 items-center justify-center !px-4 !py-0 text-[10px] font-bold tracking-[0.1em] uppercase opacity-90 md:h-12 md:min-h-12 md:!px-8 md:text-xs',
+                'pointer-events-none box-border inline-flex h-8 min-h-8 w-full items-center justify-center !px-3 !py-0 text-[9px] font-bold tracking-[0.08em] uppercase opacity-90 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs',
                 hasSlides
                   ? 'rounded-[var(--radius-control)] border border-white/55 bg-white/20 text-white backdrop-blur-md'
                   : 'btn-glass',
@@ -195,8 +195,8 @@ function LandingHeroCarousel({
               onClick={onCustom}
               className={
                 hasSlides
-                  ? 'box-border inline-flex h-10 min-h-10 items-center justify-center rounded-[var(--radius-control)] border border-white/55 bg-white/20 !px-4 !py-0 text-[10px] font-bold tracking-[0.1em] text-white uppercase backdrop-blur-md transition hover:bg-white/30 md:h-12 md:min-h-12 md:!px-8 md:text-xs'
-                  : 'btn-glass box-border h-10 min-h-10 !px-4 !py-0 text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
+                  ? 'box-border inline-flex h-8 min-h-8 w-full items-center justify-center rounded-[var(--radius-control)] border border-white/55 bg-white/20 !px-3 !py-0 text-[9px] font-bold tracking-[0.08em] text-white uppercase backdrop-blur-md transition hover:bg-white/30 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
+                  : 'btn-glass box-border h-8 min-h-8 w-full !px-3 !py-0 text-[9px] sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
               }
             >
               {ctaSecondary}

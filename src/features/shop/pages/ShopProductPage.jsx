@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Link, useParams } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import MarkdownContent from '../../../components/common/MarkdownContent'
@@ -9,8 +9,7 @@ import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
 import { buildProductOrderMessengerUrl } from '../../../utils/facebook'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
-
-const SWIPE_THRESHOLD = 48
+import ProductImagePager from '../components/ProductImagePager'
 
 function splitMaterials(value) {
   return String(value || '')
@@ -23,7 +22,6 @@ function ShopProductPage() {
   const { id } = useParams()
   const { product, isLoading, error } = useCatalogProduct(id)
   const [activeIndex, setActiveIndex] = useState(0)
-  const swipeRef = useRef({ x: 0, y: 0, tracking: false })
 
   const images = useMemo(() => {
     if (!product) return []
@@ -35,7 +33,11 @@ function ShopProductPage() {
   const goImage = useCallback(
     (direction) => {
       if (images.length < 2) return
-      setActiveIndex((current) => (current + direction + images.length) % images.length)
+      setActiveIndex((current) => {
+        const next = current + direction
+        if (next < 0 || next >= images.length) return current
+        return next
+      })
     },
     [images.length],
   )
@@ -63,29 +65,6 @@ function ShopProductPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [goImage, images.length])
 
-  function onGalleryPointerDown(event) {
-    if (images.length < 2) return
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-    swipeRef.current = { x: event.clientX, y: event.clientY, tracking: true }
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-  }
-
-  function onGalleryPointerUp(event) {
-    if (!swipeRef.current.tracking) return
-    const dx = event.clientX - swipeRef.current.x
-    const dy = event.clientY - swipeRef.current.y
-    swipeRef.current.tracking = false
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
-    if (Math.abs(dx) < SWIPE_THRESHOLD) return
-    if (Math.abs(dx) < Math.abs(dy) * 1.15) return
-    goImage(dx < 0 ? 1 : -1)
-  }
-
-  function onGalleryPointerCancel(event) {
-    swipeRef.current.tracking = false
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
-  }
-
   const categoryId = product?.categories?.[0]?.id
   const { products: relatedSource } = useCatalog(
     {
@@ -97,7 +76,6 @@ function ShopProductPage() {
   )
 
   const related = (relatedSource || []).filter((item) => item.id !== product?.id).slice(0, 3)
-  const activeImage = images[activeIndex]?.url || ''
   const materials = splitMaterials(product?.materials)
   const hasDiscount =
     product && Number(product.listPrice) > 0 && Number(product.listPrice) > Number(product.price)
@@ -170,43 +148,12 @@ function ShopProductPage() {
           className="space-y-2.5 sm:space-y-3 lg:sticky lg:top-28"
         >
           <div className="group relative -mx-4 overflow-hidden border-y border-white/40 bg-surface-container-low shadow-none sm:mx-0 sm:rounded-[2rem] sm:border sm:border-white/60 sm:shadow-[0_24px_60px_rgba(74,48,32,0.12)]">
-            <div
-              className="relative aspect-[4/5] touch-pan-y select-none sm:aspect-[5/6]"
-              onPointerDown={onGalleryPointerDown}
-              onPointerUp={onGalleryPointerUp}
-              onPointerCancel={onGalleryPointerCancel}
-            >
-              <AnimatePresence mode="wait">
-                {activeImage ? (
-                  <motion.img
-                    key={activeImage}
-                    src={cloudinaryUrl(activeImage, { width: 1200 })}
-                    srcSet={cloudinarySrcSet(activeImage, [640, 960, 1200, 1600])}
-                    sizes="(min-width: 1024px) 480px, 100vw"
-                    alt={product.name}
-                    draggable={false}
-                    fetchPriority="high"
-                    decoding="async"
-                    initial={{ opacity: 0, x: 0 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.28, ease: easeOut }}
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="relative flex h-full items-center justify-center">
-                    <img
-                      src={SHOP_IMAGES.moodPink}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover opacity-50"
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                    <MaterialIcon name="local_florist" className="relative text-5xl text-white sm:text-6xl" />
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
+            <ProductImagePager
+              images={images}
+              activeIndex={activeIndex}
+              onIndexChange={setActiveIndex}
+              alt={product.name}
+            />
 
             {images.length > 1 ? (
               <>
@@ -215,7 +162,7 @@ function ShopProductPage() {
                   whileHover={{ scale: 1.06 }}
                   whileTap={{ scale: 0.94 }}
                   onClick={() => goImage(-1)}
-                  className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:left-4 sm:h-11 sm:w-11"
+                  className="absolute top-1/2 left-2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:left-4 sm:flex sm:h-11 sm:w-11"
                   aria-label="Ảnh trước"
                 >
                   <MaterialIcon name="chevron_left" className="text-xl sm:text-2xl" />
@@ -225,12 +172,12 @@ function ShopProductPage() {
                   whileHover={{ scale: 1.06 }}
                   whileTap={{ scale: 0.94 }}
                   onClick={() => goImage(1)}
-                  className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:right-4 sm:h-11 sm:w-11"
+                  className="absolute top-1/2 right-2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/70 text-primary shadow-sm backdrop-blur-md hover:bg-white sm:right-4 sm:flex sm:h-11 sm:w-11"
                   aria-label="Ảnh sau"
                 >
                   <MaterialIcon name="chevron_right" className="text-xl sm:text-2xl" />
                 </motion.button>
-                <span className="absolute right-3 bottom-3 rounded-full bg-on-surface/70 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-md sm:right-4 sm:bottom-4 sm:px-3 sm:py-1 sm:text-[11px]">
+                <span className="pointer-events-none absolute right-3 bottom-3 rounded-full bg-on-surface/70 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-md sm:right-4 sm:bottom-4 sm:px-3 sm:py-1 sm:text-[11px]">
                   {activeIndex + 1} / {images.length}
                 </span>
               </>
