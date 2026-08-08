@@ -7,6 +7,7 @@ import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useCatalogProduct } from '../../../hooks/swr'
 import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
+import { buildProductOrderMessengerUrl } from '../../../utils/facebook'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
 const SWIPE_THRESHOLD = 48
@@ -100,11 +101,7 @@ function ShopProductPage() {
   const materials = splitMaterials(product?.materials)
   const hasDiscount =
     product && Number(product.listPrice) > 0 && Number(product.listPrice) > Number(product.price)
-  const orderMail = product
-    ? `mailto:hello@qoaflorist.com?subject=${encodeURIComponent(`Đặt hoa: ${product.name}`)}&body=${encodeURIComponent(
-        `Mình muốn đặt bó hoa:\n- Tên: ${product.name}\n- Mã: ${product.code}\n- Giá: ${formatMoney(product.price)}\n\nGhi chú thêm: `,
-      )}`
-    : ''
+  const orderMessenger = product ? buildProductOrderMessengerUrl(product) : ''
 
   if (isLoading) {
     return (
@@ -343,7 +340,9 @@ function ShopProductPage() {
             {/* Desktop CTAs */}
             <motion.div variants={fadeUp} className="hidden flex-col gap-3 sm:flex sm:flex-row">
               <motion.a
-                href={orderMail}
+                href={orderMessenger}
+                target="_blank"
+                rel="noreferrer"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className="btn-primary flex-1 py-4"
@@ -361,8 +360,8 @@ function ShopProductPage() {
               variants={fadeUp}
               className="hidden text-xs leading-relaxed text-outline sm:block"
             >
-              Inbox hoặc gửi email để chốt màu, lời thiệp QR và giờ giao. Mỗi bó được làm theo đơn,
-              nên số lượng có thể thay đổi theo ngày.
+              Inbox Facebook Messenger để chốt màu, lời thiệp QR và giờ giao. Mỗi bó được làm theo
+              đơn, nên số lượng có thể thay đổi theo ngày.
             </motion.p>
           </motion.div>
         </motion.div>
@@ -461,7 +460,12 @@ function ShopProductPage() {
             <p className="truncate text-[11px] text-on-surface-variant">{product.name}</p>
             <p className="text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
           </div>
-          <a href={orderMail} className="btn-primary shrink-0 !px-4 !py-2.5 text-[10px]">
+          <a
+            href={orderMessenger}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-primary shrink-0 !px-4 !py-2.5 text-[10px]"
+          >
             Đặt hoa
           </a>
         </div>

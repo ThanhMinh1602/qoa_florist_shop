@@ -6,6 +6,7 @@ import { Reveal } from '../motion/Reveal'
 import { useLandingSettings } from '../../hooks/swr'
 import { viewportOnce } from '../../lib/motion'
 import { getZaloShopPhone } from '../../utils/zalo'
+import { buildFacebookMessengerUrl } from '../../utils/facebook'
 
 const FOOTER_LINKS = [
   { label: 'Trang chủ', to: '/' },
@@ -19,7 +20,9 @@ function SiteFooter() {
   const { copy } = useLandingSettings()
   const zaloPhone = (copy.footerZaloPhone || getZaloShopPhone()).replace(/\s/g, '')
   const year = new Date().getFullYear()
-  const email = copy.footerEmail || 'hello@qoaflorist.com'
+  const messengerUrl = buildFacebookMessengerUrl(
+    `Xin chào ${copy.footerBrand || 'QOA Florist'}, mình muốn liên hệ đặt hoa ạ.`,
+  )
 
   return (
     <footer className="site-footer relative mt-6 overflow-hidden sm:mt-10">
@@ -102,11 +105,13 @@ function SiteFooter() {
             Chat Zalo
           </a>
           <a
-            href={`mailto:${email}`}
+            href={messengerUrl}
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-outline-variant/40 bg-white/55 px-5 py-2.5 text-[10px] font-bold tracking-[0.12em] text-primary uppercase backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/80 sm:text-[11px]"
           >
-            <MaterialIcon name="mail" className="text-base" />
-            Liên hệ
+            <MaterialIcon name="forum" className="text-base" />
+            Nhắn Facebook
           </a>
         </Reveal>
 
