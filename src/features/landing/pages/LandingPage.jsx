@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import SiteFooter from '../../../components/common/SiteFooter'
 import SiteHeader from '../../../components/common/SiteHeader'
@@ -15,11 +16,18 @@ function LandingPage() {
   const navigate = useNavigate()
   const { heroImages, heroAutoPlayMs, priceTiers, copy } = useLandingSettings()
   const {
-    products,
+    products: catalogProducts,
     isLoading: productsLoading,
     error: catalogError,
   } = useCatalog({ sort: 'popular', page: 1, limit: 10 })
   const productsError = catalogError?.message || ''
+  const products = useMemo(
+    () =>
+      [...(catalogProducts || [])].sort(
+        (a, b) => Number(b.soldCount || 0) - Number(a.soldCount || 0),
+      ),
+    [catalogProducts],
+  )
 
   return (
     <div className="relative min-h-dvh overflow-x-hidden bg-background text-on-background antialiased">
@@ -55,7 +63,7 @@ function LandingPage() {
                 {copy.featuredTitle}
               </h2>
               <Link
-                to="/shop"
+                to="/shop?sort=popular"
                 className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
               >
                 Xem thêm

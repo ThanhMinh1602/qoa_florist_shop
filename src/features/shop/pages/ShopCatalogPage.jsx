@@ -9,6 +9,7 @@ import { useCatalogInfinite, usePublicCategories } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 
 const SORT_OPTIONS = [
+  { id: 'popular', label: 'Bán chạy' },
   { id: 'newest', label: 'Mới nhất' },
   { id: 'price_asc', label: 'Giá thấp đến cao' },
   { id: 'price_desc', label: 'Giá cao đến thấp' },
@@ -303,21 +304,29 @@ function ShopCatalogPage() {
   const initialPrice = CATALOG_PRICE_FILTERS.some((item) => item.id === searchParams.get('price'))
     ? searchParams.get('price')
     : ''
+  const initialSort = SORT_OPTIONS.some((item) => item.id === searchParams.get('sort'))
+    ? searchParams.get('sort')
+    : 'newest'
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [priceFilterId, setPriceFilterId] = useState(initialPrice)
   const [draftCategoryId, setDraftCategoryId] = useState('')
   const [draftPriceFilterId, setDraftPriceFilterId] = useState(initialPrice)
-  const [sort, setSort] = useState('newest')
+  const [sort, setSort] = useState(initialSort)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const { categories } = usePublicCategories()
 
   useEffect(() => {
     const nextPrice = searchParams.get('price') || ''
-    if (!nextPrice || !CATALOG_PRICE_FILTERS.some((item) => item.id === nextPrice)) return
-    setPriceFilterId(nextPrice)
-    setDraftPriceFilterId(nextPrice)
+    if (nextPrice && CATALOG_PRICE_FILTERS.some((item) => item.id === nextPrice)) {
+      setPriceFilterId(nextPrice)
+      setDraftPriceFilterId(nextPrice)
+    }
+    const nextSort = searchParams.get('sort') || ''
+    if (nextSort && SORT_OPTIONS.some((item) => item.id === nextSort)) {
+      setSort(nextSort)
+    }
   }, [searchParams])
 
   useEffect(() => {

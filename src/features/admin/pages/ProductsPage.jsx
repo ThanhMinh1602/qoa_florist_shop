@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { overlayFade, sheetEnter } from '../../../lib/motion'
@@ -11,6 +11,7 @@ import {
   deleteProductApi,
   updateProductApi,
 } from '../../../api/productsApi'
+import { createCategoryApi } from '../../../api/categoriesApi'
 import { deleteUploadedImageApi, uploadImagesApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useAdminCategories, useProducts } from '../../../hooks/swr'
@@ -413,18 +414,63 @@ function ProductFormDialog({
   onDelete,
   onRegenerateCode,
   onRemoveCloudImage,
+  onQuickCreateCategory,
   categoryOptions = [],
   isEditing,
   formError,
   title,
 }) {
   const selectedIds = Array.isArray(values.categoryIds) ? values.categoryIds : []
+  const [quickCategoryOpen, setQuickCategoryOpen] = useState(false)
+  const [quickCategoryName, setQuickCategoryName] = useState('')
+  const [quickCategoryBusy, setQuickCategoryBusy] = useState(false)
+  const [quickCategoryError, setQuickCategoryError] = useState('')
+  const quickCategoryRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) {
+      setQuickCategoryOpen(false)
+      setQuickCategoryName('')
+      setQuickCategoryError('')
+      setQuickCategoryBusy(false)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!quickCategoryOpen) return undefined
+    const timer = window.setTimeout(() => quickCategoryRef.current?.focus(), 40)
+    return () => window.clearTimeout(timer)
+  }, [quickCategoryOpen])
 
   function toggleCategory(categoryId) {
     const next = selectedIds.includes(categoryId)
       ? selectedIds.filter((id) => id !== categoryId)
       : [...selectedIds, categoryId]
     onChange('categoryIds', next)
+  }
+
+  async function handleQuickCreateCategory(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    const name = quickCategoryName.trim()
+    if (!name || !onQuickCreateCategory) return
+    setQuickCategoryBusy(true)
+    setQuickCategoryError('')
+    try {
+      const created = await onQuickCreateCategory(name)
+      if (created?.id) {
+        const nextIds = selectedIds.includes(created.id)
+          ? selectedIds
+          : [...selectedIds, created.id]
+        onChange('categoryIds', nextIds)
+      }
+      setQuickCategoryName('')
+      setQuickCategoryOpen(false)
+    } catch (err) {
+      setQuickCategoryError(err.message || 'Không tạo được danh mục.')
+    } finally {
+      setQuickCategoryBusy(false)
+    }
   }
 
   return (
@@ -504,17 +550,6 @@ function ProductFormDialog({
             </div>
 
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-on-surface">Nguyên liệu</span>
-              <textarea
-                rows={2}
-                value={values.materials}
-                onChange={(e) => onChange('materials', e.target.value)}
-                placeholder="Ví dụ: 50 bông, giấy gói, ruy băng..."
-                className={inputClass}
-              />
-            </label>
-
-            <label className="block text-sm">
               <span className="mb-1 block font-medium text-on-surface">Mô tả sản phẩm</span>
               <textarea
                 rows={4}
@@ -529,9 +564,55 @@ function ProductFormDialog({
             </label>
 
             <div>
-              <p className="mb-2 text-sm font-medium text-on-surface">Danh mục</p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-on-surface">Danh mục</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickCategoryOpen((open) => !open)
+                    setQuickCategoryError('')
+                  }}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/35 text-primary transition hover:bg-primary/10"
+                  aria-label="Tạo nhanh danh mục"
+                  title="Tạo nhanh danh mục"
+                >
+                  <MaterialIcon name="add" className="text-lg" />
+                </button>
+              </div>
+
+              {quickCategoryOpen ? (
+                <div className="mb-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/50 p-2.5">
+                  <div className="flex gap-2">
+                    <input
+                      ref={quickCategoryRef}
+                      value={quickCategoryName}
+                      onChange={(e) => setQuickCategoryName(e.target.value)}
+                      placeholder="Tên danh mục mới"
+                      className={`${inputClass} !py-2`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleQuickCreateCategory(e)
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={quickCategoryBusy || !quickCategoryName.trim()}
+                      onClick={handleQuickCreateCategory}
+                      className="btn-primary shrink-0 !px-3 !py-2 text-[10px] disabled:opacity-50"
+                    >
+                      {quickCategoryBusy ? '...' : 'Thêm'}
+                    </button>
+                  </div>
+                  {quickCategoryError ? (
+                    <p className="mt-1.5 text-xs text-error">{quickCategoryError}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {categoryOptions.length === 0 ? (
-                <p className="mt-1 text-xs text-outline">Chưa có danh mục — thêm ở tab Danh mục.</p>
+                <p className="mt-1 text-xs text-outline">Chưa có danh mục — bấm + để tạo nhanh.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {categoryOptions.map((category) => {
@@ -571,9 +652,7 @@ function ProductFormDialog({
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 ['costPrice', 'Giá cost'],
-                ['makeMinutes', 'Thời gian làm (phút)'],
-                ['listPrice', 'Giá bán (lãi 70%)'],
-                ['sellPrice', 'Giá chốt'],
+                ['sellPrice', 'Giá bán'],
                 ['otherCost', 'Chi phí khác'],
                 ['soldCount', 'Doanh số (số đã bán)'],
               ].map(([field, label]) => (
@@ -584,20 +663,7 @@ function ProductFormDialog({
                     min="0"
                     step={field === 'soldCount' ? '1' : undefined}
                     value={values[field]}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      if (field === 'costPrice') {
-                        onChange('costPrice', next)
-                        if (!values.listPrice) {
-                          onChange(
-                            'listPrice',
-                            String(Math.round((Number(next) || 0) * 1.7)),
-                          )
-                        }
-                      } else {
-                        onChange(field, next)
-                      }
-                    }}
+                    onChange={(e) => onChange(field, e.target.value)}
                     className={inputClass}
                   />
                   {field === 'soldCount' ? (
@@ -677,7 +743,7 @@ function ProductsPage() {
     error: productsError,
     mutate: mutateProducts,
   } = useProducts()
-  const { categories } = useAdminCategories()
+  const { categories, mutate: mutateCategories } = useAdminCategories()
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -698,7 +764,7 @@ function ProductsPage() {
     const keyword = search.trim().toLowerCase()
     if (!keyword) return products
     return products.filter((item) =>
-      [item.code, item.name, item.description, item.materials, ...(item.categories || []).map((c) => c.name)]
+      [item.code, item.name, item.description, ...(item.categories || []).map((c) => c.name)]
         .join(' ')
         .toLowerCase()
         .includes(keyword),
@@ -1033,13 +1099,12 @@ function ProductsPage() {
                     </th>
                     <th className="px-4 py-3">Ảnh</th>
                     <th className="px-4 py-3">Mã</th>
-                    <th className="px-4 py-3">Tên / Nguyên liệu</th>
+                    <th className="px-4 py-3">Tên</th>
                     <th className="px-4 py-3">Danh mục</th>
                     <th className="px-4 py-3">Giá vốn</th>
-                    <th className="px-4 py-3">Giá chốt</th>
+                    <th className="px-4 py-3">Giá bán</th>
                     <th className="px-4 py-3">Lợi nhuận</th>
                     <th className="px-4 py-3">Đã bán</th>
-                    <th className="px-4 py-3">Thời gian</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -1072,9 +1137,11 @@ function ProductsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-on-surface">{product.name}</p>
-                          <p className="max-w-xs truncate text-xs text-on-surface-variant">
-                            {product.materials || product.description || '—'}
-                          </p>
+                          {product.description ? (
+                            <p className="max-w-xs truncate text-xs text-on-surface-variant">
+                              {product.description}
+                            </p>
+                          ) : null}
                         </td>
                         <td className="max-w-[180px] px-4 py-3 text-xs text-on-surface-variant">
                           {(product.categories || []).length
@@ -1090,9 +1157,6 @@ function ProductsPage() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 font-medium text-on-surface">
                           {product.soldCount || 0}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
-                          {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
                           <ProductActionButtons
@@ -1193,6 +1257,15 @@ function ProductsPage() {
         onClose={closeForm}
         onRegenerateCode={regenerateCode}
         onRemoveCloudImage={queueRemovedCloudImage}
+        onQuickCreateCategory={async (name) => {
+          const result = await createCategoryApi({
+            name,
+            showInQuickFilter: true,
+            active: true,
+          })
+          await mutateCategories()
+          return result.data
+        }}
         categoryOptions={categories}
         isEditing={Boolean(editingId)}
         onDelete={
