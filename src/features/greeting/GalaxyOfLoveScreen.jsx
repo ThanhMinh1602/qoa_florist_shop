@@ -1252,6 +1252,18 @@ const HEART_BEAT_PERIOD = 1.55
 const HEART_BEATS_BEFORE_EXPLODE = 2
 const HEART_FOCUS_HOLD = HEART_BEAT_PERIOD * HEART_BEATS_BEFORE_EXPLODE
 
+/** Camera cố định cho nền landing — nhìn nghiêng ngân hà đang quay */
+function BackdropCamera() {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    camera.position.set(8.5, 22, 26)
+    camera.lookAt(0, 0.15, 0)
+  }, [camera])
+
+  return null
+}
+
 /**
  * Intro quỹ đạo cầu — góc / bán kính đổi ĐỀU theo thời gian.
  * Không CatmullRom (dễ khựng ở control point), không scale galaxy.
@@ -1386,15 +1398,17 @@ function TextViewCamera({ active, controlsRef, textBounds, onSettled }) {
   return null
 }
 
-function Scene({ labels, messages, onSelectLabel }) {
-  const [introDone, setIntroDone] = useState(false)
+function Scene({ labels, messages, onSelectLabel, backdrop = false, loop = false }) {
+  const [cycle, setCycle] = useState(0)
+  const [introDone, setIntroDone] = useState(backdrop)
   const [heartExploding, setHeartExploding] = useState(false)
   const [heartGone, setHeartGone] = useState(false)
   const [showMessage, setShowMessage] = useState(false)
-  const [viewSettled, setViewSettled] = useState(false)
+  const [viewSettled, setViewSettled] = useState(backdrop)
   const [textBounds, setTextBounds] = useState(null)
-  const spinSpeedRef = useRef(INTRO_SPIN_START)
+  const spinSpeedRef = useRef(backdrop ? INTRO_SPIN_END * 1.35 : INTRO_SPIN_START)
   const controlsRef = useRef(null)
+  const { camera } = useThree()
 
   const handleTextBounds = useCallback((bounds) => {
     setTextBounds(bounds)
@@ -1410,70 +1424,114 @@ function Scene({ labels, messages, onSelectLabel }) {
   }
 
   useEffect(() => {
-    if (!introDone || heartExploding) return undefined
+    if (backdrop || !introDone || heartExploding) return undefined
     const timer = window.setTimeout(() => {
       setHeartExploding(true)
       setShowMessage(true)
       setViewSettled(false)
     }, HEART_FOCUS_HOLD * 1000)
     return () => window.clearTimeout(timer)
-  }, [introDone, heartExploding])
+  }, [backdrop, introDone, heartExploding, cycle])
 
   const handleHeartExploded = () => {
     setHeartGone(true)
   }
+
+  // Landing / preview: sau khi hiện lời nhắn một lúc → chạy lại từ đầu
+  useEffect(() => {
+    if (!loop || backdrop || !heartGone || !viewSettled) return undefined
+    const timer = window.setTimeout(() => {
+      spinSpeedRef.current = INTRO_SPIN_START
+      camera.position.set(0, 48, 4.8)
+      camera.lookAt(0, 0.05, 0)
+      if (controlsRef.current) {
+        controlsRef.current.target.set(0, 0.05, 0)
+        controlsRef.current.update()
+      }
+      setIntroDone(false)
+      setHeartExploding(false)
+      setHeartGone(false)
+      setShowMessage(false)
+      setViewSettled(false)
+      setTextBounds(null)
+      setCycle((value) => value + 1)
+    }, 6500)
+    return () => window.clearTimeout(timer)
+  }, [loop, backdrop, heartGone, viewSettled, camera])
 
   return (
     <>
       <color attach="background" args={['#000000']} />
       <fog attach="fog" args={['#000000', 48, 130]} />
       <ambientLight intensity={0.15} />
-      <Stars radius={140} depth={80} count={18000} factor={2.55} saturation={0} fade speed={0.38} />
-      <SpaceSparkles count={3200} />
-      <ShootingStars poolSize={3} />
-
-      <GalaxyIntro spinSpeedRef={spinSpeedRef} onComplete={handleIntroComplete} />
-      <TextViewCamera
-        active={heartExploding}
-        controlsRef={controlsRef}
-        textBounds={textBounds}
-        onSettled={() => setViewSettled(true)}
+      <Stars
+        radius={140}
+        depth={80}
+        count={backdrop ? 7000 : 18000}
+        factor={2.55}
+        saturation={0}
+        fade
+        speed={0.38}
       />
+      {!backdrop ? <SpaceSparkles count={3200} /> : null}
+      {!backdrop ? <ShootingStars poolSize={3} /> : null}
 
-      <MouseParallax strength={introDone && viewSettled ? 0.12 : 0}>
+      {backdrop ? <BackdropCamera /> : null}
+      {!backdrop ? (
+        <GalaxyIntro key={`intro-${cycle}`} spinSpeedRef={spinSpeedRef} onComplete={handleIntroComplete} />
+      ) : null}
+      {!backdrop ? (
+        <TextViewCamera
+          key={`cam-${cycle}`}
+          active={heartExploding}
+          controlsRef={controlsRef}
+          textBounds={textBounds}
+          onSettled={() => setViewSettled(true)}
+        />
+      ) : null}
+
+      <MouseParallax strength={!backdrop && introDone && viewSettled ? 0.12 : 0}>
         <group>
-          <GalaxyDisc spinSpeedRef={spinSpeedRef} />
-          {!heartGone ? (
-            <ParticleHeartOutline exploding={heartExploding} onExploded={handleHeartExploded} />
+          <GalaxyDisc count={backdrop ? 22000 : 52000} spinSpeedRef={spinSpeedRef} />
+          {!backdrop && !heartGone ? (
+            <ParticleHeartOutline
+              key={`heart-${cycle}`}
+              exploding={heartExploding}
+              onExploded={handleHeartExploded}
+            />
           ) : null}
-          {!showMessage ? (
-            <FloatingDecor labels={labels} onSelect={onSelectLabel} />
+          {!backdrop && !showMessage ? (
+            <FloatingDecor key={`decor-${cycle}`} labels={labels} onSelect={onSelectLabel} />
           ) : null}
           <pointLight position={[0, 0.2, 0]} color="#ffffff" intensity={1.8} distance={6} />
           <pointLight position={[0, 3.2, 0]} color="#ff7eb9" intensity={1.2} distance={8} />
         </group>
       </MouseParallax>
 
-      {/* Ngoài parallax — chữ billboard theo camera, đọc rõ mọi góc */}
-      <ParticleMessageText
-        phrases={messages}
-        active={showMessage}
-        onBounds={handleTextBounds}
-      />
+      {!backdrop ? (
+        <ParticleMessageText
+          key={`msg-${cycle}`}
+          phrases={messages}
+          active={showMessage}
+          onBounds={handleTextBounds}
+        />
+      ) : null}
 
-      <OrbitControls
-        ref={controlsRef}
-        enabled={introDone && viewSettled}
-        enablePan={false}
-        minDistance={8}
-        maxDistance={60}
-        target={[0, 3.35, 0]}
-        autoRotate={false}
-        enableDamping
-        dampingFactor={0.08}
-        maxPolarAngle={Math.PI * 0.58}
-        minPolarAngle={Math.PI * 0.12}
-      />
+      {!backdrop ? (
+        <OrbitControls
+          ref={controlsRef}
+          enabled={introDone && viewSettled}
+          enablePan={false}
+          minDistance={8}
+          maxDistance={60}
+          target={[0, 3.35, 0]}
+          autoRotate={false}
+          enableDamping
+          dampingFactor={0.08}
+          maxPolarAngle={Math.PI * 0.58}
+          minPolarAngle={Math.PI * 0.12}
+        />
+      ) : null}
       <SceneFX />
     </>
   )
@@ -1515,6 +1573,8 @@ function PopupCard({ open, title, message, onClose }) {
 
 function GalaxyOfLoveScreen({
   preview = false,
+  backdrop = false,
+  loop = false,
   keywords = [],
   messages = [],
   message = '',
@@ -1522,13 +1582,13 @@ function GalaxyOfLoveScreen({
 }) {
   const [selected, setSelected] = useState(null)
   const [muted, setMuted] = useState(false)
-  const [opened, setOpened] = useState(preview)
+  const [opened, setOpened] = useState(preview || backdrop)
   const audioRef = useRef(null)
 
   const musicUrl = useMemo(() => getMusicUrl(music), [music])
 
   useEffect(() => {
-    if (preview || !musicUrl) return undefined
+    if (preview || backdrop || !musicUrl) return undefined
 
     const audio = new Audio(musicUrl)
     audio.loop = true
@@ -1541,7 +1601,7 @@ function GalaxyOfLoveScreen({
       audio.src = ''
       audioRef.current = null
     }
-  }, [preview, musicUrl])
+  }, [preview, backdrop, musicUrl])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -1586,31 +1646,51 @@ function GalaxyOfLoveScreen({
     ? `“${selected}” — một góc ngân hà dành riêng cho bạn.`
     : 'Chạm chữ đang bay quanh ngân hà.'
 
+  const screenClass = [
+    'galaxy-screen',
+    preview ? 'galaxy-screen--preview' : '',
+    backdrop ? 'galaxy-screen--backdrop' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className={preview ? 'galaxy-screen galaxy-screen--preview' : 'galaxy-screen'}>
+    <div className={screenClass}>
       {opened ? (
         <Canvas
-          dpr={[1, 2]}
+          dpr={backdrop ? [1, 1.5] : [1, 2]}
           camera={{ position: [0, 48, 4.8], fov: 42, near: 0.1, far: 160 }}
-          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          gl={{
+            antialias: true,
+            alpha: false,
+            powerPreference: backdrop ? 'low-power' : 'high-performance',
+          }}
           onCreated={({ camera }) => {
             camera.lookAt(0, 0.05, 0)
           }}
         >
           <Suspense fallback={null}>
-            <Scene labels={labels} messages={phraseMessages} onSelectLabel={setSelected} />
+            <Scene
+              labels={labels}
+              messages={phraseMessages}
+              onSelectLabel={setSelected}
+              backdrop={backdrop}
+              loop={loop}
+            />
           </Suspense>
         </Canvas>
       ) : null}
 
-      <PopupCard
-        open={Boolean(selected)}
-        title={selected || ''}
-        message={popupMessage}
-        onClose={() => setSelected(null)}
-      />
+      {!backdrop ? (
+        <PopupCard
+          open={Boolean(selected)}
+          title={selected || ''}
+          message={popupMessage}
+          onClose={() => setSelected(null)}
+        />
+      ) : null}
 
-      {opened && !preview && musicUrl ? (
+      {opened && !preview && !backdrop && musicUrl ? (
         <button
           type="button"
           onClick={() => setMuted((value) => !value)}
@@ -1622,12 +1702,12 @@ function GalaxyOfLoveScreen({
         </button>
       ) : null}
 
-      {opened && !preview ? (
+      {opened && !preview && !backdrop ? (
         <p className="galaxy-hint">Kéo để xoay · chờ trái tim nổ ra lời nhắn</p>
       ) : null}
 
       <AnimatePresence>
-        {!opened && !preview ? (
+        {!opened && !preview && !backdrop ? (
           <motion.button
             type="button"
             className="galaxy-open-gate"

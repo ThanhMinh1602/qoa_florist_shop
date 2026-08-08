@@ -2,8 +2,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import SiteHeader from '../../../components/common/SiteHeader'
 import { Reveal } from '../../../components/motion/Reveal'
-import { LANDING_IMAGES } from '../../../constants/landingImagery'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
+import CustomCardSection from '../components/CustomCardSection'
 import LandingHeroCarousel from '../components/LandingHeroCarousel'
 import FeaturedProductsRail from '../components/FeaturedProductsRail'
 import PriceTiersSection from '../components/priceTiers/PriceTiersSection'
@@ -78,46 +78,7 @@ function LandingPage() {
           ) : null}
         </section>
 
-        <section
-          id="custom-card"
-          className="mx-auto max-w-7xl scroll-mt-14 px-5 py-10 md:scroll-mt-32 sm:px-8 sm:py-16 lg:px-16"
-        >
-          <Reveal className="glass-card flex flex-row items-center gap-3.5 rounded-2xl p-3.5 sm:gap-8 sm:p-8 md:gap-12 md:p-16">
-            <div className="min-w-0 flex-1 text-left">
-              <h2 className="mb-1.5 font-display text-xl leading-snug text-primary sm:mb-4 sm:text-3xl md:mb-6 md:text-[2rem]">
-                Thiệp số, cảm xúc thật
-              </h2>
-              <p className="mb-3 line-clamp-3 text-[11px] leading-relaxed text-on-surface-variant sm:mb-6 sm:line-clamp-none sm:text-sm md:mb-8 md:text-base">
-                Biến mỗi bó hoa thành một thông điệp độc nhất. Ghi âm giọng nói, tải lên video kỷ
-                niệm, hoặc viết một lá thư tay kỹ thuật số. Người nhận chỉ cần quét mã QR đính kèm
-                để mở ra những điều bất ngờ.
-              </p>
-              <Link
-                to="/shop/card"
-                className="btn-primary inline-flex px-3.5 py-2 text-[10px] sm:px-6 sm:py-3 sm:text-[10px] md:px-8 md:py-4 md:text-xs"
-              >
-                Tạo thiệp ngay
-              </Link>
-            </div>
-            <div className="relative flex shrink-0 justify-center">
-              <div className="relative z-10 h-[148px] w-[72px] overflow-hidden rounded-[14px] border-[3px] border-surface-container-high bg-surface-container-lowest shadow-lg sm:h-[280px] sm:w-[120px] sm:rounded-[24px] sm:border-[5px] sm:shadow-xl md:h-[420px] md:w-56 md:rounded-[32px] md:border-8 md:shadow-2xl">
-                <div className="flex h-4 w-full items-end justify-center bg-surface-container-high pb-0.5 sm:h-7 sm:pb-1 md:h-10 md:pb-2">
-                  <div className="h-1.5 w-7 rounded-full bg-on-surface sm:h-2.5 sm:w-12 md:h-4 md:w-20" />
-                </div>
-                <img
-                  src={LANDING_IMAGES.qrCard}
-                  alt="Giao diện thiệp số trên điện thoại"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <div
-                className="absolute top-1/2 left-1/2 -z-0 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container/20 blur-2xl sm:h-56 sm:w-56 sm:blur-3xl md:h-80 md:w-80"
-                aria-hidden="true"
-              />
-            </div>
-          </Reveal>
-        </section>
+        <CustomCardSection />
       </main>
 
       <footer className="flex w-full flex-col items-center justify-center gap-3 border-t border-white/55 px-5 py-12 sm:gap-4 sm:px-8 sm:py-16">

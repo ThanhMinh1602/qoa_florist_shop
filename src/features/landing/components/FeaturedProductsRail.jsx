@@ -33,16 +33,16 @@ function ProductCard({ product, onClickCapture }) {
             <MaterialIcon name="local_florist" className="relative text-4xl text-white sm:text-5xl" />
           </div>
         )}
-        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/55 bg-surface-container-lowest/55 p-2 backdrop-blur-xl sm:inset-x-3 sm:bottom-3 sm:rounded-2xl sm:p-3">
+        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/35 bg-white/12 p-2 backdrop-blur-md sm:inset-x-3 sm:bottom-3 sm:rounded-2xl sm:p-3">
           {product.code ? (
-            <p className="font-mono text-[8px] font-bold tracking-wider text-outline sm:text-[10px]">
+            <p className="font-mono text-[8px] font-bold tracking-wider text-white/70 sm:text-[10px]">
               {product.code}
             </p>
           ) : null}
-          <h3 className="font-display mt-0.5 line-clamp-2 text-[13px] leading-tight text-on-surface sm:text-lg lg:text-xl">
+          <h3 className="font-display mt-0.5 line-clamp-2 text-[13px] leading-tight text-white sm:text-lg lg:text-xl">
             {product.name}
           </h3>
-          <p className="mt-0.5 text-[11px] font-semibold text-primary sm:mt-1 sm:text-sm">
+          <p className="mt-0.5 text-[11px] font-semibold text-white/90 sm:mt-1 sm:text-sm">
             {formatMoney(product.price)}
           </p>
         </div>
