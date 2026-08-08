@@ -448,6 +448,41 @@ function ShopCatalogPage() {
         </label>
       </div>
 
+      <div className="-mx-4 mb-4 overflow-x-auto px-4 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max items-center gap-2 pb-0.5">
+          <button
+            type="button"
+            onClick={() => setPriceFilterId('')}
+            className={[
+              'shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-wide transition',
+              !priceFilterId
+                ? 'border-primary bg-primary text-on-primary'
+                : 'border-outline-variant/30 bg-white/70 text-on-surface-variant backdrop-blur-md',
+            ].join(' ')}
+          >
+            Tất cả
+          </button>
+          {CATALOG_PRICE_FILTERS.map((filter) => {
+            const selected = priceFilterId === filter.id
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setPriceFilterId(selected ? '' : filter.id)}
+                className={[
+                  'shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-wide whitespace-nowrap transition',
+                  selected
+                    ? 'border-primary bg-primary text-on-primary'
+                    : 'border-outline-variant/30 bg-white/70 text-on-surface-variant backdrop-blur-md',
+                ].join(' ')}
+              >
+                {filter.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <FilterBottomSheet
         open={filtersOpen}
         draftCategoryId={draftCategoryId}
