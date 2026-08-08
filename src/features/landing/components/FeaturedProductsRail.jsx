@@ -8,11 +8,11 @@ function ProductCard({ product, onClickCapture }) {
   return (
     <Link
       to={`/shop/product/${product.id}`}
-      className="glass-card block w-[11.5rem] shrink-0 overflow-hidden sm:w-[15.5rem] lg:w-[17rem]"
+      className="block w-[11.5rem] shrink-0 overflow-hidden rounded-[1.25rem] bg-transparent sm:w-[15.5rem] sm:rounded-[1.5rem] lg:w-[17rem]"
       onClickCapture={onClickCapture}
       draggable={false}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-surface-container-low">
+      <div className="relative aspect-[4/5] overflow-hidden bg-transparent">
         {product.mainImage ? (
           <img
             src={product.mainImage}
@@ -22,7 +22,7 @@ function ProductCard({ product, onClickCapture }) {
             draggable={false}
           />
         ) : (
-          <div className="relative flex h-full items-center justify-center">
+          <div className="relative flex h-full items-center justify-center bg-surface-variant/40">
             <img
               src={SHOP_IMAGES.moodPink}
               alt=""
@@ -51,52 +51,117 @@ function ProductCard({ product, onClickCapture }) {
   )
 }
 
-/** Hàng bán chạy: card nhỏ như cũ, cuộn ngang tự động. */
+/**
+ * Hàng bán chạy — marquee bằng transform (GPU), không đụng scrollLeft
+ * để tránh giật khi vuốt trang trên mobile/web.
+ */
 function FeaturedProductsRail({ products = [] }) {
+  const viewportRef = useRef(null)
   const trackRef = useRef(null)
+  const offsetRef = useRef(0)
+  const halfWidthRef = useRef(0)
   const pausedRef = useRef(false)
+  const pageScrollingRef = useRef(false)
+  const inViewRef = useRef(true)
   const draggingRef = useRef(false)
   const didDragRef = useRef(false)
   const dragStartX = useRef(0)
-  const dragStartScroll = useRef(0)
+  const dragStartOffset = useRef(0)
+  const resumeTimerRef = useRef(0)
   const [isPaused, setIsPaused] = useState(false)
 
   const loopItems = products.length > 1 ? [...products, ...products] : products
+  const canMarquee = products.length > 1
 
   useEffect(() => {
     pausedRef.current = isPaused
   }, [isPaused])
 
   useEffect(() => {
-    const el = trackRef.current
-    if (!el || products.length < 2) return undefined
+    const track = trackRef.current
+    const viewport = viewportRef.current
+    if (!track || !viewport || !canMarquee) return undefined
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduceMotion) return undefined
 
+    function measure() {
+      // Một nửa track = 1 vòng sản phẩm (đã nhân đôi)
+      halfWidthRef.current = track.scrollWidth / 2
+    }
+
+    measure()
+    const resizeObserver = new ResizeObserver(measure)
+    resizeObserver.observe(track)
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inViewRef.current = entry?.isIntersecting ?? false
+      },
+      { root: null, threshold: 0.05, rootMargin: '40px 0px' },
+    )
+    io.observe(viewport)
+
     let frameId = 0
     let lastTs = 0
-    const speed = 0.08
+    const speed = 0.045 // px / ms — chậm, mượt hơn
+
+    function wrapOffset() {
+      const half = halfWidthRef.current
+      if (half <= 0) return
+      while (offsetRef.current >= half) offsetRef.current -= half
+      while (offsetRef.current < 0) offsetRef.current += half
+    }
+
+    function applyTransform() {
+      track.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`
+    }
 
     function tick(ts) {
       if (!lastTs) lastTs = ts
-      const delta = Math.min(ts - lastTs, 32)
+      const delta = Math.min(ts - lastTs, 40)
       lastTs = ts
 
-      if (!pausedRef.current && !draggingRef.current) {
-        el.scrollLeft += speed * delta
-        const half = el.scrollWidth / 2
-        if (half > 0 && el.scrollLeft >= half - 1) {
-          el.scrollLeft -= half
-        }
+      const shouldRun =
+        inViewRef.current &&
+        !pausedRef.current &&
+        !draggingRef.current &&
+        !pageScrollingRef.current
+
+      if (shouldRun) {
+        offsetRef.current += speed * delta
+        wrapOffset()
+        applyTransform()
       }
 
       frameId = window.requestAnimationFrame(tick)
     }
 
+    applyTransform()
     frameId = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(frameId)
-  }, [products])
+
+    // Tạm dừng marquee khi user đang vuốt/scroll trang → hết giật
+    function onPageScroll() {
+      pageScrollingRef.current = true
+      window.clearTimeout(resumeTimerRef.current)
+      resumeTimerRef.current = window.setTimeout(() => {
+        pageScrollingRef.current = false
+        lastTs = 0
+      }, 140)
+    }
+
+    window.addEventListener('scroll', onPageScroll, { passive: true, capture: true })
+    window.addEventListener('touchmove', onPageScroll, { passive: true, capture: true })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      window.clearTimeout(resumeTimerRef.current)
+      resizeObserver.disconnect()
+      io.disconnect()
+      window.removeEventListener('scroll', onPageScroll, { capture: true })
+      window.removeEventListener('touchmove', onPageScroll, { capture: true })
+    }
+  }, [canMarquee, products])
 
   function pause() {
     setIsPaused(true)
@@ -107,28 +172,32 @@ function FeaturedProductsRail({ products = [] }) {
   }
 
   function onPointerDown(event) {
+    if (!canMarquee) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
-    const el = trackRef.current
-    if (!el) return
     draggingRef.current = true
     didDragRef.current = false
     pause()
     dragStartX.current = event.clientX
-    dragStartScroll.current = el.scrollLeft
-    el.setPointerCapture?.(event.pointerId)
+    dragStartOffset.current = offsetRef.current
+    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   function onPointerMove(event) {
     if (!draggingRef.current || !trackRef.current) return
     const dx = event.clientX - dragStartX.current
     if (Math.abs(dx) > 6) didDragRef.current = true
-    trackRef.current.scrollLeft = dragStartScroll.current - dx
+    offsetRef.current = dragStartOffset.current - dx
+    const half = halfWidthRef.current
+    if (half > 0) {
+      while (offsetRef.current >= half) offsetRef.current -= half
+      while (offsetRef.current < 0) offsetRef.current += half
+    }
+    trackRef.current.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`
   }
 
   function onPointerUp(event) {
-    const el = trackRef.current
     draggingRef.current = false
-    el?.releasePointerCapture?.(event.pointerId)
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
     resume()
   }
 
@@ -144,17 +213,21 @@ function FeaturedProductsRail({ products = [] }) {
 
   return (
     <div
-      className="relative"
-      onMouseEnter={pause}
-      onMouseLeave={resume}
-      onFocusCapture={pause}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) resume()
-      }}
+      className="relative bg-transparent"
+      onMouseEnter={canMarquee ? pause : undefined}
+      onMouseLeave={canMarquee ? resume : undefined}
+      onFocusCapture={canMarquee ? pause : undefined}
+      onBlurCapture={
+        canMarquee
+          ? (event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) resume()
+            }
+          : undefined
+      }
     >
       <div
-        ref={trackRef}
-        className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
+        ref={viewportRef}
+        className="overflow-hidden touch-pan-y bg-transparent"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -162,21 +235,25 @@ function FeaturedProductsRail({ products = [] }) {
         role="list"
         aria-label="Sản phẩm bán chạy"
       >
-        {loopItems.map((product, index) => (
-          <div key={`${product.id}-${index}`} role="listitem" className="shrink-0">
-            <ProductCard product={product} onClickCapture={blockClickIfDragged} />
-          </div>
-        ))}
+        <div
+          ref={trackRef}
+          className="flex w-max gap-3 bg-transparent sm:gap-5"
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            backgroundColor: 'transparent',
+          }}
+        >
+          {loopItems.map((product, index) => (
+            <div
+              key={`${product.id}-${index}`}
+              role="listitem"
+              className="shrink-0 bg-transparent"
+            >
+              <ProductCard product={product} onClickCapture={blockClickIfDragged} />
+            </div>
+          ))}
+        </div>
       </div>
-
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 hidden w-14 bg-gradient-to-r from-background to-transparent sm:block"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 hidden w-14 bg-gradient-to-l from-background to-transparent sm:block"
-        aria-hidden="true"
-      />
     </div>
   )
 }

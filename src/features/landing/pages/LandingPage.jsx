@@ -42,34 +42,40 @@ function LandingPage() {
 
         <section
           id="featured"
-          className="mx-auto max-w-7xl scroll-mt-14 py-10 md:scroll-mt-32 sm:px-8 sm:py-16 lg:px-16"
+          className="scroll-mt-14 bg-transparent py-10 md:scroll-mt-32 sm:py-16"
         >
-          <Reveal className="mb-5 flex items-center justify-between gap-3 px-5 sm:mb-10 sm:px-0">
-            <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">Bán chạy</h2>
-            <Link
-              to="/shop"
-              className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
-            >
-              Xem thêm
-            </Link>
-          </Reveal>
+          <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-16">
+            <Reveal className="mb-5 flex items-center justify-between gap-3 sm:mb-10">
+              <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">Bán chạy</h2>
+              <Link
+                to="/shop"
+                className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
+              >
+                Xem thêm
+              </Link>
+            </Reveal>
 
-          {productsError ? (
-            <p className="mx-5 rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container sm:mx-0">
-              {productsError}
-            </p>
-          ) : null}
+            {productsError ? (
+              <p className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+                {productsError}
+              </p>
+            ) : null}
 
-          {productsLoading ? (
-            <p className="py-16 text-center text-sm text-on-surface-variant">Đang tải sản phẩm...</p>
-          ) : products.length === 0 ? (
-            <div className="glass-card mx-5 px-6 py-20 text-center sm:mx-0">
-              <MaterialIcon name="local_florist" className="text-4xl text-primary-fixed-dim" />
-              <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
+            {productsLoading ? (
+              <p className="py-16 text-center text-sm text-on-surface-variant">Đang tải sản phẩm...</p>
+            ) : products.length === 0 ? (
+              <div className="glass-card px-6 py-20 text-center">
+                <MaterialIcon name="local_florist" className="text-4xl text-primary-fixed-dim" />
+                <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
+              </div>
+            ) : null}
+          </div>
+
+          {!productsLoading && !productsError && products.length > 0 ? (
+            <div className="w-full">
+              <FeaturedProductsRail products={products} />
             </div>
-          ) : (
-            <FeaturedProductsRail products={products} />
-          )}
+          ) : null}
         </section>
 
         <section
