@@ -30,12 +30,13 @@ const EMPTY_FORM = {
   listPrice: '',
   sellPrice: '',
   otherCost: '',
+  soldCount: '',
   active: true,
 }
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 
-/** Mã SP: 8 chữ cái in hoa */
+/** Mã SP: 8 chữ cái in hoa (random) */
 function generateProductCode(length = 8) {
   const chars = CODE_CHARS
   let code = ''
@@ -44,6 +45,13 @@ function generateProductCode(length = 8) {
     code += chars[values[i] % chars.length]
   }
   return code
+}
+
+function normalizeCodeInput(value) {
+  return String(value || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 20)
 }
 
 function revokeLocalPreview(image) {
@@ -185,6 +193,7 @@ function toForm(product) {
     listPrice: product.listPrice ?? '',
     sellPrice: product.sellPrice ?? '',
     otherCost: product.otherCost ?? '',
+    soldCount: product.soldCount ?? 0,
     active: product.active !== false,
   }
 }
@@ -463,25 +472,24 @@ function ProductFormDialog({
                 <span className="mb-1 block font-medium text-on-surface">Mã SP</span>
                 <div className="flex gap-2">
                   <input
-                    readOnly
                     value={values.code}
-                    className={`${inputClass} font-mono font-bold tracking-wider text-on-surface bg-surface-container-low`}
+                    onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
+                    placeholder="Nhập mã hoặc bấm random"
+                    maxLength={20}
+                    className={`${inputClass} font-mono font-bold tracking-wider text-on-surface`}
                   />
-                  {!isEditing ? (
-                    <button
-                      type="button"
-                      onClick={onRegenerateCode}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-outline-variant/40 px-3 text-sm font-medium text-primary hover:bg-surface-container-low"
-                      title="Tạo mã mới"
-                    >
-                      <MaterialIcon name="refresh" className="text-lg" />
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={onRegenerateCode}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-outline-variant/40 px-3 text-sm font-medium text-primary hover:bg-surface-container-low"
+                    title="Tạo mã ngẫu nhiên"
+                  >
+                    <MaterialIcon name="casino" className="text-lg" />
+                    <span className="hidden sm:inline">Random</span>
+                  </button>
                 </div>
                 <span className="mt-1 block text-xs text-outline">
-                  {isEditing
-                    ? 'Mã đã tạo — không đổi khi sửa.'
-                    : 'Tự sinh 8 chữ in hoa.'}
+                  Nhập tay (2–20 ký tự A–Z, 0–9) hoặc bấm Random. Để trống khi lưu = tự tạo.
                 </span>
               </label>
               <label className="block text-sm">
@@ -567,12 +575,14 @@ function ProductFormDialog({
                 ['listPrice', 'Giá bán (lãi 70%)'],
                 ['sellPrice', 'Giá chốt'],
                 ['otherCost', 'Chi phí khác'],
+                ['soldCount', 'Doanh số (số đã bán)'],
               ].map(([field, label]) => (
                 <label key={field} className="block text-sm">
                   <span className="mb-1 block font-medium text-on-surface">{label}</span>
                   <input
                     type="number"
                     min="0"
+                    step={field === 'soldCount' ? '1' : undefined}
                     value={values[field]}
                     onChange={(e) => {
                       const next = e.target.value
@@ -590,6 +600,11 @@ function ProductFormDialog({
                     }}
                     className={inputClass}
                   />
+                  {field === 'soldCount' ? (
+                    <span className="mt-1 block text-xs text-outline">
+                      Tạm nhập tay — dùng xếp mục Bán chạy trên trang chủ.
+                    </span>
+                  ) : null}
                 </label>
               ))}
             </div>
@@ -794,6 +809,7 @@ function ProductsPage() {
         listPrice: Number(snapshot.listPrice) || 0,
         sellPrice: Number(snapshot.sellPrice) || 0,
         otherCost: Number(snapshot.otherCost) || 0,
+        soldCount: Math.max(0, Math.floor(Number(snapshot.soldCount) || 0)),
       }
 
       if (productId) {
@@ -1022,6 +1038,7 @@ function ProductsPage() {
                     <th className="px-4 py-3">Giá vốn</th>
                     <th className="px-4 py-3">Giá chốt</th>
                     <th className="px-4 py-3">Lợi nhuận</th>
+                    <th className="px-4 py-3">Đã bán</th>
                     <th className="px-4 py-3">Thời gian</th>
                     <th className="px-4 py-3" />
                   </tr>
@@ -1070,6 +1087,9 @@ function ProductsPage() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-emerald-700">
                           {formatMoney(product.profit)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 font-medium text-on-surface">
+                          {product.soldCount || 0}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-on-surface-variant">
                           {product.makeMinutes ? `${product.makeMinutes}'` : '—'}
@@ -1135,7 +1155,7 @@ function ProductsPage() {
                           </div>
                           <p className="mt-2 text-xs text-on-surface-variant">
                             Giá vốn {formatMoney(product.costPrice)} · Lợi nhuận{' '}
-                            {formatMoney(product.profit)}
+                            {formatMoney(product.profit)} · Đã bán {product.soldCount || 0}
                             {!product.active ? ' · Đã ngừng bán' : ''}
                           </p>
                           {(product.categories || []).length ? (
