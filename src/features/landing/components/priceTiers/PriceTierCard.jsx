@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import MaterialIcon from '../../../../components/common/MaterialIcon'
+import ShopImage from '../../../../components/common/ShopImage'
 import { easeOut } from '../../../../lib/motion'
 import { shopPathForPriceTier } from '../../../../constants/priceTiers'
-import { cloudinaryUrl } from '../../../../utils/cloudinaryUrl'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../../../utils/cloudinaryUrl'
 
 /** Cùng bố cục 2×2 — chỉ scale typography / tỉ lệ thẻ theo thiết bị */
 const SIZE = {
@@ -64,8 +65,10 @@ function PriceTierCard({ tier, size = 'desktop', preview = false }) {
   const body = (
       <>
         {tier.coverImage?.url ? (
-          <img
-            src={cloudinaryUrl(tier.coverImage.url, { width: 800 })}
+          <ShopImage
+            src={cloudinaryUrl(tier.coverImage.url, { width: 1200 })}
+            srcSet={cloudinarySrcSet(tier.coverImage.url, [640, 960, 1200, 1600])}
+            sizes="(min-width: 1024px) 25vw, 50vw"
             alt={tier.label}
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"

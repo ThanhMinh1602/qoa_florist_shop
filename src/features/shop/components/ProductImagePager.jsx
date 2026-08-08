@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import ShopImage from '../../../components/common/ShopImage'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
@@ -91,15 +92,15 @@ function ProductImagePager({ images = [], activeIndex = 0, onIndexChange, alt = 
             key={image.id || `${image.url}-${index}`}
             className="relative h-full w-full min-w-full shrink-0 snap-center snap-always"
           >
-            <img
-              src={cloudinaryUrl(image.url, { width: 1200 })}
-              srcSet={cloudinarySrcSet(image.url, [640, 960, 1200, 1600])}
-              sizes="(min-width: 1024px) 480px, 100vw"
+            <ShopImage
+              src={cloudinaryUrl(image.url, { width: 1600 })}
+              srcSet={cloudinarySrcSet(image.url, [800, 1200, 1600, 2000])}
+              sizes="(min-width: 1024px) 520px, 100vw"
               alt={index === activeIndex ? alt : ''}
               draggable={false}
-              fetchPriority={index === 0 ? 'high' : 'low'}
+              fetchPriority="high"
               decoding="async"
-              loading={index === 0 ? 'eager' : 'lazy'}
+              loading="eager"
               className="absolute inset-0 h-full w-full object-cover"
             />
           </div>

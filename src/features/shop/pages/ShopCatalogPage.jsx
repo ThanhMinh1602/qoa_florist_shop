@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import ShopImage from '../../../components/common/ShopImage'
 import { easeOut, overlayFade, sheetEnter } from '../../../lib/motion'
 import { CATALOG_PAGE_SIZE, CATALOG_PRICE_FILTERS } from '../../../constants/catalogFilters'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
@@ -39,14 +40,14 @@ function ProductCard({ product }) {
   return (
     <Link to={`/shop/product/${product.id}`} className="group block h-full">
       <div className="lift-card relative h-full overflow-hidden rounded-xl bg-surface-container-low shadow-[0_8px_24px_rgba(74,48,32,0.07)] sm:rounded-2xl sm:shadow-[0_10px_30px_rgba(74,48,32,0.08)]">
-        <div className="aspect-[4/5]">
+        <div className="relative aspect-[4/5]">
           {product.mainImage ? (
-            <img
-              src={cloudinaryUrl(product.mainImage, { width: 640 })}
-              srcSet={cloudinarySrcSet(product.mainImage, [320, 480, 640, 960])}
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            <ShopImage
+              src={cloudinaryUrl(product.mainImage, { width: 960 })}
+              srcSet={cloudinarySrcSet(product.mainImage, [480, 720, 960, 1280, 1600])}
+              sizes="(min-width: 1280px) 28vw, (min-width: 640px) 40vw, 50vw"
               alt={product.name}
-              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.05]"
+              className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.05]"
               loading="lazy"
               decoding="async"
             />
@@ -63,7 +64,7 @@ function ProductCard({ product }) {
           )}
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent p-2.5 pt-10 sm:hidden">
+        <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/70 via-black/35 to-transparent p-2.5 pt-10 sm:hidden">
           <h3 className="font-display line-clamp-2 text-[13px] leading-tight text-white">
             {product.name}
           </h3>
@@ -71,12 +72,18 @@ function ProductCard({ product }) {
             {formatMoney(product.price)}
           </p>
         </div>
-      </div>
-      <div className="hidden pt-3 sm:block">
-        <h3 className="font-display line-clamp-2 text-lg leading-snug text-on-surface transition group-hover:text-primary">
-          {product.name}
-        </h3>
-        <p className="mt-1 text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
+
+        <div className="absolute inset-x-0 bottom-0 z-[2] hidden bg-gradient-to-t from-black/70 via-black/35 to-transparent p-4 pt-16 sm:block">
+          {product.code ? (
+            <p className="truncate font-mono text-[10px] font-bold tracking-wider text-white/70">
+              {product.code}
+            </p>
+          ) : null}
+          <h3 className="font-display mt-0.5 line-clamp-2 text-lg leading-snug text-white lg:text-xl">
+            {product.name}
+          </h3>
+          <p className="mt-1 text-sm font-semibold text-white/95">{formatMoney(product.price)}</p>
+        </div>
       </div>
     </Link>
   )
@@ -590,8 +597,8 @@ function ShopCatalogPage() {
                 ))}
               </ul>
 
-              <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10">
-                {hasMore ? (
+              {hasMore ? (
+                <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10">
                   <button
                     type="button"
                     onClick={loadMore}
@@ -600,12 +607,8 @@ function ShopCatalogPage() {
                   >
                     {isLoadingMore ? 'Đang tải...' : 'Xem thêm'}
                   </button>
-                ) : (
-                  <p className="text-xs text-on-surface-variant sm:text-sm">
-                    Đã hiển thị tất cả sản phẩm
-                  </p>
-                )}
-              </div>
+                </div>
+              ) : null}
             </>
           )}
         </section>

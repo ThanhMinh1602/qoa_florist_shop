@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import ShopImage from '../../../components/common/ShopImage'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { formatMoney } from '../../../utils/money'
@@ -15,12 +16,12 @@ function ProductCard({ product, onClickCapture }) {
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-transparent">
         {product.mainImage ? (
-          <img
-            src={cloudinaryUrl(product.mainImage, { width: 560 })}
-            srcSet={cloudinarySrcSet(product.mainImage, [320, 480, 640])}
+          <ShopImage
+            src={cloudinaryUrl(product.mainImage, { width: 800 })}
+            srcSet={cloudinarySrcSet(product.mainImage, [400, 640, 800, 1024, 1280])}
             sizes="(min-width: 1024px) 272px, (min-width: 640px) 248px, 184px"
             alt={product.name}
-            className="h-full w-full object-cover transition duration-700 hover:scale-[1.04]"
+            className="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-[1.04]"
             loading="lazy"
             decoding="async"
             draggable={false}
@@ -37,7 +38,7 @@ function ProductCard({ product, onClickCapture }) {
             <MaterialIcon name="local_florist" className="relative text-4xl text-white sm:text-5xl" />
           </div>
         )}
-        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/35 bg-white/12 p-2 backdrop-blur-md sm:inset-x-3 sm:bottom-3 sm:rounded-2xl sm:p-3">
+        <div className="absolute inset-x-2 bottom-2 z-[2] rounded-xl border border-white/35 bg-white/12 p-2 backdrop-blur-md sm:inset-x-3 sm:bottom-3 sm:rounded-2xl sm:p-3">
           {product.code ? (
             <p className="font-mono text-[8px] font-bold tracking-wider text-white/70 sm:text-[10px]">
               {product.code}

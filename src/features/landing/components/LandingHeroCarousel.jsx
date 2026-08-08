@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import ShopImage from '../../../components/common/ShopImage'
 import { LANDING_COPY_DEFAULTS, splitLines } from '../../../constants/landingCopy'
 import { fadeUp, stagger } from '../../../lib/motion'
-import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
 /**
  * Hero carousel — dùng chung Landing + preview admin.
@@ -62,18 +63,21 @@ function LandingHeroCarousel({
       {hasSlides ? (
         <>
           {slides.map((slide, slideIndex) => (
-            <img
+            <ShopImage
               key={slide.id || slide.url}
-              src={cloudinaryUrl(slide.url, { width: slideIndex === 0 ? 1600 : 1200 })}
+              src={cloudinaryUrl(slide.url, { width: slideIndex === 0 ? 2000 : 1600 })}
+              srcSet={cloudinarySrcSet(slide.url, [960, 1280, 1600, 2000, 2400])}
+              sizes="100vw"
               alt=""
               className={[
                 'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
-                slideIndex === index ? 'opacity-100' : 'opacity-0',
+                slideIndex === index ? 'z-[1]' : 'z-0 !opacity-0',
               ].join(' ')}
+              shimmerClassName={slideIndex === index ? 'z-[1]' : 'z-0 !opacity-0'}
               aria-hidden={slideIndex !== index}
-              loading={slideIndex === 0 ? 'eager' : 'lazy'}
+              loading="eager"
               decoding="async"
-              fetchPriority={slideIndex === 0 ? 'high' : 'low'}
+              fetchPriority="high"
             />
           ))}
           <div
@@ -128,7 +132,7 @@ function LandingHeroCarousel({
       ) : null}
 
       <motion.div
-        className="relative z-10 mx-auto flex max-w-4xl flex-col items-center py-4 md:py-16"
+        className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-1 pb-9 pt-2 md:px-0 md:pb-16 md:pt-16"
         initial={preview ? false : 'hidden'}
         animate="show"
         variants={stagger}
@@ -136,8 +140,8 @@ function LandingHeroCarousel({
         <motion.h1
           variants={fadeUp}
           className={[
-            'mb-2 font-display font-semibold leading-[1.08] tracking-[-0.03em] md:mb-6',
-            preview ? 'text-3xl sm:text-4xl' : 'text-2xl md:text-6xl lg:text-[5.25rem]',
+            'mb-1.5 font-display font-semibold leading-[1.12] tracking-[-0.03em] md:mb-5',
+            preview ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl md:text-5xl lg:text-[4.25rem]',
             hasSlides
               ? 'text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.55),0_1px_4px_rgba(0,0,0,0.45)]'
               : 'text-primary',
@@ -153,7 +157,7 @@ function LandingHeroCarousel({
         <motion.p
           variants={fadeUp}
           className={[
-            'mb-3 max-w-2xl px-1 text-sm leading-snug md:mb-10 md:text-lg md:leading-relaxed',
+            'mb-2.5 max-w-xl px-1 text-xs leading-snug md:mb-8 md:max-w-2xl md:text-base md:leading-relaxed lg:text-lg',
             hasSlides
               ? 'text-white/95 [text-shadow:0_1px_12px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.4)]'
               : 'text-on-surface-variant',
@@ -163,17 +167,17 @@ function LandingHeroCarousel({
         </motion.p>
         <motion.div
           variants={fadeUp}
-          className="flex w-full max-w-[11.5rem] flex-col items-stretch justify-center gap-1.5 sm:max-w-none sm:w-auto sm:flex-row sm:flex-wrap sm:gap-2 md:gap-4"
+          className="flex w-full max-w-[10.5rem] flex-col items-stretch justify-center gap-1.5 sm:max-w-none sm:w-auto sm:flex-row sm:flex-wrap sm:gap-2 md:gap-3"
         >
           {preview || !onExplore ? (
-            <span className="btn-primary pointer-events-none box-border h-8 min-h-8 w-full border border-transparent !px-3 !py-0 text-[9px] tracking-[0.08em] shadow-lg shadow-black/25 opacity-90 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs">
+            <span className="btn-primary pointer-events-none box-border h-7 min-h-7 w-full border border-transparent !px-2.5 !py-0 text-[8px] tracking-[0.08em] shadow-lg shadow-black/25 opacity-90 sm:h-9 sm:min-h-9 sm:w-auto sm:!px-4 sm:text-[10px] md:h-11 md:min-h-11 md:!px-7 md:text-xs">
               {ctaPrimary}
             </span>
           ) : (
             <button
               type="button"
               onClick={onExplore}
-              className="btn-primary box-border h-8 min-h-8 w-full border border-transparent !px-3 !py-0 text-[9px] tracking-[0.08em] shadow-lg shadow-black/25 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs"
+              className="btn-primary box-border h-7 min-h-7 w-full border border-transparent !px-2.5 !py-0 text-[8px] tracking-[0.08em] shadow-lg shadow-black/25 sm:h-9 sm:min-h-9 sm:w-auto sm:!px-4 sm:text-[10px] md:h-11 md:min-h-11 md:!px-7 md:text-xs"
             >
               {ctaPrimary}
             </button>
@@ -181,7 +185,7 @@ function LandingHeroCarousel({
           {preview || !onCustom ? (
             <span
               className={[
-                'pointer-events-none box-border inline-flex h-8 min-h-8 w-full items-center justify-center !px-3 !py-0 text-[9px] font-bold tracking-[0.08em] uppercase opacity-90 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs',
+                'pointer-events-none box-border inline-flex h-7 min-h-7 w-full items-center justify-center !px-2.5 !py-0 text-[8px] font-bold tracking-[0.08em] uppercase opacity-90 sm:h-9 sm:min-h-9 sm:w-auto sm:!px-4 sm:text-[10px] md:h-11 md:min-h-11 md:!px-7 md:text-xs',
                 hasSlides
                   ? 'rounded-[var(--radius-control)] border border-white/55 bg-white/20 text-white backdrop-blur-md'
                   : 'btn-glass',
@@ -195,8 +199,8 @@ function LandingHeroCarousel({
               onClick={onCustom}
               className={
                 hasSlides
-                  ? 'box-border inline-flex h-8 min-h-8 w-full items-center justify-center rounded-[var(--radius-control)] border border-white/55 bg-white/20 !px-3 !py-0 text-[9px] font-bold tracking-[0.08em] text-white uppercase backdrop-blur-md transition hover:bg-white/30 sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
-                  : 'btn-glass box-border h-8 min-h-8 w-full !px-3 !py-0 text-[9px] sm:h-10 sm:min-h-10 sm:w-auto sm:!px-4 sm:text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
+                  ? 'box-border inline-flex h-7 min-h-7 w-full items-center justify-center rounded-[var(--radius-control)] border border-white/55 bg-white/20 !px-2.5 !py-0 text-[8px] font-bold tracking-[0.08em] text-white uppercase backdrop-blur-md transition hover:bg-white/30 sm:h-9 sm:min-h-9 sm:w-auto sm:!px-4 sm:text-[10px] md:h-11 md:min-h-11 md:!px-7 md:text-xs'
+                  : 'btn-glass box-border h-7 min-h-7 w-full !px-2.5 !py-0 text-[8px] sm:h-9 sm:min-h-9 sm:w-auto sm:!px-4 sm:text-[10px] md:h-11 md:min-h-11 md:!px-7 md:text-xs'
               }
             >
               {ctaSecondary}

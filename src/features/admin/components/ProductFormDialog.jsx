@@ -98,6 +98,26 @@ async function prepareImagesPayload(images = []) {
 const inputClass =
   'w-full rounded-xl border border-outline-variant/25 bg-white px-3 py-2.5 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20'
 
+const DESCRIPTION_MIN_ROWS = 5
+const DESCRIPTION_MAX_ROWS = 15
+
+function resizeDescriptionTextarea(el) {
+  if (!el) return
+  const style = window.getComputedStyle(el)
+  const lineHeight = Number.parseFloat(style.lineHeight) || 22
+  const paddingY =
+    (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0)
+  const borderY =
+    (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0)
+  const minHeight = lineHeight * DESCRIPTION_MIN_ROWS + paddingY + borderY
+  const maxHeight = lineHeight * DESCRIPTION_MAX_ROWS + paddingY + borderY
+
+  el.style.height = '0px'
+  const next = Math.min(Math.max(el.scrollHeight, minHeight), maxHeight)
+  el.style.height = `${next}px`
+  el.style.overflowY = el.scrollHeight > maxHeight + 1 ? 'auto' : 'hidden'
+}
+
 function withMainFirst(list = []) {
   return list.map((image, index) => ({
     ...image,
@@ -428,6 +448,7 @@ function ProductFormDialog({
   const [quickCategoryBusy, setQuickCategoryBusy] = useState(false)
   const [quickCategoryError, setQuickCategoryError] = useState('')
   const quickCategoryRef = useRef(null)
+  const descriptionRef = useRef(null)
 
   useEffect(() => {
     if (!open) {
@@ -437,6 +458,14 @@ function ProductFormDialog({
       setQuickCategoryBusy(false)
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open) return undefined
+    const frame = window.requestAnimationFrame(() => {
+      resizeDescriptionTextarea(descriptionRef.current)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [open, values.description])
 
   useEffect(() => {
     if (!quickCategoryOpen) return undefined
@@ -514,11 +543,15 @@ function ProductFormDialog({
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-on-surface">Mô tả sản phẩm</span>
         <textarea
-          rows={4}
+          ref={descriptionRef}
+          rows={DESCRIPTION_MIN_ROWS}
           value={values.description}
-          onChange={(e) => onChange('description', e.target.value)}
+          onChange={(e) => {
+            onChange('description', e.target.value)
+            resizeDescriptionTextarea(e.target)
+          }}
           placeholder="Mô tả hoa, ý nghĩa, kích thước, dịp phù hợp..."
-          className={inputClass}
+          className={`${inputClass} resize-none overflow-hidden py-3 text-base leading-relaxed sm:py-2.5 sm:text-sm sm:leading-normal`}
         />
       </label>
 

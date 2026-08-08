@@ -3,25 +3,20 @@ import { motion } from 'framer-motion'
 import { Link, useParams } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import MarkdownContent from '../../../components/common/MarkdownContent'
+import MessengerOrderSheet from '../../../components/common/MessengerOrderSheet'
+import ShopImage from '../../../components/common/ShopImage'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useCatalogProduct } from '../../../hooks/swr'
 import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
-import { buildProductOrderMessengerUrl } from '../../../utils/facebook'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import ProductImagePager from '../components/ProductImagePager'
-
-function splitMaterials(value) {
-  return String(value || '')
-    .split(/[,;•|/\n]+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
 
 function ShopProductPage() {
   const { id } = useParams()
   const { product, isLoading, error } = useCatalogProduct(id)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [orderSheetOpen, setOrderSheetOpen] = useState(false)
 
   const images = useMemo(() => {
     if (!product) return []
@@ -76,10 +71,8 @@ function ShopProductPage() {
   )
 
   const related = (relatedSource || []).filter((item) => item.id !== product?.id).slice(0, 3)
-  const materials = splitMaterials(product?.materials)
   const hasDiscount =
     product && Number(product.listPrice) > 0 && Number(product.listPrice) > Number(product.price)
-  const orderMessenger = product ? buildProductOrderMessengerUrl(product) : ''
 
   if (isLoading) {
     return (
@@ -197,18 +190,19 @@ function ShopProductPage() {
                       whileHover={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.25, ease: easeOut }}
                       className={[
-                        'h-14 w-11 overflow-hidden rounded-xl border-2 sm:h-24 sm:w-20 sm:rounded-2xl',
+                        'relative h-14 w-11 overflow-hidden rounded-xl border-2 sm:h-24 sm:w-20 sm:rounded-2xl',
                         selected
                           ? 'border-primary shadow-[0_8px_20px_rgba(74,48,32,0.16)]'
                           : 'border-transparent',
                       ].join(' ')}
                     >
-                      <img
-                        src={cloudinaryUrl(image.url, { width: 160 })}
+                      <ShopImage
+                        src={cloudinaryUrl(image.url, { width: 240 })}
                         alt=""
-                        className="h-full w-full object-cover"
-                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="eager"
                         decoding="async"
+                        fetchPriority="high"
                       />
                     </motion.button>
                   </li>
@@ -265,38 +259,18 @@ function ShopProductPage() {
               </motion.div>
             ) : null}
 
-            {materials.length ? (
-              <motion.div variants={fadeUp}>
-                <p className="label-caps text-[10px] text-primary sm:text-xs">Nguyên liệu</p>
-                <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
-                  {materials.map((item, index) => (
-                    <motion.span
-                      key={item}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.25 + index * 0.05, duration: 0.35, ease: easeOut }}
-                      className="rounded-full border border-outline-variant/40 bg-surface-container-lowest/80 px-2.5 py-1 text-[11px] text-on-surface sm:px-3 sm:py-1.5 sm:text-sm"
-                    >
-                      {item}
-                    </motion.span>
-                  ))}
-                </div>
-              </motion.div>
-            ) : null}
-
             {/* Desktop CTAs */}
             <motion.div variants={fadeUp} className="hidden flex-col gap-3 sm:flex sm:flex-row">
-              <motion.a
-                href={orderMessenger}
-                target="_blank"
-                rel="noreferrer"
+              <motion.button
+                type="button"
+                onClick={() => setOrderSheetOpen(true)}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className="btn-primary flex-1 py-4"
               >
                 <MaterialIcon name="chat_bubble" className="text-lg" />
                 Đặt bó hoa này
-              </motion.a>
+              </motion.button>
               <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="flex-1">
                 <Link to="/shop" className="btn-glass flex h-full w-full py-4">
                   Xem thêm mẫu khác
@@ -348,12 +322,12 @@ function ShopProductPage() {
                 <Link to={`/shop/product/${item.id}`} className="group block">
                   <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low shadow-[0_8px_24px_rgba(74,48,32,0.07)] sm:rounded-none sm:shadow-none">
                     {item.mainImage ? (
-                      <img
-                        src={cloudinaryUrl(item.mainImage, { width: 480 })}
-                        srcSet={cloudinarySrcSet(item.mainImage, [320, 480, 640])}
-                        sizes="(min-width: 640px) 25vw, 50vw"
+                      <ShopImage
+                        src={cloudinaryUrl(item.mainImage, { width: 800 })}
+                        srcSet={cloudinarySrcSet(item.mainImage, [480, 720, 960, 1280])}
+                        sizes="(min-width: 1024px) 30vw, 50vw"
                         alt={item.name}
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.06]"
+                        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.06]"
                         loading="lazy"
                         decoding="async"
                       />
@@ -372,7 +346,7 @@ function ShopProductPage() {
                       </div>
                     )}
                     {/* Mobile overlay */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent p-2.5 pt-8 sm:hidden">
+                    <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/70 via-black/35 to-transparent p-2.5 pt-8 sm:hidden">
                       <h3 className="font-display line-clamp-2 text-[13px] leading-tight text-white">
                         {item.name}
                       </h3>
@@ -380,15 +354,17 @@ function ShopProductPage() {
                         {formatMoney(item.price)}
                       </p>
                     </div>
-                    {/* Desktop overlay card */}
-                    <div className="absolute inset-x-3 bottom-3 hidden rounded-2xl border border-white/55 bg-surface-container-lowest/55 p-3 backdrop-blur-xl sm:block">
-                      <p className="font-mono text-[10px] font-bold tracking-wider text-outline">
-                        {item.code}
-                      </p>
-                      <h3 className="font-display mt-0.5 line-clamp-2 text-xl leading-tight text-on-surface">
+                    {/* Desktop overlay — gradient như mobile */}
+                    <div className="absolute inset-x-0 bottom-0 z-[2] hidden bg-gradient-to-t from-black/70 via-black/35 to-transparent p-4 pt-16 sm:block">
+                      {item.code ? (
+                        <p className="truncate font-mono text-[10px] font-bold tracking-wider text-white/70">
+                          {item.code}
+                        </p>
+                      ) : null}
+                      <h3 className="font-display mt-0.5 line-clamp-2 text-xl leading-tight text-white">
                         {item.name}
                       </h3>
-                      <p className="mt-1 text-sm font-semibold text-primary">
+                      <p className="mt-1 text-sm font-semibold text-white/95">
                         {formatMoney(item.price)}
                       </p>
                     </div>
@@ -407,16 +383,21 @@ function ShopProductPage() {
             <p className="truncate text-[11px] text-on-surface-variant">{product.name}</p>
             <p className="text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
           </div>
-          <a
-            href={orderMessenger}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => setOrderSheetOpen(true)}
             className="btn-primary shrink-0 !px-4 !py-2.5 text-[10px]"
           >
             Đặt hoa
-          </a>
+          </button>
         </div>
       </div>
+
+      <MessengerOrderSheet
+        open={orderSheetOpen}
+        product={product}
+        onClose={() => setOrderSheetOpen(false)}
+      />
     </motion.div>
   )
 }

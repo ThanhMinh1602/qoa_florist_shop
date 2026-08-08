@@ -1,5 +1,5 @@
 /**
- * Cloudinary delivery URL helpers — resize/format on CDN so UI không tải full ~1600px.
+ * Cloudinary delivery URL helpers — resize/format on CDN.
  * Non-Cloudinary / blob / data URLs được trả nguyên.
  */
 
@@ -21,9 +21,18 @@ function stripExistingTransforms(afterUpload) {
 
 /**
  * @param {string} url
- * @param {{ width?: number, height?: number, crop?: string, quality?: string | number }} [opts]
+ * @param {{
+ *   width?: number
+ *   height?: number
+ *   crop?: string
+ *   quality?: string | number
+ *   dpr?: boolean | number | string
+ * }} [opts]
  */
-export function cloudinaryUrl(url, { width, height, crop = 'fill', quality = 'auto' } = {}) {
+export function cloudinaryUrl(
+  url,
+  { width, height, crop = 'limit', quality = 'auto:good', dpr = false } = {},
+) {
   if (!url || typeof url !== 'string') return url || ''
   if (url.startsWith('blob:') || url.startsWith('data:')) return url
   if (!isCloudinaryUploadUrl(url)) return url
@@ -39,13 +48,20 @@ export function cloudinaryUrl(url, { width, height, crop = 'fill', quality = 'au
   if (width) parts.push(`w_${Math.round(width)}`)
   if (height) parts.push(`h_${Math.round(height)}`)
   if (crop && (width || height)) parts.push(`c_${crop}`)
+  if (dpr === true) parts.push('dpr_auto')
+  else if (dpr) parts.push(`dpr_${dpr}`)
   parts.push('f_auto', `q_${quality}`)
 
   return `${before}${parts.join(',')}/${after}`
 }
 
-/** srcset cho card / gallery responsive */
-export function cloudinarySrcSet(url, widths = [320, 480, 640, 960]) {
+/**
+ * srcset cho card / gallery responsive.
+ * Không gắn dpr_auto — browser đã chọn width theo DPR qua `sizes`.
+ */
+export function cloudinarySrcSet(url, widths = [480, 720, 960, 1280], opts = {}) {
   if (!isCloudinaryUploadUrl(url)) return undefined
-  return widths.map((w) => `${cloudinaryUrl(url, { width: w })} ${w}w`).join(', ')
+  return widths
+    .map((w) => `${cloudinaryUrl(url, { width: w, dpr: false, ...opts })} ${w}w`)
+    .join(', ')
 }

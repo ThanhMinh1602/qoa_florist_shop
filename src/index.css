@@ -429,6 +429,36 @@ body {
   box-shadow: 0 18px 40px rgba(74, 48, 32, 0.12);
 }
 
+/* Image loading shimmer */
+.img-shimmer {
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--color-surface-container-high, #e8dfd6) 100%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-container-high, #e8dfd6) 100%, transparent) 38%,
+    color-mix(in srgb, var(--color-surface-container-lowest, #faf7f4) 92%, white) 50%,
+    color-mix(in srgb, var(--color-surface-container-high, #e8dfd6) 100%, transparent) 62%,
+    color-mix(in srgb, var(--color-surface-container-high, #e8dfd6) 100%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  animation: img-shimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes img-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img-shimmer {
+    animation: none;
+    background: var(--color-surface-container-high, #e8dfd6);
+  }
+}
+
 /* Landing price-tier cards */
 .price-tier-card {
   box-shadow:
