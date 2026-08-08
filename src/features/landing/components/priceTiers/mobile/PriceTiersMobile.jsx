@@ -1,46 +1,35 @@
-import { Link } from 'react-router-dom'
-import { Stagger, StaggerItem } from '../../../../../components/motion/Reveal'
-import { shopPathForPriceTier } from '../../../../../constants/priceTiers'
+import { motion } from 'framer-motion'
+import { viewportOnce } from '../../../../../lib/motion'
+import PriceTierCard from '../PriceTierCard'
 
+/** Điện thoại: lưới 2×2 — đúng 4 thẻ như desktop/tablet */
 function PriceTiersMobile({ tiers }) {
   return (
-    <section id="price-tiers" className="mx-auto max-w-7xl scroll-mt-14 px-5 py-10">
-      <div className="mb-5">
-        <p className="label-caps mb-1 text-[10px] text-secondary">Bộ sưu tập</p>
-        <h2 className="font-display text-xl text-primary">Chọn theo mức giá</h2>
-      </div>
+    <section id="price-tiers" className="mx-auto w-full max-w-7xl scroll-mt-14 px-4 py-8 sm:px-5">
+      <motion.div
+        className="mb-4"
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={viewportOnce}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <h2 className="font-display text-lg text-primary sm:text-xl">Chọn theo mức giá</h2>
+      </motion.div>
 
-      <Stagger className="grid grid-cols-2 gap-3" faster>
+      <motion.div
+        className="grid grid-cols-2 gap-2.5"
+        initial="hidden"
+        whileInView="show"
+        viewport={viewportOnce}
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
+        }}
+      >
         {tiers.map((tier) => (
-          <StaggerItem key={tier.id}>
-            <Link
-              to={shopPathForPriceTier(tier.id)}
-              className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low shadow-[0_8px_24px_rgba(74,48,32,0.08)]"
-            >
-              {tier.coverImage?.url ? (
-                <img
-                  src={tier.coverImage.url}
-                  alt={tier.label}
-                  className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-surface-variant" />
-              )}
-
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-2.5 pt-12 pb-2.5">
-                <h3 className="text-xs font-semibold leading-snug text-white">{tier.label}</h3>
-                <p className="mt-0.5 line-clamp-2 text-[10px] leading-relaxed text-white/85">
-                  {tier.description}
-                </p>
-                <span className="mt-2 inline-flex rounded-full border border-white/45 bg-white/15 px-2.5 py-1 text-[9px] font-semibold tracking-wide text-white backdrop-blur-sm">
-                  Xem thêm
-                </span>
-              </div>
-            </Link>
-          </StaggerItem>
+          <PriceTierCard key={tier.id} tier={tier} size="mobile" />
         ))}
-      </Stagger>
+      </motion.div>
     </section>
   )
 }
