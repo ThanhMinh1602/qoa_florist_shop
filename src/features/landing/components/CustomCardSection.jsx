@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { Reveal } from '../../../components/motion/Reveal'
+import { LANDING_COPY_DEFAULTS, splitLines } from '../../../constants/landingCopy'
 import { viewportOnce } from '../../../lib/motion'
 import BirthdayMatrixBackdrop from './BirthdayMatrixBackdrop'
 
-function CustomCardSection() {
+function CustomCardSection({ copy = LANDING_COPY_DEFAULTS }) {
   const sectionRef = useRef(null)
   const [active, setActive] = useState(false)
   const reduceMotion = useReducedMotion()
+  const headingLines = splitLines(copy.customCardHeading)
 
   useEffect(() => {
     const el = sectionRef.current
@@ -33,7 +35,9 @@ function CustomCardSection() {
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-16">
         <Reveal className="mb-5 sm:mb-8">
-          <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">Thiệp số</h2>
+          <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">
+            {copy.customCardTitle}
+          </h2>
         </Reveal>
 
         <Reveal className="galaxy-feature relative isolate overflow-hidden rounded-[1.75rem] sm:rounded-[2rem]">
@@ -59,15 +63,18 @@ function CustomCardSection() {
               transition={{ type: 'spring', stiffness: 320, damping: 22, mass: 0.8 }}
             >
               <p className="label-caps mb-3 text-[10px] tracking-[0.18em] text-white/65">
-                QR Greeting
+                {copy.customCardEyebrow}
               </p>
               <p className="font-display text-[1.35rem] leading-snug text-white sm:text-[1.6rem]">
-                Lời chúc mở ra
-                <br />
-                khi quét mã QR
+                {headingLines.map((line, i) => (
+                  <span key={`${line}-${i}`}>
+                    {i > 0 ? <br /> : null}
+                    {line}
+                  </span>
+                ))}
               </p>
               <p className="mt-2.5 text-[13px] leading-relaxed text-white/72 sm:text-sm">
-                Gắn thiệp số vào bó hoa — người nhận chỉ cần một lần quét.
+                {copy.customCardBody}
               </p>
 
               <motion.div
@@ -97,7 +104,7 @@ function CustomCardSection() {
                   }
                 >
                   <Link to="/shop/card" className="btn-galaxy-cta pointer-events-auto">
-                    Tạo thiệp ngay
+                    {copy.customCardCta}
                     <MaterialIcon name="arrow_forward" className="btn-galaxy-cta__icon text-[1.05em]" />
                   </Link>
                 </motion.div>

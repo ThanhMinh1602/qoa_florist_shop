@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import SiteFooter from '../../../components/common/SiteFooter'
 import SiteHeader from '../../../components/common/SiteHeader'
 import AnimatedOutlet from '../../../components/motion/AnimatedOutlet'
 
@@ -25,17 +26,7 @@ function ShopLayout() {
         <AnimatedOutlet variant="shop" />
       </main>
 
-      <footer className="relative mt-10 border-t border-white/55 sm:mt-16">
-        <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-8 sm:py-12">
-          <p className="font-display text-xl text-primary sm:text-3xl">QOA Florist</p>
-          <p className="mt-2 text-xs text-on-surface-variant sm:text-sm">
-            Hoa tươi mỗi ngày · Thiệp QR trên bó hoa · Giao tận nơi
-          </p>
-          <p className="mt-5 text-xs text-outline sm:mt-6 sm:text-sm">
-            © {new Date().getFullYear()} QOA Florist
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

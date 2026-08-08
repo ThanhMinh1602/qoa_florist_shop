@@ -3,7 +3,7 @@ import { viewportOnce } from '../../../../../lib/motion'
 import PriceTierCard, { priceTierStagger } from '../PriceTierCard'
 
 /** iPad / tablet: lưới 2×2 — 4 thẻ */
-function PriceTiersTablet({ tiers }) {
+function PriceTiersTablet({ tiers, title = 'Chọn theo mức giá' }) {
   return (
     <section id="price-tiers" className="mx-auto w-full max-w-7xl scroll-mt-20 px-6 py-12 md:px-8 md:py-14">
       <motion.div
@@ -13,7 +13,7 @@ function PriceTiersTablet({ tiers }) {
         viewport={viewportOnce}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <h2 className="font-display text-2xl text-primary md:text-3xl">Chọn theo mức giá</h2>
+        <h2 className="font-display text-2xl text-primary md:text-3xl">{title}</h2>
       </motion.div>
 
       <motion.div

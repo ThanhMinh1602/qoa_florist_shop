@@ -382,6 +382,32 @@ body {
   }
 }
 
+.site-footer-cta {
+  box-shadow: 0 10px 28px rgba(74, 48, 32, 0.16);
+}
+
+.site-footer-glow {
+  animation: site-footer-breathe 7s ease-in-out infinite;
+}
+
+@keyframes site-footer-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(-50%) scale(0.92);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer-glow {
+    animation: none;
+  }
+}
+
 .lift-card {
   transition:
     transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),

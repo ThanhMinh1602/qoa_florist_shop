@@ -3,7 +3,7 @@ import { viewportOnce } from '../../../../../lib/motion'
 import PriceTierCard from '../PriceTierCard'
 
 /** Điện thoại: lưới 2×2 — đúng 4 thẻ như desktop/tablet */
-function PriceTiersMobile({ tiers }) {
+function PriceTiersMobile({ tiers, title = 'Chọn theo mức giá' }) {
   return (
     <section id="price-tiers" className="mx-auto w-full max-w-7xl scroll-mt-14 px-4 py-8 sm:px-5">
       <motion.div
@@ -13,7 +13,7 @@ function PriceTiersMobile({ tiers }) {
         viewport={viewportOnce}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
-        <h2 className="font-display text-lg text-primary sm:text-xl">Chọn theo mức giá</h2>
+        <h2 className="font-display text-lg text-primary sm:text-xl">{title}</h2>
       </motion.div>
 
       <motion.div

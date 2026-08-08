@@ -55,26 +55,13 @@ export const priceTierStagger = {
   },
 }
 
-function PriceTierCard({ tier, size = 'desktop' }) {
+function PriceTierCard({ tier, size = 'desktop', preview = false }) {
   const reduceMotion = useReducedMotion()
   const s = SIZE[size] || SIZE.desktop
-  const canLift = s.lift && !reduceMotion
+  const canLift = s.lift && !reduceMotion && !preview
 
-  return (
-    <motion.div
-      variants={priceTierCardVariants}
-      className="min-w-0"
-      whileHover={canLift ? { y: -6 } : undefined}
-      transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-    >
-      <Link
-        to={shopPathForPriceTier(tier.id)}
-        className={[
-          'price-tier-card group relative block w-full overflow-hidden bg-[#2c1a12]',
-          s.aspect,
-          s.radius,
-        ].join(' ')}
-      >
+  const body = (
+      <>
         {tier.coverImage?.url ? (
           <img
             src={tier.coverImage.url}
@@ -128,7 +115,31 @@ function PriceTierCard({ tier, size = 'desktop' }) {
             />
           </span>
         </div>
-      </Link>
+      </>
+  )
+
+  const shellClass = [
+    'price-tier-card group relative block w-full overflow-hidden bg-[#2c1a12]',
+    s.aspect,
+    s.radius,
+  ].join(' ')
+
+  return (
+    <motion.div
+      variants={preview ? undefined : priceTierCardVariants}
+      className="min-w-0"
+      whileHover={canLift ? { y: -6 } : undefined}
+      transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+    >
+      {preview ? (
+        <div className={shellClass} aria-hidden="true">
+          {body}
+        </div>
+      ) : (
+        <Link to={shopPathForPriceTier(tier.id)} className={shellClass}>
+          {body}
+        </Link>
+      )}
     </motion.div>
   )
 }

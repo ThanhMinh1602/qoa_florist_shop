@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { LANDING_COPY_DEFAULTS, splitLines } from '../../../constants/landingCopy'
 import { fadeUp, stagger } from '../../../lib/motion'
 
 /**
  * Hero carousel — dùng chung Landing + preview admin.
- * @param {{ images: { id?: string, url: string }[], autoPlayMs?: number, preview?: boolean, onExplore?: () => void, onCustom?: () => void }} props
  */
 function LandingHeroCarousel({
   images = [],
@@ -13,11 +13,16 @@ function LandingHeroCarousel({
   preview = false,
   onExplore,
   onCustom,
+  title = LANDING_COPY_DEFAULTS.heroTitle,
+  subtitle = LANDING_COPY_DEFAULTS.heroSubtitle,
+  ctaPrimary = LANDING_COPY_DEFAULTS.heroCtaPrimary,
+  ctaSecondary = LANDING_COPY_DEFAULTS.heroCtaSecondary,
 }) {
   const slides = images.filter((item) => item?.url)
   const [index, setIndex] = useState(0)
   const pauseUntilRef = useRef(0)
   const count = slides.length
+  const titleLines = splitLines(title)
 
   const go = useCallback(
     (direction) => {
@@ -69,7 +74,6 @@ function LandingHeroCarousel({
               fetchPriority={slideIndex === 0 ? 'high' : 'low'}
             />
           ))}
-          {/* Overlay nhẹ toàn ảnh + vignette đáy để chữ nổi, nền vẫn rõ */}
           <div
             className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/45"
             aria-hidden="true"
@@ -137,9 +141,12 @@ function LandingHeroCarousel({
               : 'text-primary',
           ].join(' ')}
         >
-          Hoa tươi chọn tay.
-          <br />
-          Thiệp số gắn QR.
+          {titleLines.map((line, i) => (
+            <span key={`${line}-${i}`}>
+              {i > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
         </motion.h1>
         <motion.p
           variants={fadeUp}
@@ -150,8 +157,7 @@ function LandingHeroCarousel({
               : 'text-on-surface-variant',
           ].join(' ')}
         >
-          Trải nghiệm tặng hoa hoàn toàn mới với thông điệp cá nhân hóa được mã hóa qua QR code,
-          mang đến bất ngờ tinh tế cho người nhận.
+          {subtitle}
         </motion.p>
         <motion.div
           variants={fadeUp}
@@ -159,7 +165,7 @@ function LandingHeroCarousel({
         >
           {preview || !onExplore ? (
             <span className="btn-primary pointer-events-none box-border h-10 min-h-10 border border-transparent !px-4 !py-0 text-[10px] shadow-lg shadow-black/25 opacity-90 md:h-12 md:min-h-12 md:!px-8 md:text-xs">
-              Khám phá bộ sưu tập
+              {ctaPrimary}
             </span>
           ) : (
             <button
@@ -167,7 +173,7 @@ function LandingHeroCarousel({
               onClick={onExplore}
               className="btn-primary box-border h-10 min-h-10 border border-transparent !px-4 !py-0 text-[10px] shadow-lg shadow-black/25 md:h-12 md:min-h-12 md:!px-8 md:text-xs"
             >
-              Khám phá bộ sưu tập
+              {ctaPrimary}
             </button>
           )}
           {preview || !onCustom ? (
@@ -179,7 +185,7 @@ function LandingHeroCarousel({
                   : 'btn-glass',
               ].join(' ')}
             >
-              Tạo thiệp lời chúc
+              {ctaSecondary}
             </span>
           ) : (
             <button
@@ -191,7 +197,7 @@ function LandingHeroCarousel({
                   : 'btn-glass box-border h-10 min-h-10 !px-4 !py-0 text-[10px] md:h-12 md:min-h-12 md:!px-8 md:text-xs'
               }
             >
-              Tạo thiệp lời chúc
+              {ctaSecondary}
             </button>
           )}
         </motion.div>

@@ -5,13 +5,11 @@ import { viewportOnce } from '../../../../../lib/motion'
 import PriceTierCard, { priceTierStagger } from '../PriceTierCard'
 
 /** Desktop: lưới 2×2 — 4 thẻ */
-function PriceTiersDesktop({ tiers }) {
+function PriceTiersDesktop({ tiers, title = 'Chọn theo mức giá' }) {
   return (
     <section id="price-tiers" className="mx-auto w-full max-w-7xl scroll-mt-32 px-10 py-14 lg:px-16 lg:py-16">
       <Reveal className="mb-9 flex items-end justify-between gap-6 lg:mb-10">
-        <h2 className="font-display text-[1.75rem] text-primary lg:text-[2rem]">
-          Chọn theo mức giá
-        </h2>
+        <h2 className="font-display text-[1.75rem] text-primary lg:text-[2rem]">{title}</h2>
         <Link
           to="/shop"
           className="label-caps group inline-flex shrink-0 items-center gap-1 text-xs text-primary transition hover:gap-2"

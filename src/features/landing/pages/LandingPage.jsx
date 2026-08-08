@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import SiteFooter from '../../../components/common/SiteFooter'
 import SiteHeader from '../../../components/common/SiteHeader'
 import { Reveal } from '../../../components/motion/Reveal'
 import { useCatalog, useLandingSettings } from '../../../hooks/swr'
@@ -12,7 +13,7 @@ const LANDING_SCROLL_SECTIONS = ['home', 'price-tiers', 'featured', 'custom-card
 
 function LandingPage() {
   const navigate = useNavigate()
-  const { heroImages, heroAutoPlayMs, priceTiers } = useLandingSettings()
+  const { heroImages, heroAutoPlayMs, priceTiers, copy } = useLandingSettings()
   const {
     products,
     isLoading: productsLoading,
@@ -33,12 +34,16 @@ function LandingPage() {
           <LandingHeroCarousel
             images={heroImages}
             autoPlayMs={heroAutoPlayMs}
+            title={copy.heroTitle}
+            subtitle={copy.heroSubtitle}
+            ctaPrimary={copy.heroCtaPrimary}
+            ctaSecondary={copy.heroCtaSecondary}
             onExplore={() => navigate('/shop')}
             onCustom={() => navigate('/shop/card')}
           />
         </section>
 
-        <PriceTiersSection priceTiers={priceTiers} />
+        <PriceTiersSection priceTiers={priceTiers} title={copy.priceTiersTitle} />
 
         <section
           id="featured"
@@ -46,7 +51,9 @@ function LandingPage() {
         >
           <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-16">
             <Reveal className="mb-5 flex items-center justify-between gap-3 sm:mb-10">
-              <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">Bán chạy</h2>
+              <h2 className="font-display text-xl text-primary sm:text-3xl md:text-[2rem]">
+                {copy.featuredTitle}
+              </h2>
               <Link
                 to="/shop"
                 className="label-caps shrink-0 text-[10px] text-primary hover:underline sm:text-xs"
@@ -78,41 +85,10 @@ function LandingPage() {
           ) : null}
         </section>
 
-        <CustomCardSection />
+        <CustomCardSection copy={copy} />
       </main>
 
-      <footer className="flex w-full flex-col items-center justify-center gap-3 border-t border-white/55 px-5 py-12 sm:gap-4 sm:px-8 sm:py-16">
-        <p className="font-display text-xl text-primary sm:text-2xl">QOA Florist</p>
-        <p className="text-center text-xs text-on-surface-variant sm:text-sm">
-          © {new Date().getFullYear()} QOA Florist. Đánh thức vẻ đẹp tự nhiên.
-        </p>
-        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-          <Link
-            to="/#featured"
-            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
-          >
-            Bán chạy
-          </Link>
-          <Link
-            to="/shop"
-            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
-          >
-            Sản phẩm
-          </Link>
-          <Link
-            to="/shop/card"
-            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
-          >
-            Tạo thiệp
-          </Link>
-          <a
-            href="mailto:hello@qoaflorist.com"
-            className="label-caps text-[10px] text-on-surface-variant hover:text-primary sm:text-xs"
-          >
-            Liên hệ
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
