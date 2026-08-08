@@ -236,16 +236,6 @@ body {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
-
-  /* Màn edit full mobile — ẩn chrome admin */
-  html.admin-chrome-hidden .admin-mobile-topbar,
-  html.admin-chrome-hidden .admin-mobile-bottom-nav {
-    display: none !important;
-  }
-
-  html.admin-chrome-hidden .admin-mobile-main {
-    padding-bottom: 0 !important;
-  }
 }
 
 @layer components {

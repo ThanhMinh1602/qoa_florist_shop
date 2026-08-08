@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NotificationsProvider } from '../../../context/NotificationsContext'
 import AnimatedOutlet from '../../../components/motion/AnimatedOutlet'
 import AdminHeader from '../components/AdminHeader'
@@ -22,6 +22,10 @@ function AdminMobileTopBar() {
 
 function AdminLayout() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.classList.remove('admin-chrome-hidden')
+  }, [])
 
   return (
     <NotificationsProvider>

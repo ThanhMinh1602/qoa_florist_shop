@@ -45,6 +45,35 @@ export const adminPageTransition = {
   transition: { duration: 0.2, ease: easeOut },
 }
 
+/** Mobile admin: forward = từ phải vào, back = từ trái vào */
+export const adminMobileSlideVariants = {
+  enter: (direction) => ({
+    x: direction >= 0 ? '100%' : '-32%',
+    opacity: direction >= 0 ? 1 : 0.9,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    position: 'relative',
+    zIndex: 1,
+  },
+  exit: (direction) => ({
+    x: direction >= 0 ? '-28%' : '100%',
+    opacity: direction >= 0 ? 0.9 : 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
+  }),
+}
+
+export const adminMobileSlideTransition = {
+  type: 'tween',
+  duration: 0.3,
+  ease: easeOut,
+}
+
 export const overlayFade = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
