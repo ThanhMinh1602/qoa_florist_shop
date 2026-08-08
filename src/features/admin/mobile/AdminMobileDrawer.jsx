@@ -2,11 +2,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { drawerEnter, overlayFade } from '../../../lib/motion'
 import AdminNavMenu from '../components/AdminNavMenu'
 
 function AdminMobileDrawer({ isOpen, onClose }) {
   const { logout, username } = useAuth()
+  useScrollLock(isOpen)
 
   return (
     <AnimatePresence>

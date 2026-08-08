@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import lottie from 'lottie-web'
 import loadingAnimation from '../../assets/lottie/loading.json'
+import { useScrollLock } from '../../hooks/useScrollLock'
 import { overlayFade, sheetEnter } from '../../lib/motion'
 
 function LoadingOverlay({ open, message = 'Đang xử lý...' }) {
   const containerRef = useRef(null)
+  useScrollLock(open)
 
   useEffect(() => {
     if (!open || !containerRef.current) return undefined

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { formatMoney } from '../../../utils/money'
 
 function ProductCard({ product, onClickCapture }) {
@@ -15,10 +16,13 @@ function ProductCard({ product, onClickCapture }) {
       <div className="relative aspect-[4/5] overflow-hidden bg-transparent">
         {product.mainImage ? (
           <img
-            src={product.mainImage}
+            src={cloudinaryUrl(product.mainImage, { width: 560 })}
+            srcSet={cloudinarySrcSet(product.mainImage, [320, 480, 640])}
+            sizes="(min-width: 1024px) 272px, (min-width: 640px) 248px, 184px"
             alt={product.name}
             className="h-full w-full object-cover transition duration-700 hover:scale-[1.04]"
             loading="lazy"
+            decoding="async"
             draggable={false}
           />
         ) : (
@@ -68,7 +72,7 @@ function FeaturedProductsRail({ products = [] }) {
   const dragStartX = useRef(0)
   const dragStartOffset = useRef(0)
   const resumeTimerRef = useRef(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const [isPaused, setIsPaused] = useState(false) 
 
   const loopItems = products.length > 1 ? [...products, ...products] : products
   const canMarquee = products.length > 1

@@ -531,7 +531,7 @@ function SiteSettingsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 pb-24 lg:gap-6 lg:p-10 lg:pb-10">
       <header className="flex flex-wrap items-center justify-between gap-3 lg:items-end lg:gap-4">
         <div className="min-w-0">
-          <h2 className="font-display text-xl text-primary lg:text-3xl">Cài đặt web</h2>
+          <h2 className="font-display text-lg text-primary lg:text-3xl">Cài đặt web</h2>
           <p className="mt-0.5 text-xs text-on-surface-variant lg:mt-1 lg:text-base">
             Ảnh hero, chữ banner, section trang chủ và footer.
           </p>

@@ -7,6 +7,7 @@ import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalog, useCatalogProduct } from '../../../hooks/swr'
 import { easeOut, fadeUp, stagger } from '../../../lib/motion'
 import { formatMoney } from '../../../utils/money'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
 const SWIPE_THRESHOLD = 48
 
@@ -182,9 +183,13 @@ function ShopProductPage() {
                 {activeImage ? (
                   <motion.img
                     key={activeImage}
-                    src={activeImage}
+                    src={cloudinaryUrl(activeImage, { width: 1200 })}
+                    srcSet={cloudinarySrcSet(activeImage, [640, 960, 1200, 1600])}
+                    sizes="(min-width: 1024px) 480px, 100vw"
                     alt={product.name}
                     draggable={false}
+                    fetchPriority="high"
+                    decoding="async"
                     initial={{ opacity: 0, x: 0 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
@@ -254,7 +259,13 @@ function ShopProductPage() {
                           : 'border-transparent',
                       ].join(' ')}
                     >
-                      <img src={image.url} alt="" className="h-full w-full object-cover" />
+                      <img
+                        src={cloudinaryUrl(image.url, { width: 160 })}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </motion.button>
                   </li>
                 )
@@ -392,10 +403,13 @@ function ShopProductPage() {
                   <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low shadow-[0_8px_24px_rgba(74,48,32,0.07)] sm:rounded-none sm:shadow-none">
                     {item.mainImage ? (
                       <img
-                        src={item.mainImage}
+                        src={cloudinaryUrl(item.mainImage, { width: 480 })}
+                        srcSet={cloudinarySrcSet(item.mainImage, [320, 480, 640])}
+                        sizes="(min-width: 640px) 25vw, 50vw"
                         alt={item.name}
                         className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.06]"
                         loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div className="relative flex h-full items-center justify-center">

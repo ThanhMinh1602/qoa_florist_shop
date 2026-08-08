@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useNotifications } from '../../../context/NotificationsContext'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { popoverEnter } from '../../../lib/motion'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 
@@ -11,6 +13,8 @@ function NotificationBell() {
   const panelRef = useRef(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const isLgUp = useIsLgUp()
+  useScrollLock(isOpen && !isLgUp)
   const { notifications, unreadCount, isConnected, loadNotifications, markRead, markAllRead } =
     useNotifications()
 
@@ -99,7 +103,7 @@ function NotificationBell() {
             ) : null}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div data-scroll-lock-scrollable className="max-h-96 overflow-y-auto overscroll-contain">
             {isLoading ? (
               <p className="px-4 py-8 text-center text-sm text-on-surface-variant">Đang tải...</p>
             ) : notifications.length === 0 ? (

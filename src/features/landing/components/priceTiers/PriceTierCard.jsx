@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import MaterialIcon from '../../../../components/common/MaterialIcon'
 import { easeOut } from '../../../../lib/motion'
 import { shopPathForPriceTier } from '../../../../constants/priceTiers'
+import { cloudinaryUrl } from '../../../../utils/cloudinaryUrl'
 
 /** Cùng bố cục 2×2 — chỉ scale typography / tỉ lệ thẻ theo thiết bị */
 const SIZE = {
@@ -64,10 +65,11 @@ function PriceTierCard({ tier, size = 'desktop', preview = false }) {
       <>
         {tier.coverImage?.url ? (
           <img
-            src={tier.coverImage.url}
+            src={cloudinaryUrl(tier.coverImage.url, { width: 800 })}
             alt={tier.label}
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
+            decoding="async"
             draggable={false}
           />
         ) : (

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../../components/common/BrandLogo'
 import MaterialIcon from '../../components/common/MaterialIcon'
+import { useScrollLock } from '../../hooks/useScrollLock'
 
 /** Chiều cao header — mobile dính mép, desktop header nổi */
 export const NAV_OFFSET = 96
@@ -29,6 +30,7 @@ function SiteHeader({ variant = 'page', activeId, scrollSections = [] }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  useScrollLock(menuOpen)
   const [scrollActive, setScrollActive] = useState(() => {
     if (activeId) return activeId
     const hash = normalizeHash(window.location.hash)

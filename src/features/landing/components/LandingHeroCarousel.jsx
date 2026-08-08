@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { LANDING_COPY_DEFAULTS, splitLines } from '../../../constants/landingCopy'
 import { fadeUp, stagger } from '../../../lib/motion'
+import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
 /**
  * Hero carousel — dùng chung Landing + preview admin.
@@ -63,13 +64,14 @@ function LandingHeroCarousel({
           {slides.map((slide, slideIndex) => (
             <img
               key={slide.id || slide.url}
-              src={slide.url}
+              src={cloudinaryUrl(slide.url, { width: slideIndex === 0 ? 1600 : 1200 })}
               alt=""
               className={[
                 'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
                 slideIndex === index ? 'opacity-100' : 'opacity-0',
               ].join(' ')}
               aria-hidden={slideIndex !== index}
+              loading={slideIndex === 0 ? 'eager' : 'lazy'}
               decoding="async"
               fetchPriority={slideIndex === 0 ? 'high' : 'low'}
             />

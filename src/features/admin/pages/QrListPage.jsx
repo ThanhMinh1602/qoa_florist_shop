@@ -10,6 +10,7 @@ import { getMusicName } from '../../../constants/galaxyMusic'
 import { useCards } from '../../../context/CardsContext'
 import { useDialog } from '../../../context/DialogContext'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { buildGreetingUrl } from '../../../constants/app'
 import CardQrPanel from '../components/CardQrPanel'
@@ -46,6 +47,7 @@ function messagePreview(card) {
 }
 
 function QrDetailModal({ card, onClose, onDelete, onUpdated, startInEdit = false }) {
+  useScrollLock(true)
   const { updateCard } = useCards()
   const topic = getTopicById(card.topicId)
   const formConfig = getTopicQrForm(card.topicId)
@@ -143,7 +145,10 @@ function QrDetailModal({ card, onClose, onDelete, onUpdated, startInEdit = false
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6">
+        <div
+          data-scroll-lock-scrollable
+          className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8 sm:py-6"
+        >
           {editing && formConfig ? (
             <>
               <TopicQrForm
@@ -365,7 +370,7 @@ function QrListPage() {
       <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
         <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
           <div className="min-w-0">
-            <h2 className="font-display text-xl text-primary lg:text-3xl">Danh sách QR</h2>
+            <h2 className="font-display text-lg text-primary lg:text-3xl">Danh sách QR</h2>
             <p className="mt-1 hidden text-sm text-on-surface-variant lg:block">
               Quản lý và theo dõi các mã QR thiệp đính kèm hoa.
             </p>

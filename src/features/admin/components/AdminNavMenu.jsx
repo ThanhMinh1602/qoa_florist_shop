@@ -115,7 +115,10 @@ function AdminNavMenu({ onNavigate, className = '' }) {
   }
 
   return (
-    <nav className={['flex flex-1 flex-col gap-3 overflow-y-auto p-4', className].join(' ')}>
+    <nav
+      data-scroll-lock-scrollable
+      className={['flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-4', className].join(' ')}
+    >
       {ADMIN_SIDEBAR_SECTIONS.map((section) => {
         if (section.type === 'link') {
           return <LinkSection key={section.id} section={section} onNavigate={onNavigate} />

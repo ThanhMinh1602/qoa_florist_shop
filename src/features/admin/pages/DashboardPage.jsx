@@ -24,7 +24,7 @@ function KpiCard({ icon, label, value, hint, accent = 'primary' }) {
           <MaterialIcon name={icon} className="text-lg lg:text-xl" />
         </span>
       </div>
-      <p className="font-display mt-2 text-xl leading-tight text-on-surface lg:mt-3 lg:text-3xl">
+      <p className="font-display mt-2 text-lg leading-tight text-on-surface lg:mt-3 lg:text-3xl">
         {value}
       </p>
       {hint ? <p className="mt-0.5 text-[10px] text-outline lg:mt-1 lg:text-xs">{hint}</p> : null}
@@ -43,7 +43,7 @@ function DashboardPage() {
       <header className="border-b border-outline-variant/20 bg-surface-container-lowest/70 px-4 py-3 backdrop-blur-xl lg:px-8 lg:py-5">
         <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
           <div className="min-w-0">
-            <h2 className="font-display text-xl text-primary lg:text-4xl">Tổng quan Boutique</h2>
+            <h2 className="font-display text-lg text-primary lg:text-4xl">Tổng quan Boutique</h2>
             <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block">
               Dưới đây là thông tin hoạt động kinh doanh hoa tươi ngày hôm nay.
             </p>

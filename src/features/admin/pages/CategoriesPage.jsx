@@ -12,6 +12,7 @@ import {
 } from '../../../api/categoriesApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useAdminCategories } from '../../../hooks/swr'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { swrKeys } from '../../../hooks/swr/keys'
 
 const inputClass =
@@ -36,6 +37,7 @@ function CategoryFormDialog({
   formError,
   isEditing,
 }) {
+  useScrollLock(open)
   const nameRef = useRef(null)
 
   useEffect(() => {
@@ -84,7 +86,11 @@ function CategoryFormDialog({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4 px-5 py-4">
+        <form
+          data-scroll-lock-scrollable
+          onSubmit={onSubmit}
+          className="max-h-[min(80dvh,var(--app-vvh,80dvh))] space-y-4 overflow-y-auto overscroll-contain px-5 py-4"
+        >
           <label className="block text-sm">
             <span className="mb-1.5 block font-medium text-on-surface">Tên danh mục</span>
             <input
@@ -386,7 +392,7 @@ function CategoriesPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-10">
         <header className="flex flex-wrap items-center justify-between gap-2.5 lg:items-end lg:gap-4">
           <div className="min-w-0">
-            <h2 className="font-display text-xl text-primary lg:text-3xl">Danh mục sản phẩm</h2>
+            <h2 className="font-display text-lg text-primary lg:text-3xl">Danh mục sản phẩm</h2>
             <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block lg:text-base">
               Quản lý danh mục — gán cho sản phẩm và dùng làm lọc nhanh trên shop.
             </p>

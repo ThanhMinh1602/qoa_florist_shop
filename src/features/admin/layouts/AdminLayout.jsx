@@ -10,7 +10,7 @@ import NotificationBell from '../components/NotificationBell'
 
 function AdminMobileTopBar() {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/55 bg-surface-container-lowest/90 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl lg:hidden">
+    <header className="admin-mobile-topbar sticky top-0 z-30 flex items-center justify-between border-b border-white/55 bg-surface-container-lowest/90 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl lg:hidden">
       <div className="flex min-w-0 items-center gap-2">
         <BrandLogo size="xs" />
         <p className="font-display truncate text-base leading-none text-primary">QOA Florist</p>
@@ -35,7 +35,10 @@ function AdminLayout() {
             <AdminHeader />
           </div>
 
-          <main className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+          <main
+            data-scroll-root
+            className="admin-mobile-main min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0"
+          >
             <AnimatedOutlet variant="admin" />
           </main>
         </div>

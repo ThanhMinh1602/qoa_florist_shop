@@ -59,11 +59,34 @@ export const sheetEnter = {
   transition: { duration: 0.28, ease: easeOut },
 }
 
+/** Dialog giữa màn hình (mobile + desktop) */
+export const modalEnter = {
+  initial: { opacity: 0, scale: 0.94, y: 8 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.96, y: 4 },
+  transition: { duration: 0.22, ease: easeOut },
+}
+
 export const drawerEnter = {
   initial: { x: '100%' },
   animate: { x: 0 },
   exit: { x: '100%' },
   transition: { duration: 0.28, ease: easeOut },
+}
+
+/** Chuyển màn mobile (list → edit) */
+export const pageSlideIn = {
+  initial: { x: '18%', opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: '12%', opacity: 0 },
+  transition: { duration: 0.28, ease: easeOut },
+}
+
+export const pageSlideOut = {
+  initial: { x: '-8%', opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: '-6%', opacity: 0 },
+  transition: { duration: 0.24, ease: easeOut },
 }
 
 export const popoverEnter = {

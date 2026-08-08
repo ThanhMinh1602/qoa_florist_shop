@@ -38,7 +38,7 @@ function ChangePasswordPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-5">
-        <h2 className="font-display text-xl text-primary lg:text-2xl">Đổi mật khẩu</h2>
+        <h2 className="font-display text-lg text-primary lg:text-2xl">Đổi mật khẩu</h2>
         <p className="mt-1 text-xs text-on-surface-variant lg:mt-2 lg:max-w-2xl lg:text-sm">
           Tài khoản hiện tại: <span className="font-medium text-on-surface">{username}</span>
         </p>

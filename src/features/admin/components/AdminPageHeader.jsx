@@ -16,7 +16,7 @@ function AdminPageHeader({ title, subtitle, actions, bordered = false, className
     >
       <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-end lg:gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl leading-tight text-primary lg:text-3xl">{title}</h2>
+          <h2 className="font-display text-lg leading-tight text-primary lg:text-3xl">{title}</h2>
           {subtitle ? (
             <p className="mt-0.5 text-xs text-on-surface-variant lg:mt-1 lg:text-sm">{subtitle}</p>
           ) : null}

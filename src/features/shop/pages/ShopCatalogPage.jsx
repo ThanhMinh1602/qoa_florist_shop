@@ -6,7 +6,9 @@ import { easeOut, overlayFade, sheetEnter } from '../../../lib/motion'
 import { CATALOG_PAGE_SIZE, CATALOG_PRICE_FILTERS } from '../../../constants/catalogFilters'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
 import { useCatalogInfinite, usePublicCategories } from '../../../hooks/swr'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { formatMoney } from '../../../utils/money'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 
 const SORT_OPTIONS = [
   { id: 'popular', label: 'Bán chạy' },
@@ -40,10 +42,13 @@ function ProductCard({ product }) {
         <div className="aspect-[4/5]">
           {product.mainImage ? (
             <img
-              src={product.mainImage}
+              src={cloudinaryUrl(product.mainImage, { width: 640 })}
+              srcSet={cloudinarySrcSet(product.mainImage, [320, 480, 640, 960])}
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
               alt={product.name}
               className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.05]"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="relative flex h-full items-center justify-center">
@@ -174,15 +179,7 @@ function FilterBottomSheet({
   onSubmit,
 }) {
   const draftCount = Number(Boolean(draftCategoryId)) + Number(Boolean(draftPriceFilterId))
-
-  useEffect(() => {
-    if (!open) return undefined
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
-  }, [open])
+  useScrollLock(open)
 
   return (
     <AnimatePresence>
@@ -221,7 +218,10 @@ function FilterBottomSheet({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3">
+            <div
+              data-scroll-lock-scrollable
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3"
+            >
               <div className="border-t border-outline-variant/20 pt-4">
                 <p className="mb-2 text-xs font-semibold text-on-surface-variant">Danh mục</p>
                 <div className="space-y-0.5">

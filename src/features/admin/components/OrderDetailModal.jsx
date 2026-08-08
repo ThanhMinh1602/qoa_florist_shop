@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { overlayFade, sheetEnter } from '../../../lib/motion'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import {
   SHIPPING_STATUS_LABELS,
@@ -42,6 +43,7 @@ function OrderDetailModal({
   onUpdated,
   isUpdating,
 }) {
+  useScrollLock(true)
   const status = ORDER_STATUS_LABELS[request.status] ?? ORDER_STATUS_LABELS.pending
   const shippingKey = request.shippingStatus || 'pending'
 
@@ -142,7 +144,7 @@ function OrderDetailModal({
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Đóng" />
 
       <motion.div
-        className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(92dvh,var(--app-vvh,92dvh))] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
         {...sheetEnter}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">
@@ -181,7 +183,10 @@ function OrderDetailModal({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+        <div
+          data-scroll-lock-scrollable
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6"
+        >
           <div className="flex flex-wrap items-center justify-end gap-2">
             {request.customerPhone ? (
               <button

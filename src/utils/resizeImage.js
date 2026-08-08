@@ -2,6 +2,44 @@
  * Resize ảnh trên trình duyệt (canvas) trước khi upload Cloudinary.
  * Giữ tỉ lệ, giới hạn cạnh dài, xuất JPEG.
  */
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('Không đọc được file ảnh.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function loadHtmlImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Không hiển thị được ảnh từ thư viện.'))
+    img.src = src
+  })
+}
+
+async function loadImageSource(file) {
+  try {
+    return await createImageBitmap(file)
+  } catch {
+    // ignore — thử fallback
+  }
+
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    return await loadHtmlImage(objectUrl)
+  } catch {
+    // ignore
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+
+  const dataUrl = await readFileAsDataUrl(file)
+  return loadHtmlImage(dataUrl)
+}
+
 export async function resizeImageFile(
   file,
   {
@@ -11,15 +49,34 @@ export async function resizeImageFile(
     mimeType = 'image/jpeg',
   } = {},
 ) {
-  if (!file?.type?.startsWith('image/')) {
+  const type = String(file?.type || '').toLowerCase()
+  const looksLikeImage =
+    type.startsWith('image/') ||
+    !type ||
+    type === 'application/octet-stream'
+
+  if (!file || !looksLikeImage) {
     throw new Error('File không phải ảnh.')
   }
 
-  const bitmap = await createImageBitmap(file)
+  let bitmap
   try {
-    const scale = Math.min(1, maxWidth / bitmap.width, maxHeight / bitmap.height)
-    const width = Math.max(1, Math.round(bitmap.width * scale))
-    const height = Math.max(1, Math.round(bitmap.height * scale))
+    bitmap = await loadImageSource(file)
+  } catch {
+    throw new Error(
+      'Không đọc được ảnh. Thử JPEG/PNG, hoặc trên iPhone tắt “High Efficiency” trong Cài đặt → Camera.',
+    )
+  }
+
+  try {
+    const sourceWidth = bitmap.width || bitmap.naturalWidth
+    const sourceHeight = bitmap.height || bitmap.naturalHeight
+    if (!sourceWidth || !sourceHeight) {
+      throw new Error('Ảnh không hợp lệ.')
+    }
+    const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight)
+    const width = Math.max(1, Math.round(sourceWidth * scale))
+    const height = Math.max(1, Math.round(sourceHeight * scale))
 
     const canvas = document.createElement('canvas')
     canvas.width = width

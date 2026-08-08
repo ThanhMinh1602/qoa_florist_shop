@@ -6,6 +6,7 @@ import { fadeUp, staggerFast } from '../../../lib/motion'
 import { createCashEntryApi, deleteCashEntryApi } from '../../../api/cashbookApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useCashbook } from '../../../hooks/swr'
+import { useScrollLock } from '../../../hooks/useScrollLock'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
 
 const EMPTY = {
@@ -77,6 +78,7 @@ function CashbookPage() {
   const [formError, setFormError] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [formOpen, setFormOpen] = useState(false)
+  useScrollLock(formOpen)
 
   const cashParams = useMemo(() => {
     const params = { month, year }
@@ -275,7 +277,7 @@ function CashbookPage() {
           />
           <form
             onSubmit={handleSubmit}
-            className="relative z-10 flex max-h-[min(90dvh,640px)] w-full flex-col rounded-t-3xl bg-surface-container-lowest shadow-2xl"
+            className="relative z-10 flex max-h-[min(90dvh,var(--app-vvh,90dvh),640px)] w-full flex-col rounded-t-3xl bg-surface-container-lowest shadow-2xl"
           >
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex flex-1 flex-col items-center">
@@ -291,7 +293,10 @@ function CashbookPage() {
                 <MaterialIcon name="close" />
               </button>
             </div>
-            <div className="grid min-h-0 flex-1 gap-2.5 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div
+              data-scroll-lock-scrollable
+              className="grid min-h-0 flex-1 gap-2.5 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            >
               {formFields}
             </div>
           </form>

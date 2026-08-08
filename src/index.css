@@ -230,68 +230,88 @@ body {
   box-shadow: var(--shadow-glass);
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: var(--radius-control);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.875rem 1.25rem;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+@layer components {
+  [data-scroll-lock-scrollable] {
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Màn edit full mobile — ẩn chrome admin */
+  html.admin-chrome-hidden .admin-mobile-topbar,
+  html.admin-chrome-hidden .admin-mobile-bottom-nav {
+    display: none !important;
+  }
+
+  html.admin-chrome-hidden .admin-mobile-main {
+    padding-bottom: 0 !important;
+  }
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-container);
-  transform: translateY(-1px);
-}
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-control);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.875rem 1.25rem;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
 
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-}
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-container);
+    transform: translateY(-1px);
+  }
 
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
 
-.btn-glass {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: var(--radius-control);
-  background: rgb(255 255 255 / 0.75);
-  border: 1px solid rgb(255 255 255 / 0.55);
-  color: var(--color-primary);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.875rem 1.25rem;
-  backdrop-filter: blur(12px);
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
-}
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
-.btn-glass:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.9);
-  transform: translateY(-1px);
-}
+  .btn-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-control);
+    background: rgb(255 255 255 / 0.75);
+    border: 1px solid rgb(255 255 255 / 0.55);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.875rem 1.25rem;
+    backdrop-filter: blur(12px);
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+  }
 
-.btn-glass:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
+  .btn-glass:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.9);
+    transform: translateY(-1px);
+  }
+
+  .btn-glass:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
 }
 
 /* CTA đặc biệt — section Thiệp số / ngân hà */
