@@ -13,7 +13,9 @@ import {
 import { useDialog } from '../../../context/DialogContext'
 import { useAdminCategories } from '../../../hooks/swr'
 import { useScrollLock } from '../../../hooks/useScrollLock'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { swrKeys } from '../../../hooks/swr/keys'
+import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 
 const inputClass =
   'w-full rounded-xl border border-outline-variant/25 bg-white/50 px-3 py-2.5 text-sm outline-none backdrop-blur-sm focus:ring-2 focus:ring-primary/20'
@@ -171,6 +173,7 @@ function CategoriesPage() {
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [selectedIds, setSelectedIds] = useState([])
   const error = categoriesError?.message || ''
+  const isLgUp = useIsLgUp()
 
   const allSelected =
     categories.length > 0 && categories.every((item) => selectedIds.includes(item.id))
@@ -387,15 +390,28 @@ function CategoriesPage() {
     }
   }
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-10">
+  function renderPage(requestClose) {
+    return (
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background lg:overflow-visible">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-4 lg:gap-6 lg:p-10" data-scroll-lock-scrollable>
         <header className="flex flex-wrap items-center justify-between gap-2.5 lg:items-end lg:gap-4">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg text-primary lg:text-3xl">Danh mục sản phẩm</h2>
-            <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block lg:text-base">
-              Quản lý danh mục — gán cho sản phẩm và dùng làm lọc nhanh trên shop.
-            </p>
+          <div className="flex min-w-0 items-center gap-2">
+            {requestClose ? (
+              <button
+                type="button"
+                onClick={requestClose}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low lg:hidden"
+                aria-label="Quay lại"
+              >
+                <MaterialIcon name="arrow_back" className="text-xl" />
+              </button>
+            ) : null}
+            <div className="min-w-0">
+              <h2 className="font-display text-lg text-primary lg:text-3xl">Danh mục sản phẩm</h2>
+              <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block lg:text-base">
+                Quản lý danh mục — gán cho sản phẩm và dùng làm lọc nhanh trên shop.
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -577,7 +593,18 @@ function CategoriesPage() {
 
       <LoadingOverlay open={busy} message={busyMessage} />
     </div>
-  )
+    )
+  }
+
+  if (!isLgUp) {
+    return (
+      <AdminMobileOverlayShell backTo="/admin/products">
+        {({ requestClose }) => renderPage(requestClose)}
+      </AdminMobileOverlayShell>
+    )
+  }
+
+  return renderPage(null)
 }
 
 export default CategoriesPage

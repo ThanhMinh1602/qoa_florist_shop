@@ -19,7 +19,11 @@ function isOrderEditorPath(path) {
 
 /** Giữ layout /admin/products không remount khi vào nested detail */
 function outletAnimationKey(pathname) {
-  if (pathname === '/admin/products' || isProductEditorPath(pathname)) {
+  if (
+    pathname === '/admin/products' ||
+    isProductEditorPath(pathname) ||
+    pathname === '/admin/categories'
+  ) {
     return '/admin/products'
   }
   if (pathname === '/admin/manage' || isOrderEditorPath(pathname) || pathname === '/admin/orders/import') {
@@ -29,7 +33,7 @@ function outletAnimationKey(pathname) {
 }
 
 function isFillHeightAdminPath(path) {
-  return path === '/admin/manage'
+  return path === '/admin/manage' || path === '/admin/products'
 }
 
 function resolveAdminDirection(fromPath, toPath, navType) {

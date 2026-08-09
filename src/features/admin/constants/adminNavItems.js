@@ -141,12 +141,9 @@ export const ADMIN_MOBILE_TABS = [
     label: 'Sản phẩm',
     shortLabel: 'Sản phẩm',
     icon: 'local_florist',
+    to: '/admin/products',
     defaultTo: '/admin/products',
     matchPrefixes: ['/admin/products', '/admin/categories'],
-    children: [
-      { to: '/admin/products', label: 'Sản phẩm', icon: 'inventory_2' },
-      { to: '/admin/categories', label: 'Danh mục', icon: 'category' },
-    ],
   },
 ]
 

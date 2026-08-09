@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, Outlet } from 'react-router-dom'
+import { Link, useNavigate, Outlet } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
@@ -8,6 +8,7 @@ import {
   createProductApi,
   deactivateProductApi,
   deleteProductApi,
+  fetchProductsApi,
   updateProductApi,
 } from '../../../api/productsApi'
 import { createCategoryApi } from '../../../api/categoriesApi'
@@ -24,6 +25,24 @@ import ProductFormDialog, {
   revokeLocalPreviews,
   toForm,
 } from '../components/ProductFormDialog'
+import ProductsListMobile, { ProductsListMobileSkeleton } from '../mobile/ProductsListMobile'
+
+const PAGE_SIZE = 25
+const SEARCH_DEBOUNCE_MS = 300
+const SCROLL_TOGGLE_DELTA = 8
+
+function buildPageButtons(totalPages, safePage) {
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
+    if (totalPages <= 5) return true
+    if (page === 1 || page === totalPages) return true
+    return Math.abs(page - safePage) <= 1
+  })
+  return pages.reduce((acc, page, index, list) => {
+    if (index > 0 && page - list[index - 1] > 1) acc.push('…')
+    acc.push(page)
+    return acc
+  }, [])
+}
 
 const actionBtnClass =
   'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/40 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
@@ -172,9 +191,110 @@ function ProductsPage() {
   const removedPublicIdsRef = useRef([])
   const error = productsError?.message || ''
 
+  const [page, setPage] = useState(1)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [pagedProducts, setPagedProducts] = useState([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [isLoadingPage, setIsLoadingPage] = useState(true)
+  const [pageError, setPageError] = useState('')
+  const [mobileReloadToken, setMobileReloadToken] = useState(0)
+  const loadSeqRef = useRef(0)
+  const listScrollRef = useRef(null)
+  const skipScrollOnMount = useRef(true)
+  const lastScrollTopRef = useRef(0)
+  const [toolsOpen, setToolsOpen] = useState(true)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const next = search.trim()
+      setDebouncedSearch((prev) => {
+        if (prev !== next) setPage(1)
+        return next
+      })
+    }, SEARCH_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [search])
+
+  const loadMobileProducts = useCallback(async () => {
+    if (isLgUp) return
+    const seq = ++loadSeqRef.current
+    setIsLoadingPage(true)
+    setPageError('')
+    try {
+      const result = await fetchProductsApi({
+        page,
+        limit: PAGE_SIZE,
+        q: debouncedSearch,
+      })
+      if (seq !== loadSeqRef.current) return
+      const rows = Array.isArray(result.data) ? result.data : []
+      setPagedProducts(rows)
+      const pagination = result.pagination || {}
+      const nextTotal = pagination.total != null ? Number(pagination.total) : rows.length
+      const nextTotalPages =
+        pagination.totalPages != null
+          ? Math.max(1, Number(pagination.totalPages))
+          : Math.max(1, Math.ceil(nextTotal / PAGE_SIZE))
+      setTotal(Number.isFinite(nextTotal) ? nextTotal : rows.length)
+      setTotalPages(Number.isFinite(nextTotalPages) ? nextTotalPages : 1)
+      if (page > nextTotalPages) setPage(nextTotalPages)
+    } catch (err) {
+      if (seq !== loadSeqRef.current) return
+      setPageError(err.message || 'Không thể tải danh sách.')
+    } finally {
+      if (seq === loadSeqRef.current) setIsLoadingPage(false)
+    }
+  }, [isLgUp, page, debouncedSearch])
+
+  useEffect(() => {
+    void loadMobileProducts()
+  }, [loadMobileProducts, mobileReloadToken])
+
   const load = useCallback(async () => {
     await mutateProducts()
+    setMobileReloadToken((token) => token + 1)
   }, [mutateProducts])
+
+  const safePage = Math.min(page, totalPages)
+  const pageFrom = total ? (safePage - 1) * PAGE_SIZE + 1 : 0
+  const pageTo = Math.min(safePage * PAGE_SIZE, total)
+  const pageButtons = useMemo(
+    () => buildPageButtons(totalPages, safePage),
+    [totalPages, safePage],
+  )
+
+  useEffect(() => {
+    if (isLgUp || skipScrollOnMount.current) {
+      skipScrollOnMount.current = false
+      return
+    }
+    listScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    setToolsOpen(true)
+    lastScrollTopRef.current = 0
+  }, [safePage, isLgUp])
+
+  useEffect(() => {
+    if (isLgUp) {
+      setToolsOpen(true)
+      return undefined
+    }
+    const el = listScrollRef.current
+    if (!el) return undefined
+    const onScroll = () => {
+      const top = el.scrollTop
+      const delta = top - lastScrollTopRef.current
+      lastScrollTopRef.current = top
+      if (top <= 12) {
+        setToolsOpen(true)
+        return
+      }
+      if (delta > SCROLL_TOGGLE_DELTA) setToolsOpen(false)
+      else if (delta < -SCROLL_TOGGLE_DELTA) setToolsOpen(true)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [isLgUp, isLoadingPage])
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -187,6 +307,11 @@ function ProductsPage() {
     )
   }, [products, search])
 
+  const mobileList = isLgUp ? filtered : pagedProducts
+  const mobileIds = useMemo(() => mobileList.map((item) => item.id), [mobileList])
+  const allMobileSelected =
+    mobileIds.length > 0 && mobileIds.every((id) => selectedIds.includes(id))
+
   const filteredIds = useMemo(() => filtered.map((item) => item.id), [filtered])
   const allFilteredSelected =
     filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id))
@@ -196,6 +321,15 @@ function ProductsPage() {
     setSelectedIds((previous) =>
       previous.includes(id) ? previous.filter((item) => item !== id) : [...previous, id],
     )
+  }
+
+  function toggleSelectAllMobile() {
+    setSelectedIds((previous) => {
+      if (allMobileSelected) {
+        return previous.filter((id) => !mobileIds.includes(id))
+      }
+      return [...new Set([...previous, ...mobileIds])]
+    })
   }
 
   function toggleSelectAllFiltered() {
@@ -474,149 +608,172 @@ function ProductsPage() {
     title: editingId ? 'Sửa sản phẩm' : 'Thêm sản phẩm',
   }
 
-  // Mobile: danh sách; tạo/sửa = route ProductEditPage
+  // Mobile: shell giống đơn hàng — header / list / pagination
   if (!isLgUp) {
+    const iconBtn =
+      'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/40 text-primary hover:bg-surface-container-low'
+    const showTools = toolsOpen
+    const listError = pageError || error
+
     return (
       <>
-        <div className="flex flex-col gap-4 p-4">
-          <header className="flex flex-wrap items-center justify-between gap-2.5">
-            <div className="min-w-0">
-              <h2 className="font-display text-lg text-primary">Quản lý sản phẩm</h2>
+        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
+          <header className="shrink-0 border-b border-outline-variant/25 bg-surface-container-lowest">
+            <div className="flex items-center gap-2 px-3 py-2">
+              <h2 className="min-w-0 flex-1 truncate font-display text-base text-primary">
+                Sản phẩm
+              </h2>
+              <Link to="/admin/categories" className={iconBtn} title="Danh mục" aria-label="Danh mục">
+                <MaterialIcon name="category" className="text-lg" />
+              </Link>
+              <button
+                type="button"
+                onClick={openCreate}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary-container"
+                title="Thêm sản phẩm"
+                aria-label="Thêm sản phẩm"
+              >
+                <MaterialIcon name="add" className="text-lg" />
+              </button>
+            </div>
+
+            <div
+              className={[
+                'grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+                showTools
+                  ? 'grid-rows-[1fr] opacity-100'
+                  : 'pointer-events-none grid-rows-[0fr] opacity-0',
+              ].join(' ')}
+              aria-hidden={!showTools}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div className="space-y-1.5 border-t border-outline-variant/20 px-2 pb-2 pt-1.5">
+                  {selectedCount > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
+                      <button
+                        type="button"
+                        onClick={clearSelection}
+                        className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-surface-container-low"
+                      >
+                        Bỏ
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => void handleBulkDelete()}
+                        className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 disabled:opacity-50"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Mã / tên sản phẩm…"
+                      tabIndex={showTools ? 0 : -1}
+                      className="min-w-0 flex-1 rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-2.5 py-1.5 text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    {pagedProducts.length > 0 ? (
+                      <label className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] text-on-surface-variant">
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-outline-variant"
+                          checked={allMobileSelected}
+                          onChange={toggleSelectAllMobile}
+                        />
+                        Tất cả
+                      </label>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </div>
           </header>
 
-          <div className="flex flex-col gap-3">
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm mã, tên..."
-              className="w-full rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface outline-none ring-primary/20 transition focus:ring-2"
-            />
-            {selectedCount > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface">
-                  Đã chọn {selectedCount}
-                </span>
-                <button
-                  type="button"
-                  onClick={clearSelection}
-                  className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
-                >
-                  Bỏ chọn
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkDelete}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100/80"
-                >
-                  <MaterialIcon name="delete" className="text-base" />
-                  Xóa đã chọn
-                </button>
-              </div>
-            ) : null}
-          </div>
-
-          {error ? (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
-              {error}
+          {listError ? (
+            <p
+              className="mx-2 mt-2 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600"
+              role="alert"
+            >
+              {listError}
             </p>
           ) : null}
 
-          {isLoading ? (
-            <p className="py-12 text-center text-sm text-on-surface-variant">Đang tải...</p>
-          ) : filtered.length === 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={openCreate}
-                  className="btn-primary inline-flex h-9 w-9 items-center justify-center !p-0"
-                  title="Thêm sản phẩm"
-                  aria-label="Thêm sản phẩm"
-                >
-                  <MaterialIcon name="add" className="text-xl" />
-                </button>
-              </div>
-              <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-6 py-16 text-center">
-                <MaterialIcon name="inventory_2" className="text-4xl text-outline" />
-                <p className="mt-3 text-sm font-medium text-on-surface">Chưa có sản phẩm</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <label className="glass-card inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-on-surface">
-                  <input
-                    type="checkbox"
-                    className="accent-primary"
-                    checked={allFilteredSelected}
-                    onChange={toggleSelectAllFiltered}
-                  />
-                  Chọn tất cả ({filtered.length})
-                </label>
-                <button
-                  type="button"
-                  onClick={openCreate}
-                  className="btn-primary inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0"
-                  title="Thêm sản phẩm"
-                  aria-label="Thêm sản phẩm"
-                >
-                  <MaterialIcon name="add" className="text-xl" />
-                </button>
-              </div>
-              {filtered.map((product) => {
-                const checked = selectedIds.includes(product.id)
-                return (
-                  <div
-                    key={product.id}
-                    className={[
-                      'rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-3 shadow-sm',
-                      !product.active ? 'opacity-60' : '',
-                      checked ? 'border-primary/30 bg-primary/5' : '',
-                    ].join(' ')}
+          <div
+            ref={listScrollRef}
+            data-scroll-lock-scrollable
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pt-2 touch-pan-y [-webkit-overflow-scrolling:touch]"
+            aria-busy={isLoadingPage || undefined}
+          >
+            {isLoadingPage ? (
+              <ProductsListMobileSkeleton rows={8} />
+            ) : (
+              <ProductsListMobile
+                products={pagedProducts}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onSelect={openEdit}
+                onHide={handleDeactivate}
+                onShow={handleActivate}
+                onDelete={handleDelete}
+                busy={isBusy}
+              />
+            )}
+          </div>
+
+          {total > 0 ? (
+            <div className="relative z-10 mt-auto shrink-0 border-t border-outline-variant/25 bg-surface-container-lowest">
+              <div className="flex items-center justify-between gap-2 px-2 py-2">
+                <p className="text-[11px] text-on-surface-variant">
+                  {pageFrom}–{pageTo}/{total}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1 || isLoadingPage}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <input
-                        type="checkbox"
-                        className="shrink-0 accent-primary"
-                        checked={checked}
-                        onChange={() => toggleSelect(product.id)}
-                        aria-label={`Chọn ${product.name}`}
-                      />
+                    ‹
+                  </button>
+                  {pageButtons.map((item, index) =>
+                    item === '…' ? (
+                      <span key={`gap-${index}`} className="px-0.5 text-[11px] text-outline">
+                        …
+                      </span>
+                    ) : (
                       <button
+                        key={item}
                         type="button"
-                        onClick={() => openEdit(product)}
-                        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                        disabled={isLoadingPage}
+                        onClick={() => setPage(item)}
+                        className={[
+                          'min-w-6 rounded-md px-1.5 py-1 text-[11px] font-medium',
+                          item === safePage
+                            ? 'bg-primary text-white'
+                            : 'border border-outline-variant/40 text-on-surface',
+                        ].join(' ')}
                       >
-                        <ProductThumb product={product} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-on-surface">
-                            {product.name}
-                          </p>
-                          <p className="mt-0.5 text-sm font-semibold text-primary">
-                            {formatMoney(product.sellPrice)}
-                          </p>
-                          {!product.active ? (
-                            <p className="mt-0.5 text-[11px] font-medium text-on-surface-variant">
-                              Đã ẩn
-                            </p>
-                          ) : null}
-                        </div>
+                        {item}
                       </button>
-                      <ProductMoreMenu
-                        product={product}
-                        disabled={isBusy}
-                        onHide={handleDeactivate}
-                        onShow={handleActivate}
-                        onDelete={handleDelete}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
+                    ),
+                  )}
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages || isLoadingPage}
+                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         <LoadingOverlay open={isBusy} message={busyMessage} />
@@ -636,14 +793,23 @@ function ProductsPage() {
             </p>
           </div>
           {isLgUp ? (
-            <button
-              type="button"
-              onClick={openCreate}
-              className="btn-primary inline-flex items-center gap-1.5 !px-3 !py-2 text-xs"
-            >
-              <MaterialIcon name="add" className="text-lg" />
-              Thêm
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/admin/categories"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-outline-variant/40 px-3 text-xs font-semibold text-primary hover:bg-surface-container-low"
+              >
+                <MaterialIcon name="category" className="text-lg" />
+                Danh mục
+              </Link>
+              <button
+                type="button"
+                onClick={openCreate}
+                className="btn-primary inline-flex items-center gap-1.5 !px-3 !py-2 text-xs"
+              >
+                <MaterialIcon name="add" className="text-lg" />
+                Thêm
+              </button>
+            </div>
           ) : null}
         </header>
 
