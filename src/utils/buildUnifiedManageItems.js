@@ -1,6 +1,7 @@
 import { getInvoiceCode } from './invoiceCode'
 import { summarizeItems } from './money'
 import { calcOrderMoney } from './orderMoney'
+import { normalizeTrackingCode } from './trackingCode'
 
 /**
  * Danh sách đơn hàng — map theo sổ ĐƠN HÀNG QOA.
@@ -46,7 +47,7 @@ export function buildUnifiedManageItems(orders = []) {
         appReceive: money.appReceive,
         paymentStatus: order.paymentStatus || 'unpaid',
         paymentNote: order.paymentNote || '',
-        trackingCode: order.shippingTrackingCode || '',
+        trackingCode: normalizeTrackingCode(order.shippingTrackingCode),
         monthEndChecked: Boolean(order.monthEndChecked),
         status: order.status,
         shippingStatus: order.shippingStatus,

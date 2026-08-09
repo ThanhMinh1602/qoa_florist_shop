@@ -15,29 +15,23 @@ export const DEFAULT_DELIVERY_STEP = {
   orderDate: todayInputValue(),
   customerName: '',
   customerPhone: '',
-  deliveryRecipientName: '',
-  deliveryPhone: '',
   deliveryAddress: '',
   deliveryDate: '',
   deliveryTimeSlot: '',
-  deliveryNote: '',
   note: '',
+  shippingProvider: '',
   shippingTrackingCode: '',
-  monthEndChecked: false,
 }
 
 export const EMPTY_ORDER_MONEY = {
   addOnAmount: '',
   deposit: '',
-  shippingFee: '',
+  shippingFee: '30000',
   actualShippingFee: '',
   incidentalAmount: '',
   codAmount: '',
   codManual: false,
-  paidAmount: '',
-  paymentStatus: 'unpaid',
   paymentNote: '',
-  shipDate: '',
 }
 
 export const SHIPPING_PROVIDERS = [

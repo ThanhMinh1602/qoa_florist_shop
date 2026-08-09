@@ -1,27 +1,26 @@
-const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? '/api'
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
-      ...options.headers,
-    },
-    ...options,
-  })
-
-  const payload = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(payload.message || 'Yêu cầu thất bại.')
-  }
-
-  return payload
-}
+import { apiRequest } from './client'
 
 export function submitCustomRequestApi(data) {
-  return request('/custom-requests', {
+  return apiRequest('/custom-requests', {
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+export function importCustomRequestsBulkApi(payload) {
+  return apiRequest('/custom-requests/bulk', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function fetchCustomRequestsApi(params = {}) {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      search.set(key, String(value))
+    }
+  })
+  const query = search.toString()
+  return apiRequest(`/custom-requests${query ? `?${query}` : ''}`)
 }

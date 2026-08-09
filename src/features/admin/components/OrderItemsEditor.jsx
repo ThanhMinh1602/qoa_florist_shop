@@ -46,9 +46,12 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
     0,
   )
 
+  const lineInput =
+    'rounded-md border border-outline-variant/25 bg-surface-container-lowest px-2 py-1.5 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20'
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <select
           defaultValue=""
           onChange={(event) => {
@@ -57,9 +60,9 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
               event.target.value = ''
             }
           }}
-          className="min-w-[12rem] flex-1 rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="min-w-0 flex-1 rounded-lg border border-outline-variant/25 px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
         >
-          <option value="">+ Thêm từ catalog...</option>
+          <option value="">+ Catalog…</option>
           {products
             .filter((product) => product.active !== false)
             .map((product) => (
@@ -71,38 +74,38 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
         <button
           type="button"
           onClick={addCustom}
-          className="rounded-xl border border-outline-variant/40 px-3 py-2.5 text-sm font-medium text-primary hover:bg-surface-container-low"
+          className="shrink-0 rounded-lg border border-outline-variant/40 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-surface-container-low"
         >
-          Dòng tùy chỉnh
+          Tùy chỉnh
         </button>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-outline-variant/40 px-4 py-6 text-center text-sm text-on-surface-variant">
-          Chưa có sản phẩm. Chọn từ catalog hoặc thêm dòng tùy chỉnh.
+        <p className="rounded-lg border border-dashed border-outline-variant/40 px-3 py-4 text-center text-xs text-on-surface-variant">
+          Chưa có SP — chọn catalog hoặc tùy chỉnh.
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {items.map((item, index) => {
             const lineTotal = (Number(item.unitPrice) || 0) * (Number(item.quantity) || 1)
             return (
               <div
                 key={`${item.productId || 'custom'}-${index}`}
-                className="space-y-2 rounded-xl border border-outline-variant/25 bg-surface-container-low/20 p-3"
+                className="rounded-lg border border-outline-variant/25 bg-surface-container-low/15 p-2"
               >
-                <div className="grid gap-2 sm:grid-cols-[1fr_5rem_7rem_auto]">
+                <div className="grid grid-cols-[minmax(0,1fr)_3.25rem_5.5rem_auto] items-center gap-1.5 sm:grid-cols-[minmax(0,1.4fr)_3.25rem_5.5rem_minmax(0,1fr)_auto_auto]">
                   <input
                     value={item.productName}
                     onChange={(e) => updateItem(index, { productName: e.target.value })}
-                    placeholder="vd: Hộp tulip nhỏ"
-                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                    placeholder="Tên SP"
+                    className={`${lineInput} min-w-0`}
                   />
                   <input
                     type="number"
                     min="1"
                     value={item.quantity}
                     onChange={(e) => updateItem(index, { quantity: Number(e.target.value) || 1 })}
-                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                    className={lineInput}
                     title="Số lượng"
                     placeholder="SL"
                   />
@@ -111,37 +114,38 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
                     min="0"
                     value={item.unitPrice}
                     onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) || 0 })}
-                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
+                    className={lineInput}
                     title="Đơn giá"
-                    placeholder="79000"
+                    placeholder="Giá"
                   />
+                  <input
+                    value={item.color || ''}
+                    onChange={(e) => updateItem(index, { color: e.target.value })}
+                    placeholder="Màu"
+                    className={`${lineInput} col-span-3 min-w-0 sm:col-span-1`}
+                  />
+                  <p className="hidden whitespace-nowrap text-right text-xs font-semibold text-on-surface sm:block">
+                    {formatMoney(lineTotal)}
+                  </p>
                   <button
                     type="button"
                     onClick={() => removeItem(index)}
-                    className="rounded-lg px-2 text-sm text-outline hover:bg-surface-container-lowest hover:text-red-500"
+                    className="rounded-md px-1.5 py-1 text-xs text-outline hover:bg-surface-container-lowest hover:text-red-500"
                   >
                     Xóa
                   </button>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <input
-                    value={item.color || ''}
-                    onChange={(e) => updateItem(index, { color: e.target.value })}
-                    placeholder="vd: hồng · 2 xanh dương 3 hồng"
-                    className="rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20"
-                  />
-                  <p className="flex items-center justify-end px-1 text-sm font-medium text-on-surface">
-                    {formatMoney(lineTotal)}
-                  </p>
-                </div>
+                <p className="mt-1 text-right text-xs font-medium text-on-surface sm:hidden">
+                  {formatMoney(lineTotal)}
+                </p>
               </div>
             )
           })}
         </div>
       )}
 
-      <p className="text-right text-sm font-semibold text-on-surface">
-        Tổng giá sản phẩm: {formatMoney(subtotal)}
+      <p className="text-right text-xs font-semibold text-on-surface">
+        Tổng SP: {formatMoney(subtotal)}
       </p>
     </div>
   )

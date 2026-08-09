@@ -5,6 +5,7 @@ import {
   SHIPPING_STATUS_LABELS,
 } from '../../../constants/customRequestDefaults'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
+import { normalizeTrackingCode } from '../../../utils/trackingCode'
 
 const BLACK = '#000000'
 const GRAY = '#444444'
@@ -167,7 +168,9 @@ const RequestPrintSheet = forwardRef(function RequestPrintSheet({ request }, ref
             </tr>
             <tr>
               <LabelCell>Mã vận đơn</LabelCell>
-              <ValueCell bold>{(request.shippingTrackingCode || '—').toUpperCase()}</ValueCell>
+              <ValueCell bold>
+                {normalizeTrackingCode(request.shippingTrackingCode) || '—'}
+              </ValueCell>
             </tr>
             <tr>
               <LabelCell>Trạng thái</LabelCell>

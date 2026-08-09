@@ -4,6 +4,7 @@ import { overlayFade, sheetEnter } from '../../../lib/motion'
 import { useScrollLock } from '../../../hooks/useScrollLock'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import {
+  SHIPPING_PROVIDERS,
   SHIPPING_STATUS_LABELS,
   SHIPPING_STATUS_OPTIONS,
 } from '../../../constants/customRequestDefaults'
@@ -13,12 +14,12 @@ import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
 import { calcOrderMoney } from '../../../utils/orderMoney'
+import { normalizeTrackingCode } from '../../../utils/trackingCode'
 import { buildZaloChatUrlToCustomer, openZaloChatWithCustomer } from '../../../utils/zalo'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import OrderItemsEditor, { calcItemsSubtotal } from './OrderItemsEditor'
 import OrderMoneyFields from './OrderMoneyFields'
 import RequestExportButton from './RequestExportButton'
-import RequestShippingPanel from './RequestShippingPanel'
 
 function moneyStateFromRequest(request) {
   return {
@@ -29,8 +30,6 @@ function moneyStateFromRequest(request) {
     incidentalAmount: request.incidentalAmount ?? '',
     codAmount: request.codAmount ?? '',
     codManual: true,
-    paidAmount: request.paidAmount ?? '',
-    paymentStatus: request.paymentStatus || 'unpaid',
     paymentNote: request.paymentNote || '',
   }
 }
@@ -59,7 +58,10 @@ function OrderDetailModal({
     toDateInputValue(request.shipDate) || request.deliveryDate || '',
   )
   const [shipTime, setShipTime] = useState(request.deliveryTimeSlot || '')
-  const [trackingCode, setTrackingCode] = useState(request.shippingTrackingCode || '')
+  const [shippingProvider, setShippingProvider] = useState(request.shippingProvider || '')
+  const [trackingCode, setTrackingCode] = useState(() =>
+    normalizeTrackingCode(request.shippingTrackingCode),
+  )
   const [monthEndChecked, setMonthEndChecked] = useState(Boolean(request.monthEndChecked))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -95,7 +97,8 @@ function OrderDetailModal({
     setOrderDate(toDateInputValue(request.orderDate || request.createdAt) || '')
     setNeededDate(toDateInputValue(request.shipDate) || request.deliveryDate || '')
     setShipTime(request.deliveryTimeSlot || '')
-    setTrackingCode(request.shippingTrackingCode || '')
+    setShippingProvider(request.shippingProvider || '')
+    setTrackingCode(normalizeTrackingCode(request.shippingTrackingCode))
     setMonthEndChecked(Boolean(request.monthEndChecked))
   }, [request])
 
@@ -112,8 +115,7 @@ function OrderDetailModal({
         actualShippingFee: totals.actualShippingFee,
         incidentalAmount: totals.incidentalAmount,
         codAmount: totals.codAmount,
-        paidAmount: Number(money.paidAmount) || totals.deposit,
-        paymentStatus: money.paymentStatus,
+        paidAmount: totals.deposit,
         paymentNote: money.paymentNote,
         note,
         customerName: customerName.trim(),
@@ -125,7 +127,8 @@ function OrderDetailModal({
         shipDate: neededDate || null,
         deliveryDate: neededDate || '',
         deliveryTimeSlot: shipTime,
-        shippingTrackingCode: trackingCode,
+        shippingProvider,
+        shippingTrackingCode: normalizeTrackingCode(trackingCode),
         monthEndChecked,
       })
       onUpdated?.(result.data)
@@ -232,8 +235,41 @@ function OrderDetailModal({
             </select>
           </div>
 
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4">
+            <h4 className="text-sm font-semibold text-on-surface">Khách & địa chỉ</h4>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-on-surface">Tên KH</span>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-on-surface">SĐT</span>
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </label>
+              <label className="block text-sm sm:col-span-2">
+                <span className="mb-1 block font-medium text-on-surface">Địa chỉ</span>
+                <textarea
+                  rows={2}
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
-            <h4 className="text-sm font-semibold text-on-surface">Thời gian & vận đơn</h4>
+            <h4 className="text-sm font-semibold text-on-surface">Lịch & vận đơn</h4>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <label className="block text-sm">
                 <span className="mb-1 block font-medium text-on-surface">Ngày đặt</span>
@@ -262,16 +298,36 @@ function OrderDetailModal({
                   className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-on-surface">Đơn vị vận chuyển</span>
+                <select
+                  value={shippingProvider}
+                  onChange={(e) => setShippingProvider(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">Chưa chọn</option>
+                  {SHIPPING_PROVIDERS.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="block text-sm sm:col-span-2">
                 <span className="mb-1 block font-medium text-on-surface">Mã vận đơn</span>
                 <input
                   type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  spellCheck={false}
                   value={trackingCode}
                   onChange={(e) => setTrackingCode(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                  onBlur={() => setTrackingCode((value) => normalizeTrackingCode(value))}
+                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="vd: 148143415811"
                 />
               </label>
-              <label className="flex items-center gap-2 pt-7 text-sm text-on-surface">
+              <label className="flex items-center gap-2 text-sm text-on-surface sm:col-span-3">
                 <input
                   type="checkbox"
                   checked={monthEndChecked}
@@ -306,44 +362,6 @@ function OrderDetailModal({
             </label>
           </div>
 
-          <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4">
-            <h4 className="text-sm font-semibold text-on-surface">Khách & địa chỉ</h4>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-on-surface">Tên KH</span>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-on-surface">SĐT</span>
-                <input
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </label>
-              <label className="block text-sm sm:col-span-2">
-                <span className="mb-1 block font-medium text-on-surface">Địa chỉ</span>
-                <textarea
-                  rows={2}
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </label>
-              {request.shippingStatus ? (
-                <p className="text-sm text-on-surface-variant sm:col-span-2">
-                  Giao hàng: {SHIPPING_STATUS_LABELS[request.shippingStatus] || 'Chưa giao'}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button
             type="button"
@@ -353,8 +371,6 @@ function OrderDetailModal({
           >
             {isSaving ? 'Đang lưu...' : 'Lưu đơn'}
           </button>
-
-          <RequestShippingPanel request={request} onUpdated={onUpdated} />
         </div>
       </motion.div>
     </motion.div>

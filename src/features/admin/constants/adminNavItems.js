@@ -94,6 +94,11 @@ export const ADMIN_SIDEBAR_SECTIONS = [
         icon: 'edit_note',
       },
       {
+        to: '/admin/orders/import',
+        label: 'Import từ Sheet',
+        icon: 'upload_file',
+      },
+      {
         to: '/admin/manage',
         label: 'Quản lý đơn',
         icon: 'receipt_long',

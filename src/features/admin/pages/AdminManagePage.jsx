@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
@@ -17,7 +17,23 @@ import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { buildUnifiedManageItems } from '../../../utils/buildUnifiedManageItems'
 import ManageUnifiedTable from '../components/ManageUnifiedTable'
 import OrderDetailModal from '../components/OrderDetailModal'
+import ExportOrdersExcelModal from '../components/ExportOrdersExcelModal'
 import ManageUnifiedListMobile from '../mobile/ManageUnifiedListMobile'
+
+const PAGE_SIZE = 20
+
+function buildPageButtons(totalPages, safePage) {
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
+    if (totalPages <= 7) return true
+    if (page === 1 || page === totalPages) return true
+    return Math.abs(page - safePage) <= 1
+  })
+  return pages.reduce((acc, page, index, list) => {
+    if (index > 0 && page - list[index - 1] > 1) acc.push('…')
+    acc.push(page)
+    return acc
+  }, [])
+}
 
 function AdminManagePage() {
   const { alert, confirm } = useDialog()
@@ -27,6 +43,7 @@ function AdminManagePage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [shippingFilter, setShippingFilter] = useState('')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [selectedItem, setSelectedItem] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
   const [isLoadingOrders, setIsLoadingOrders] = useState(true)
@@ -34,7 +51,10 @@ function AdminManagePage() {
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [error, setError] = useState('')
   const [updatingId, setUpdatingId] = useState(null)
+  const [exportOpen, setExportOpen] = useState(false)
   const isLgUp = useIsLgUp()
+  const listTopRef = useRef(null)
+  const skipScrollOnMount = useRef(true)
 
   const loadOrders = useCallback(async () => {
     setIsLoadingOrders(true)
@@ -95,6 +115,33 @@ function AdminManagePage() {
     })
   }, [unifiedItems, statusFilter, shippingFilter, search])
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+
+  const pagedItems = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return filteredItems.slice(start, start + PAGE_SIZE)
+  }, [filteredItems, safePage])
+
+  const pageFrom = filteredItems.length ? (safePage - 1) * PAGE_SIZE + 1 : 0
+  const pageTo = Math.min(safePage * PAGE_SIZE, filteredItems.length)
+  const pageButtons = useMemo(
+    () => buildPageButtons(totalPages, safePage),
+    [totalPages, safePage],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, shippingFilter])
+
+  useEffect(() => {
+    if (skipScrollOnMount.current) {
+      skipScrollOnMount.current = false
+      return
+    }
+    listTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [safePage])
+
   useEffect(() => {
     setSelectedIds((previous) => previous.filter((id) => filteredItems.some((item) => item.id === id)))
   }, [filteredItems])
@@ -105,8 +152,10 @@ function AdminManagePage() {
     const matched = unifiedItems.find((item) => item.kind === 'order' && item.id === highlightId)
     if (matched) {
       setSelectedItem(matched)
+      const index = filteredItems.findIndex((item) => item.id === matched.id)
+      if (index >= 0) setPage(Math.floor(index / PAGE_SIZE) + 1)
     }
-  }, [highlightId, unifiedItems])
+  }, [highlightId, unifiedItems, filteredItems])
 
   function toggleSelect(id) {
     setSelectedIds((previous) =>
@@ -116,10 +165,14 @@ function AdminManagePage() {
 
   function toggleSelectAll(checked) {
     if (!checked) {
-      setSelectedIds([])
+      setSelectedIds((previous) => previous.filter((id) => !pagedItems.some((item) => item.id === id)))
       return
     }
-    setSelectedIds(filteredItems.map((item) => item.id))
+    setSelectedIds((previous) => {
+      const next = new Set(previous)
+      pagedItems.forEach((item) => next.add(item.id))
+      return Array.from(next)
+    })
   }
 
   function clearSelection() {
@@ -262,13 +315,30 @@ function AdminManagePage() {
               Thêm, sửa, xóa và theo dõi cọc/ship/COD.
             </p>
           </div>
-          <Link
-            to="/admin/orders/new"
-            className="btn-primary inline-flex shrink-0 items-center gap-1 !px-3 !py-2 text-[10px] lg:!px-4 lg:!py-2.5 lg:text-xs"
-          >
-            <MaterialIcon name="add" className="text-lg" />
-            Lên đơn
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setExportOpen(true)}
+              className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-[10px] font-medium text-primary hover:bg-surface-container-low lg:px-4 lg:py-2.5 lg:text-xs"
+            >
+              <MaterialIcon name="download" className="text-lg" />
+              Xuất Excel
+            </button>
+            <Link
+              to="/admin/orders/import"
+              className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-[10px] font-medium text-primary hover:bg-surface-container-low lg:px-4 lg:py-2.5 lg:text-xs"
+            >
+              <MaterialIcon name="upload_file" className="text-lg" />
+              Import
+            </Link>
+            <Link
+              to="/admin/orders/new"
+              className="btn-primary inline-flex shrink-0 items-center gap-1 !px-3 !py-2 text-[10px] lg:!px-4 lg:!py-2.5 lg:text-xs"
+            >
+              <MaterialIcon name="add" className="text-lg" />
+              Lên đơn
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -369,9 +439,22 @@ function AdminManagePage() {
           </div>
         </div>
 
-        <p className="text-sm text-on-surface-variant">
-          <span className="font-semibold text-on-surface">{filteredItems.length}</span> mục
+        <p ref={listTopRef} className="scroll-mt-3 text-sm text-on-surface-variant">
+          {filteredItems.length ? (
+            <>
+              Hiện{' '}
+              <span className="font-semibold text-on-surface">
+                {pageFrom}–{pageTo}
+              </span>{' '}
+              / {filteredItems.length} mục
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-on-surface">0</span> mục
+            </>
+          )}
           {search.trim() || statusFilter || shippingFilter ? ' phù hợp bộ lọc' : ''}
+          {totalPages > 1 ? ` · trang ${safePage}/${totalPages}` : ''}
         </p>
 
         {error ? (
@@ -387,7 +470,7 @@ function AdminManagePage() {
         ) : isLgUp ? (
           <div className="animate-fade-in">
             <ManageUnifiedTable
-              items={filteredItems}
+              items={pagedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onToggleSelectAll={toggleSelectAll}
@@ -402,7 +485,7 @@ function AdminManagePage() {
         ) : (
           <div className="animate-fade-in">
             <ManageUnifiedListMobile
-              items={filteredItems}
+              items={pagedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onSelect={setSelectedItem}
@@ -414,6 +497,55 @@ function AdminManagePage() {
             />
           </div>
         )}
+
+        {!isLoading && filteredItems.length > 0 ? (
+          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-auto border-t border-outline-variant/25 bg-surface-container-lowest/95 px-4 py-2.5 shadow-[0_-6px_20px_rgba(0,0,0,0.06)] backdrop-blur md:-mx-8 md:px-8 lg:bottom-0">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-on-surface-variant">
+                Hiện {pageFrom}–{pageTo} / {filteredItems.length} · {PAGE_SIZE}/trang
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-2.5 py-1.5 text-xs font-medium text-on-surface disabled:opacity-40"
+                >
+                  Trước
+                </button>
+                {pageButtons.map((item, index) =>
+                  item === '…' ? (
+                    <span key={`gap-${index}`} className="px-1 text-xs text-on-surface-variant">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setPage(item)}
+                      className={[
+                        'min-w-8 rounded-lg px-2 py-1.5 text-xs font-medium',
+                        item === safePage
+                          ? 'bg-primary text-white'
+                          : 'border border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container-low',
+                      ].join(' ')}
+                    >
+                      {item}
+                    </button>
+                  ),
+                )}
+                <button
+                  type="button"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-2.5 py-1.5 text-xs font-medium text-on-surface disabled:opacity-40"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <AnimatePresence>
@@ -429,6 +561,12 @@ function AdminManagePage() {
           />
         ) : null}
       </AnimatePresence>
+
+      <ExportOrdersExcelModal
+        open={exportOpen}
+        orders={orders}
+        onClose={() => setExportOpen(false)}
+      />
 
       <LoadingOverlay open={busy} message={busyMessage} />
     </div>

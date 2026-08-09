@@ -28,7 +28,8 @@
     "socket.io-client": "^4.8.3",
     "swr": "^2.5.0",
     "tailwindcss": "^4.3.2",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
