@@ -89,24 +89,28 @@ function LinkSection({ section, onNavigate }) {
 }
 
 /** Menu sidebar/drawer dạng nhóm accordion */
-function AdminNavMenu({ onNavigate, className = '' }) {
+function AdminNavMenu({ onNavigate, className = '', sections = ADMIN_SIDEBAR_SECTIONS }) {
   const location = useLocation()
   const [openIds, setOpenIds] = useState(() =>
-    ADMIN_SIDEBAR_SECTIONS.filter(
-      (section) =>
-        section.type === 'group' && isAdminSectionActive(location.pathname, section),
-    ).map((section) => section.id),
+    sections
+      .filter(
+        (section) =>
+          section.type === 'group' && isAdminSectionActive(location.pathname, section),
+      )
+      .map((section) => section.id),
   )
 
   useEffect(() => {
-    const activeGroupIds = ADMIN_SIDEBAR_SECTIONS.filter(
-      (section) =>
-        section.type === 'group' && isAdminSectionActive(location.pathname, section),
-    ).map((section) => section.id)
+    const activeGroupIds = sections
+      .filter(
+        (section) =>
+          section.type === 'group' && isAdminSectionActive(location.pathname, section),
+      )
+      .map((section) => section.id)
 
     if (activeGroupIds.length === 0) return
     setOpenIds((previous) => [...new Set([...previous, ...activeGroupIds])])
-  }, [location.pathname])
+  }, [location.pathname, sections])
 
   function toggleGroup(id) {
     setOpenIds((previous) =>
@@ -119,7 +123,7 @@ function AdminNavMenu({ onNavigate, className = '' }) {
       data-scroll-lock-scrollable
       className={['flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-4', className].join(' ')}
     >
-      {ADMIN_SIDEBAR_SECTIONS.map((section) => {
+      {sections.map((section) => {
         if (section.type === 'link') {
           return <LinkSection key={section.id} section={section} onNavigate={onNavigate} />
         }

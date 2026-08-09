@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { importCustomRequestsBulkApi } from '../../../api/customRequestsApi'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { formatMoney } from '../../../utils/money'
 import { parseOrderSheetFromFile } from '../../../utils/parseOrderSheet'
+import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import ImportProgressModal from '../components/ImportProgressModal'
 
 const IMPORT_CHUNK_SIZE = 20
 const PREVIEW_PAGE_SIZE = 25
 
 function ImportOrdersPage() {
+  const isLgUp = useIsLgUp()
+  const closeRef = useRef(null)
   const [orders, setOrders] = useState([])
   const [parseErrors, setParseErrors] = useState([])
   const [meta, setMeta] = useState(null)
@@ -204,26 +208,48 @@ function ImportOrdersPage() {
     setPreviewPage(1)
   }
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-20 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
+  const page = (
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-3 py-2.5 backdrop-blur lg:px-8 lg:py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="font-display text-lg text-primary lg:text-2xl">Import đơn từ Sheet</h2>
-            <p className="mt-0.5 text-xs text-on-surface-variant lg:text-sm">
-              Nhập file CSV/Excel export từ sổ ĐƠN HÀNG QOA (Tháng 7 / Tháng 8).
-            </p>
+          <div className="flex min-w-0 items-center gap-2">
+            {!isLgUp ? (
+              <button
+                type="button"
+                onClick={() => closeRef.current?.()}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
+                aria-label="Quay lại"
+              >
+                <MaterialIcon name="arrow_back" className="text-xl" />
+              </button>
+            ) : null}
+            <div className="min-w-0">
+              <h2 className="font-display text-base text-primary lg:text-2xl">Import đơn từ Sheet</h2>
+              <p className="mt-0.5 hidden text-xs text-on-surface-variant lg:block lg:text-sm">
+                Nhập file CSV/Excel export từ sổ ĐƠN HÀNG QOA (Tháng 7 / Tháng 8).
+              </p>
+            </div>
           </div>
-          <Link
-            to="/admin/manage"
-            className="rounded-xl border border-outline-variant/40 px-3 py-2 text-xs font-medium text-primary hover:bg-surface-container-low"
-          >
-            Về quản lý đơn
-          </Link>
+          {isLgUp ? (
+            <Link
+              to="/admin/manage"
+              className="rounded-xl border border-outline-variant/40 px-3 py-2 text-xs font-medium text-primary hover:bg-surface-container-low"
+            >
+              Về quản lý đơn
+            </Link>
+          ) : (
+            <Link
+              to="/admin/manage"
+              className="inline-flex h-8 items-center rounded-lg border border-outline-variant/40 px-2.5 text-[11px] font-medium text-primary"
+            >
+              Đơn hàng
+            </Link>
+          )}
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-6xl space-y-4 p-3 md:p-5 lg:p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-6xl space-y-4 p-3 md:p-5 lg:p-6">
         <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm">
           <h3 className="text-sm font-semibold text-on-surface">1. Chuẩn bị file</h3>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-on-surface-variant">
@@ -465,6 +491,7 @@ function ImportOrdersPage() {
             </div>
           </section>
         ) : null}
+        </div>
       </div>
 
       <ImportProgressModal
@@ -478,6 +505,19 @@ function ImportOrdersPage() {
       />
     </div>
   )
+
+  if (!isLgUp) {
+    return (
+      <AdminMobileOverlayShell backTo="/admin/orders/new">
+        {({ requestClose }) => {
+          closeRef.current = requestClose
+          return page
+        }}
+      </AdminMobileOverlayShell>
+    )
+  }
+
+  return page
 }
 
 export default ImportOrdersPage

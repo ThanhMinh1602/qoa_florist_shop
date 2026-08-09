@@ -52,19 +52,19 @@ export const SHIPPING_STATUS_LABELS = {
 export const SHIPPING_STATUS_META = {
   pending: {
     label: 'Chưa giao',
-    className: 'bg-secondary-fixed text-on-secondary-container ring-secondary-fixed-dim/40',
+    className: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
   },
   booked: {
     label: 'Đã lên đơn',
-    className: 'bg-primary-fixed/50 text-primary ring-primary-fixed-dim/40',
+    className: 'bg-sky-100 text-sky-800 ring-1 ring-sky-200',
   },
   shipping: {
     label: 'Đang giao',
-    className: 'bg-amber-50 text-amber-800 ring-amber-100',
+    className: 'bg-amber-100 text-amber-900 ring-1 ring-amber-300',
   },
   delivered: {
     label: 'Đã giao',
-    className: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    className: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300',
   },
 }
 

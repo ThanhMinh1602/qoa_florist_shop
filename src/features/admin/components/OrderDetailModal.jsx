@@ -271,25 +271,25 @@ function OrderDetailModal({
           <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
             <h4 className="text-sm font-semibold text-on-surface">Lịch & vận đơn</h4>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm">
+              <label className="block min-w-0 text-sm">
                 <span className="mb-1 block font-medium text-on-surface">Ngày đặt</span>
                 <input
                   type="date"
                   value={orderDate}
                   onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
                 />
               </label>
-              <label className="block text-sm">
+              <label className="block min-w-0 text-sm">
                 <span className="mb-1 block font-medium text-on-surface">Ngày cần</span>
                 <input
                   type="date"
                   value={neededDate}
                   onChange={(e) => setNeededDate(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
                 />
               </label>
-              <label className="block text-sm">
+              <label className="block min-w-0 text-sm">
                 <span className="mb-1 block font-medium text-on-surface">Thời gian ship</span>
                 <input
                   type="text"

@@ -1,51 +1,3 @@
-/** Bottom nav mobile — bao quát chức năng chính */
-export const ADMIN_NAV_ITEMS = [
-  {
-    to: '/admin',
-    label: 'Dashboard',
-    shortLabel: 'Home',
-    icon: 'dashboard',
-    end: true,
-  },
-  {
-    to: '/admin/manage',
-    label: 'Đơn hàng',
-    shortLabel: 'Đơn',
-    icon: 'receipt_long',
-    /** Active cả khi đang lên đơn */
-    matchPrefixes: ['/admin/manage', '/admin/orders'],
-  },
-  {
-    to: '/admin/qr',
-    label: 'Thiệp QR',
-    shortLabel: 'QR',
-    icon: 'qr_code_2',
-    matchPrefixes: ['/admin/qr'],
-  },
-  {
-    to: '/admin/products',
-    label: 'Sản phẩm',
-    shortLabel: 'SP',
-    icon: 'inventory_2',
-    matchPrefixes: ['/admin/products', '/admin/categories'],
-  },
-  {
-    to: '/admin/cashbook',
-    label: 'Sổ quỹ',
-    shortLabel: 'Quỹ',
-    icon: 'account_balance_wallet',
-  },
-  {
-    id: 'more',
-    type: 'menu',
-    label: 'Thêm',
-    shortLabel: 'Thêm',
-    icon: 'apps',
-    matchPrefixes: ['/admin/settings', '/admin/change-password'],
-  },
-]
-
-
 /**
  * Sidebar / drawer — nhóm accordion.
  * type: 'link' = 1 mục, click chuyển trang (không dropdown)
@@ -153,34 +105,55 @@ export const ADMIN_SIDEBAR_SECTIONS = [
   },
 ]
 
-/** Drawer mobile (legacy flat) — các mục phụ không nằm bottom nav */
-export const ADMIN_DRAWER_ITEMS = [
+/** 4 tab chính trên mobile bottom nav */
+export const ADMIN_MOBILE_TABS = [
   {
-    to: '/admin/products',
+    id: 'dashboard',
+    label: 'Dashboard',
+    shortLabel: 'Dashboard',
+    icon: 'dashboard',
+    to: '/admin',
+    end: true,
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    shortLabel: 'Marketing',
+    icon: 'campaign',
+    defaultTo: '/admin/qr',
+    matchPrefixes: ['/admin/qr'],
+    children: [
+      { to: '/admin/qr', label: 'Danh sách QR', icon: 'list_alt', end: true },
+      { to: '/admin/qr/new', label: 'Tạo QR mới', icon: 'qr_code_2' },
+    ],
+  },
+  {
+    id: 'sales',
+    label: 'Bán hàng',
+    shortLabel: 'Bán hàng',
+    icon: 'storefront',
+    to: '/admin/orders/new',
+    defaultTo: '/admin/orders/new',
+    matchPrefixes: ['/admin/orders/new'],
+  },
+  {
+    id: 'catalog',
     label: 'Sản phẩm',
+    shortLabel: 'Sản phẩm',
     icon: 'local_florist',
-  },
-  {
-    to: '/admin/categories',
-    label: 'Danh mục',
-    icon: 'category',
-  },
-  {
-    to: '/admin/cashbook',
-    label: 'Sổ quỹ',
-    icon: 'account_balance_wallet',
-  },
-  {
-    to: '/admin/settings',
-    label: 'Cài đặt web',
-    icon: 'tune',
-  },
-  {
-    to: '/admin/change-password',
-    label: 'Đổi mật khẩu',
-    icon: 'lock',
+    defaultTo: '/admin/products',
+    matchPrefixes: ['/admin/products', '/admin/categories'],
+    children: [
+      { to: '/admin/products', label: 'Sản phẩm', icon: 'inventory_2' },
+      { to: '/admin/categories', label: 'Danh mục', icon: 'category' },
+    ],
   },
 ]
+
+/** Mục phụ trong menu góc phải (không nằm 4 tab) */
+export const ADMIN_MOBILE_MORE_SECTIONS = ADMIN_SIDEBAR_SECTIONS.filter(
+  (section) => section.id === 'finance' || section.id === 'system',
+)
 
 export function isAdminNavItemActive(pathname, item) {
   if (!item) return false
@@ -194,6 +167,17 @@ export function isAdminNavItemActive(pathname, item) {
   if (!item.to) return false
   if (item.end) return pathname === item.to
   return pathname === item.to || pathname.startsWith(`${item.to}/`)
+}
+
+export function isAdminMobileTabActive(pathname, tab) {
+  if (!tab) return false
+  if (tab.children?.length) {
+    return tab.children.some((item) => isAdminNavItemActive(pathname, item))
+      || (tab.matchPrefixes || []).some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+      )
+  }
+  return isAdminNavItemActive(pathname, tab)
 }
 
 export function isAdminSectionActive(pathname, section) {

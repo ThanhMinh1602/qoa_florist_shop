@@ -5,8 +5,9 @@ import { useAuth } from '../../../context/AuthContext'
 import { useScrollLock } from '../../../hooks/useScrollLock'
 import { drawerEnter, overlayFade } from '../../../lib/motion'
 import AdminNavMenu from '../components/AdminNavMenu'
+import { ADMIN_MOBILE_MORE_SECTIONS } from '../constants/adminNavItems'
 
-function AdminMobileDrawer({ isOpen, onClose }) {
+function AdminMobileDrawer({ isOpen, onClose, sections = ADMIN_MOBILE_MORE_SECTIONS }) {
   const { logout, username } = useAuth()
   useScrollLock(isOpen)
 
@@ -47,9 +48,10 @@ function AdminMobileDrawer({ isOpen, onClose }) {
                   Đăng nhập: <span className="font-medium text-on-surface">{username}</span>
                 </p>
               ) : null}
+              <p className="mt-1 text-[11px] text-outline">Sổ quỹ & cài đặt hệ thống</p>
             </div>
 
-            <AdminNavMenu onNavigate={onClose} className="min-h-0" />
+            <AdminNavMenu onNavigate={onClose} sections={sections} className="min-h-0" />
 
             <div className="border-t border-outline-variant/20 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <button

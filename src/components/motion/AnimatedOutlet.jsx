@@ -21,6 +21,10 @@ function outletAnimationKey(pathname) {
   return pathname
 }
 
+function isFillHeightAdminPath(path) {
+  return path === '/admin/manage'
+}
+
 function resolveAdminDirection(fromPath, toPath, navType) {
   if (navType === 'POP') return -1
 
@@ -28,6 +32,18 @@ function resolveAdminDirection(fromPath, toPath, navType) {
   if (fromPath.startsWith(`${toPath}/`)) return -1
 
   return 1
+}
+
+function AdminFillShell({ children }) {
+  return (
+    <div className="absolute inset-0 flex flex-col overflow-hidden bg-background pb-[var(--admin-bottom-nav-offset)] lg:pb-0">
+      {children}
+    </div>
+  )
+}
+
+function isTransparentAdminPath(path) {
+  return path === '/admin/orders/new'
 }
 
 function AnimatedOutlet({ variant = 'shop' }) {
@@ -54,6 +70,10 @@ function AnimatedOutlet({ variant = 'shop' }) {
     prevPathRef.current = location.pathname
   }
 
+  if (variant === 'admin' && isFillHeightAdminPath(animKey)) {
+    return <AdminFillShell>{outlet}</AdminFillShell>
+  }
+
   if (variant === 'admin' && !isLgUp) {
     // List + detail sản phẩm: detail portal tự slide; list/header luôn giữ
     if (animKey === '/admin/products') {
@@ -61,6 +81,7 @@ function AnimatedOutlet({ variant = 'shop' }) {
     }
 
     const direction = directionRef.current
+    const pageBg = isTransparentAdminPath(animKey) ? 'bg-transparent' : 'bg-background'
 
     return (
       <div className="relative min-h-full overflow-x-clip">
@@ -81,7 +102,7 @@ function AnimatedOutlet({ variant = 'shop' }) {
             animate="center"
             exit="exit"
             transition={adminMobileSlideTransition}
-            className="min-h-full w-full bg-background"
+            className={`min-h-full w-full ${pageBg}`}
             style={{ willChange: 'transform' }}
           >
             {outletByPathRef.current.get(animKey) ?? outlet}

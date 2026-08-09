@@ -949,7 +949,7 @@ function SiteSettingsPage() {
 
       <LoadingOverlay open={isSaving} message="Đang upload & lưu cài đặt..." />
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant/20 bg-surface-container-lowest/95 px-4 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 bottom-[var(--admin-bottom-nav-offset)] z-30 border-t border-outline-variant/20 bg-surface-container-lowest/95 px-4 pt-2.5 pb-2.5 backdrop-blur-xl lg:hidden">
         <button
           type="button"
           onClick={handleSave}

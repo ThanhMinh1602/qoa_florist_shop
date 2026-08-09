@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import MaterialIcon from '../../../components/common/MaterialIcon'
 import {
   OrderCustomerFieldsMobile,
   OrderNoteFieldsMobile,
@@ -27,14 +29,31 @@ function CreateOrderMobileView({
     return (
       <div className="px-4 py-4 pb-8">
         <CreateOrderSuccess request={savedRequest} onCreateAnother={onCreateAnother} compact />
+        <div className="mt-4">
+          <Link
+            to="/admin/manage"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-outline-variant/40 px-3 py-2.5 text-sm font-medium text-primary"
+          >
+            <MaterialIcon name="receipt_long" className="text-lg" />
+            Quản lý đơn
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="border-b border-outline-variant/25 bg-surface-container-lowest px-3 py-2">
-        <h2 className="font-display text-base text-primary">Lên đơn</h2>
+    <div className="flex min-h-full flex-col bg-transparent">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <h2 className="min-w-0 flex-1 font-display text-base text-primary">Lên đơn</h2>
+        <Link
+          to="/admin/manage"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/40 text-primary"
+          title="Quản lý đơn"
+          aria-label="Quản lý đơn"
+        >
+          <MaterialIcon name="receipt_long" className="text-lg" />
+        </Link>
       </div>
 
       <div className="px-2.5 py-2.5 pb-[calc(9rem+env(safe-area-inset-bottom))]">
@@ -97,12 +116,12 @@ function CreateOrderMobileView({
         </form>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 border-t border-outline-variant/25 bg-surface-container-lowest/95 px-3 py-2.5 backdrop-blur lg:bottom-0">
+      <div className="fixed inset-x-0 bottom-[var(--admin-bottom-nav-offset)] z-30 px-3 pb-2.5 pt-1 lg:hidden">
         <button
           type="submit"
           form="admin-create-order-mobile"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition active:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(74,48,32,0.22)] transition active:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? 'Đang lên đơn...' : 'Tạo đơn hàng'}
         </button>

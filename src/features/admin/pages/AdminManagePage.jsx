@@ -18,13 +18,15 @@ import { buildUnifiedManageItems } from '../../../utils/buildUnifiedManageItems'
 import ManageUnifiedTable from '../components/ManageUnifiedTable'
 import OrderDetailModal from '../components/OrderDetailModal'
 import ExportOrdersExcelModal from '../components/ExportOrdersExcelModal'
+import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import ManageUnifiedListMobile from '../mobile/ManageUnifiedListMobile'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 25
+const SCROLL_TOGGLE_DELTA = 8
 
 function buildPageButtons(totalPages, safePage) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
-    if (totalPages <= 7) return true
+    if (totalPages <= 5) return true
     if (page === 1 || page === totalPages) return true
     return Math.abs(page - safePage) <= 1
   })
@@ -34,6 +36,14 @@ function buildPageButtons(totalPages, safePage) {
     return acc
   }, [])
 }
+
+const chipClass = (active) =>
+  [
+    'shrink-0 rounded-md px-2 py-1 text-[11px] font-medium transition',
+    active
+      ? 'bg-primary text-white'
+      : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high',
+  ].join(' ')
 
 function AdminManagePage() {
   const { alert, confirm } = useDialog()
@@ -53,13 +63,14 @@ function AdminManagePage() {
   const [updatingId, setUpdatingId] = useState(null)
   const [exportOpen, setExportOpen] = useState(false)
   const isLgUp = useIsLgUp()
-  const listTopRef = useRef(null)
+  const listScrollRef = useRef(null)
   const skipScrollOnMount = useRef(true)
+  const lastScrollTopRef = useRef(0)
+  const [toolsOpen, setToolsOpen] = useState(true)
 
   const loadOrders = useCallback(async () => {
     setIsLoadingOrders(true)
     setError('')
-
     try {
       const result = await fetchCustomRequestsApi('')
       setOrders(result.data)
@@ -72,11 +83,9 @@ function AdminManagePage() {
 
   useEffect(() => {
     loadOrders()
-
     function handleNewRequest() {
       loadOrders()
     }
-
     window.addEventListener('qoa:request:new', handleNewRequest)
     return () => window.removeEventListener('qoa:request:new', handleNewRequest)
   }, [loadOrders])
@@ -85,21 +94,17 @@ function AdminManagePage() {
 
   const filteredItems = useMemo(() => {
     const keyword = search.trim().toLowerCase()
-
     return unifiedItems.filter((item) => {
       if (statusFilter) {
         if (item.kind !== 'order') return false
         const normalized = item.status === 'reviewed' ? 'arranging' : item.status
         if (normalized !== statusFilter) return false
       }
-
       if (shippingFilter) {
         const ship = item.shippingStatus || 'pending'
         if (ship !== shippingFilter) return false
       }
-
       if (!keyword) return true
-
       const haystack = [
         item.code,
         item.primaryName,
@@ -110,7 +115,6 @@ function AdminManagePage() {
       ]
         .join(' ')
         .toLowerCase()
-
       return haystack.includes(keyword)
     })
   }, [unifiedItems, statusFilter, shippingFilter, search])
@@ -139,8 +143,38 @@ function AdminManagePage() {
       skipScrollOnMount.current = false
       return
     }
-    listTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    listScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    setToolsOpen(true)
+    lastScrollTopRef.current = 0
   }, [safePage])
+
+  useEffect(() => {
+    if (isLgUp) {
+      setToolsOpen(true)
+      return undefined
+    }
+    const el = listScrollRef.current
+    if (!el) return undefined
+
+    const onScroll = () => {
+      const top = el.scrollTop
+      const delta = top - lastScrollTopRef.current
+      lastScrollTopRef.current = top
+
+      if (top <= 12) {
+        setToolsOpen(true)
+        return
+      }
+      if (delta > SCROLL_TOGGLE_DELTA) {
+        setToolsOpen(false)
+      } else if (delta < -SCROLL_TOGGLE_DELTA) {
+        setToolsOpen(true)
+      }
+    }
+
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [isLgUp, isLoadingOrders])
 
   useEffect(() => {
     setSelectedIds((previous) => previous.filter((id) => filteredItems.some((item) => item.id === id)))
@@ -148,7 +182,6 @@ function AdminManagePage() {
 
   useEffect(() => {
     if (!highlightId || unifiedItems.length === 0) return
-
     const matched = unifiedItems.find((item) => item.kind === 'order' && item.id === highlightId)
     if (matched) {
       setSelectedItem(matched)
@@ -175,13 +208,8 @@ function AdminManagePage() {
     })
   }
 
-  function clearSelection() {
-    setSelectedIds([])
-  }
-
   async function handleStatusChange(id, status) {
     setUpdatingId(id)
-
     try {
       const result = await updateCustomRequestStatusApi(id, status)
       setOrders((items) => items.map((item) => (item.id === id ? result.data : item)))
@@ -231,21 +259,17 @@ function AdminManagePage() {
     })
   }
 
-  function handleEdit(item) {
-    setSelectedItem(item)
-  }
-
   async function handleDelete(item) {
     if (busy) return
     const ok = await confirm({
       title: 'Xóa đơn hàng',
-      message: `Xóa hẳn đơn “${item.code} — ${item.primaryName}”?\nThao tác này không hoàn tác được.`,
-      confirmLabel: 'Xóa đơn',
+      message: `Xóa hẳn đơn “${item.code} — ${item.primaryName}”?`,
+      confirmLabel: 'Xóa',
       variant: 'danger',
     })
     if (!ok) return
 
-    setBusyMessage('Đang xóa đơn...')
+    setBusyMessage('Đang xóa...')
     setBusy(true)
     try {
       await deleteCustomRequestApi(item.id)
@@ -253,11 +277,6 @@ function AdminManagePage() {
       setSelectedIds((previous) => previous.filter((id) => id !== item.id))
       if (selectedItem?.id === item.id) setSelectedItem(null)
       setBusy(false)
-      await alert({
-        title: 'Đã xóa',
-        message: `Đơn ${item.code} đã được xóa.`,
-        variant: 'success',
-      })
     } catch (err) {
       setBusy(false)
       await alert({
@@ -272,8 +291,8 @@ function AdminManagePage() {
     if (busy || selectedIds.length === 0) return
     const ok = await confirm({
       title: 'Xóa nhiều đơn',
-      message: `Xóa hẳn ${selectedIds.length} đơn đã chọn?\nThao tác này không hoàn tác được.`,
-      confirmLabel: `Xóa ${selectedIds.length} đơn`,
+      message: `Xóa ${selectedIds.length} đơn đã chọn?`,
+      confirmLabel: `Xóa ${selectedIds.length}`,
       variant: 'danger',
     })
     if (!ok) return
@@ -282,16 +301,11 @@ function AdminManagePage() {
     setBusyMessage(`Đang xóa ${ids.length} đơn...`)
     setBusy(true)
     try {
-      const result = await bulkDeleteCustomRequestsApi(ids)
+      await bulkDeleteCustomRequestsApi(ids)
       setOrders((previous) => previous.filter((order) => !ids.includes(order.id)))
-      clearSelection()
+      setSelectedIds([])
       if (selectedItem && ids.includes(selectedItem.id)) setSelectedItem(null)
       setBusy(false)
-      await alert({
-        title: 'Đã xóa',
-        message: result.message || `Đã xóa ${ids.length} đơn.`,
-        variant: 'success',
-      })
     } catch (err) {
       setBusy(false)
       await alert({
@@ -304,273 +318,279 @@ function AdminManagePage() {
 
   const isLoading = isLoadingOrders && unifiedItems.length === 0
   const selectedCount = selectedIds.length
+  const iconBtn =
+    'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/40 text-primary hover:bg-surface-container-low'
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
-        <div className="flex flex-wrap items-center justify-between gap-2.5 lg:items-start lg:gap-3">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg text-primary lg:text-3xl">Đơn hàng</h2>
-            <p className="mt-1 hidden max-w-2xl text-sm text-on-surface-variant lg:block">
-              Thêm, sửa, xóa và theo dõi cọc/ship/COD.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setExportOpen(true)}
-              className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-[10px] font-medium text-primary hover:bg-surface-container-low lg:px-4 lg:py-2.5 lg:text-xs"
-            >
-              <MaterialIcon name="download" className="text-lg" />
-              Xuất Excel
-            </button>
-            <Link
-              to="/admin/orders/import"
-              className="inline-flex items-center gap-1 rounded-xl border border-outline-variant/40 px-3 py-2 text-[10px] font-medium text-primary hover:bg-surface-container-low lg:px-4 lg:py-2.5 lg:text-xs"
-            >
-              <MaterialIcon name="upload_file" className="text-lg" />
-              Import
-            </Link>
-            <Link
-              to="/admin/orders/new"
-              className="btn-primary inline-flex shrink-0 items-center gap-1 !px-3 !py-2 text-[10px] lg:!px-4 lg:!py-2.5 lg:text-xs"
-            >
-              <MaterialIcon name="add" className="text-lg" />
-              Lên đơn
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm mã, SĐT, tên..."
-            className="w-full rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface outline-none ring-primary/20 transition focus:ring-2 lg:max-w-xs"
-          />
-
-          {selectedCount > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface">
-                Đã chọn {selectedCount}
-              </span>
-              <button
-                type="button"
-                onClick={clearSelection}
-                className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
-              >
-                Bỏ chọn
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleBulkDelete}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100/80 disabled:opacity-50"
-              >
-                <MaterialIcon name="delete" className="text-base" />
-                Xóa {selectedCount} đơn
-              </button>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setShippingFilter('')}
-              className={[
-                'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
-                shippingFilter === ''
-                  ? 'border-outline bg-surface-container text-on-surface'
-                  : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
-              ].join(' ')}
-            >
-              Mọi giao hàng
-            </button>
-            {SHIPPING_STATUS_OPTIONS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setShippingFilter(item.value)}
-                className={[
-                  'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
-                  shippingFilter === item.value
-                    ? 'border-outline bg-surface-container text-on-surface'
-                    : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
-                ].join(' ')}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setStatusFilter('')}
-              className={[
-                'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
-                statusFilter === ''
-                  ? 'border-outline bg-surface-container text-on-surface'
-                  : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
-              ].join(' ')}
-            >
-              Mọi làm hàng
-            </button>
-            {ORDER_STATUS_OPTIONS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setStatusFilter(item.value)}
-                className={[
-                  'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-medium transition',
-                  statusFilter === item.value
-                    ? 'border-outline bg-surface-container text-on-surface'
-                    : 'border-outline-variant/25 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low',
-                ].join(' ')}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <p ref={listTopRef} className="scroll-mt-3 text-sm text-on-surface-variant">
-          {filteredItems.length ? (
-            <>
-              Hiện{' '}
-              <span className="font-semibold text-on-surface">
-                {pageFrom}–{pageTo}
-              </span>{' '}
-              / {filteredItems.length} mục
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-on-surface">0</span> mục
-            </>
-          )}
-          {search.trim() || statusFilter || shippingFilter ? ' phù hợp bộ lọc' : ''}
-          {totalPages > 1 ? ` · trang ${safePage}/${totalPages}` : ''}
+  function renderPaginationBar() {
+    if (isLoading || filteredItems.length === 0) return null
+    return (
+      <div className="flex items-center justify-between gap-2 px-2 py-1.5 md:px-3 lg:px-4">
+        <p className="text-[11px] text-on-surface-variant">
+          {pageFrom}–{pageTo}/{filteredItems.length}
         </p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
+          >
+            ‹
+          </button>
+          {pageButtons.map((item, index) =>
+            item === '…' ? (
+              <span key={`gap-${index}`} className="px-0.5 text-[11px] text-outline">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setPage(item)}
+                className={[
+                  'min-w-6 rounded-md px-1.5 py-1 text-[11px] font-medium',
+                  item === safePage
+                    ? 'bg-primary text-white'
+                    : 'border border-outline-variant/40 text-on-surface',
+                ].join(' ')}
+              >
+                {item}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            disabled={safePage >= totalPages}
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const showPagination = !isLoading && filteredItems.length > 0
+  const showTools = isLgUp || toolsOpen
+
+  function renderPage(requestClose) {
+    return (
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+        <header className="shrink-0 border-b border-outline-variant/25 bg-surface-container-lowest">
+          <div className="flex items-center gap-2 px-3 py-2 lg:px-6">
+            {requestClose ? (
+              <button
+                type="button"
+                onClick={requestClose}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
+                aria-label="Quay lại"
+              >
+                <MaterialIcon name="arrow_back" className="text-xl" />
+              </button>
+            ) : null}
+            <h2 className="min-w-0 flex-1 truncate font-display text-base text-primary lg:text-xl">
+              Đơn hàng
+            </h2>
+            {isLgUp ? (
+              <>
+                <button type="button" onClick={() => setExportOpen(true)} className={iconBtn} title="Xuất Excel">
+                  <MaterialIcon name="download" className="text-lg" />
+                </button>
+                <Link to="/admin/orders/import" className={iconBtn} title="Import">
+                  <MaterialIcon name="upload_file" className="text-lg" />
+                </Link>
+                <Link
+                  to="/admin/orders/new"
+                  className="inline-flex h-8 items-center gap-0.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-container"
+                >
+                  <MaterialIcon name="add" className="text-base" />
+                  Lên đơn
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/admin/orders/import" className={iconBtn} title="Import">
+                  <MaterialIcon name="upload_file" className="text-lg" />
+                </Link>
+                <button type="button" onClick={() => setExportOpen(true)} className={iconBtn} title="Xuất Excel">
+                  <MaterialIcon name="download" className="text-lg" />
+                </button>
+              </>
+            )}
+          </div>
+
+          <div
+            className={[
+              'grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+              showTools
+                ? 'grid-rows-[1fr] opacity-100'
+                : 'pointer-events-none grid-rows-[0fr] opacity-0',
+            ].join(' ')}
+            aria-hidden={!showTools}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="space-y-1.5 border-t border-outline-variant/20 px-2 pb-2 pt-1.5 md:px-3 lg:border-t-0 lg:px-4 lg:pb-2 lg:pt-0">
+                {!isLgUp && selectedCount > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds([])}
+                      className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-surface-container-low"
+                    >
+                      Bỏ
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleBulkDelete()}
+                      className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 disabled:opacity-50"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Mã / SĐT / tên…"
+                    tabIndex={showTools ? 0 : -1}
+                    className="min-w-0 flex-1 rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-2.5 py-1.5 text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary/20 sm:max-w-xs"
+                  />
+                  {isLgUp && selectedCount > 0 ? (
+                    <>
+                      <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedIds([])}
+                        className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-surface-container-low"
+                      >
+                        Bỏ
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void handleBulkDelete()}
+                        className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 disabled:opacity-50"
+                      >
+                        Xóa
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="flex gap-1 overflow-x-auto overscroll-x-contain touch-pan-x pb-0.5 [-webkit-overflow-scrolling:touch]">
+                  <button type="button" onClick={() => setShippingFilter('')} className={chipClass(shippingFilter === '')}>
+                    Giao: tất cả
+                  </button>
+                  {SHIPPING_STATUS_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setShippingFilter(item.value)}
+                      className={chipClass(shippingFilter === item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <span className="mx-0.5 w-px shrink-0 self-stretch bg-outline-variant/30" />
+                  <button type="button" onClick={() => setStatusFilter('')} className={chipClass(statusFilter === '')}>
+                    Làm: tất cả
+                  </button>
+                  {ORDER_STATUS_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setStatusFilter(item.value)}
+                      className={chipClass(statusFilter === item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
 
         {error ? (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+          <p className="shrink-0 mx-2 mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 md:mx-3 lg:mx-4" role="alert">
             {error}
           </p>
         ) : null}
 
-        {isLoading ? (
-          <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest px-6 py-16 text-center">
-            <p className="text-sm text-on-surface-variant">Đang tải...</p>
-          </div>
-        ) : isLgUp ? (
-          <div className="animate-fade-in">
+        <div
+          ref={listScrollRef}
+          data-scroll-lock-scrollable
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pt-2 touch-pan-y [-webkit-overflow-scrolling:touch] md:px-3 lg:px-4"
+        >
+          {isLoading ? (
+            <p className="py-12 text-center text-xs text-on-surface-variant">Đang tải…</p>
+          ) : isLgUp ? (
             <ManageUnifiedTable
               items={pagedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onToggleSelectAll={toggleSelectAll}
               onSelect={setSelectedItem}
-              onEdit={handleEdit}
               onDelete={handleDelete}
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
               updatingId={updatingId}
             />
-          </div>
-        ) : (
-          <div className="animate-fade-in">
+          ) : (
             <ManageUnifiedListMobile
               items={pagedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onSelect={setSelectedItem}
-              onEdit={handleEdit}
               onDelete={handleDelete}
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
               updatingId={updatingId}
             />
-          </div>
-        )}
+          )}
+        </div>
 
-        {!isLoading && filteredItems.length > 0 ? (
-          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-auto border-t border-outline-variant/25 bg-surface-container-lowest/95 px-4 py-2.5 shadow-[0_-6px_20px_rgba(0,0,0,0.06)] backdrop-blur md:-mx-8 md:px-8 lg:bottom-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-on-surface-variant">
-                Hiện {pageFrom}–{pageTo} / {filteredItems.length} · {PAGE_SIZE}/trang
-              </p>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-2.5 py-1.5 text-xs font-medium text-on-surface disabled:opacity-40"
-                >
-                  Trước
-                </button>
-                {pageButtons.map((item, index) =>
-                  item === '…' ? (
-                    <span key={`gap-${index}`} className="px-1 text-xs text-on-surface-variant">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setPage(item)}
-                      className={[
-                        'min-w-8 rounded-lg px-2 py-1.5 text-xs font-medium',
-                        item === safePage
-                          ? 'bg-primary text-white'
-                          : 'border border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container-low',
-                      ].join(' ')}
-                    >
-                      {item}
-                    </button>
-                  ),
-                )}
-                <button
-                  type="button"
-                  disabled={safePage >= totalPages}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-2.5 py-1.5 text-xs font-medium text-on-surface disabled:opacity-40"
-                >
-                  Sau
-                </button>
-              </div>
-            </div>
+        {showPagination ? (
+          <div className="mt-auto shrink-0 border-t border-outline-variant/25 bg-surface-container-lowest">
+            {renderPaginationBar()}
           </div>
         ) : null}
+
+        <AnimatePresence>
+          {selectedItem?.kind === 'order' ? (
+            <OrderDetailModal
+              key={selectedItem.id}
+              request={selectedItem.raw}
+              onClose={() => setSelectedItem(null)}
+              onStatusChange={handleStatusChange}
+              onShippingStatusChange={handleShippingStatusChange}
+              onUpdated={handleOrderUpdated}
+              isUpdating={updatingId === selectedItem.id}
+            />
+          ) : null}
+        </AnimatePresence>
+
+        <ExportOrdersExcelModal open={exportOpen} orders={orders} onClose={() => setExportOpen(false)} />
+        <LoadingOverlay open={busy} message={busyMessage} />
       </div>
+    )
+  }
 
-      <AnimatePresence>
-        {selectedItem?.kind === 'order' ? (
-          <OrderDetailModal
-            key={selectedItem.id}
-            request={selectedItem.raw}
-            onClose={() => setSelectedItem(null)}
-            onStatusChange={handleStatusChange}
-            onShippingStatusChange={handleShippingStatusChange}
-            onUpdated={handleOrderUpdated}
-            isUpdating={updatingId === selectedItem.id}
-          />
-        ) : null}
-      </AnimatePresence>
+  if (!isLgUp) {
+    return (
+      <AdminMobileOverlayShell backTo="/admin/orders/new">
+        {({ requestClose }) => renderPage(requestClose)}
+      </AdminMobileOverlayShell>
+    )
+  }
 
-      <ExportOrdersExcelModal
-        open={exportOpen}
-        orders={orders}
-        onClose={() => setExportOpen(false)}
-      />
-
-      <LoadingOverlay open={busy} message={busyMessage} />
-    </div>
-  )
+  return renderPage(null)
 }
 
 export default AdminManagePage

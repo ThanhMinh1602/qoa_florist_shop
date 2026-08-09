@@ -87,7 +87,7 @@ function NotificationBell() {
       <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-2xl shadow-primary/10 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto max-lg:w-auto"
+          className="absolute right-0 top-12 z-50 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-2xl shadow-primary/10 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-[calc(var(--admin-bottom-nav-offset)+0.75rem)] max-lg:top-auto max-lg:w-auto"
           {...popoverEnter}
         >
           <div className="flex items-center justify-between border-b border-surface-container px-4 py-3">
