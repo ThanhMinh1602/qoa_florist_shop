@@ -147,7 +147,7 @@ function OrderDetailModal({
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Đóng" />
 
       <motion.div
-        className="relative z-10 flex max-h-[min(92dvh,var(--app-vvh,92dvh))] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
         {...sheetEnter}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-container px-4 py-4 sm:px-6">

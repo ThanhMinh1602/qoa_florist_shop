@@ -13,6 +13,10 @@ function isProductEditorPath(path) {
   return path === '/admin/products/new' || /^\/admin\/products\/[^/]+\/edit$/.test(path)
 }
 
+function isCategoryEditorPath(path) {
+  return path === '/admin/categories/new' || /^\/admin\/categories\/[^/]+\/edit$/.test(path)
+}
+
 function isOrderEditorPath(path) {
   return path === '/admin/orders/new' || /^\/admin\/orders\/[^/]+\/edit$/.test(path)
 }
@@ -22,7 +26,8 @@ function outletAnimationKey(pathname) {
   if (
     pathname === '/admin/products' ||
     isProductEditorPath(pathname) ||
-    pathname === '/admin/categories'
+    pathname === '/admin/categories' ||
+    isCategoryEditorPath(pathname)
   ) {
     return '/admin/products'
   }

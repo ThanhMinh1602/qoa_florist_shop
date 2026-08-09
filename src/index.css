@@ -246,6 +246,12 @@ body {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Full-screen overlay — inset cố định; form pages cuộn bằng overflow-y-auto trên shell */
+  .app-vv-shell {
+    position: fixed;
+    inset: 0;
+  }
 }
 
 @layer components {

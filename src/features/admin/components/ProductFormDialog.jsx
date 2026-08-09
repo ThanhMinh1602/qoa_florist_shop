@@ -8,6 +8,7 @@ import { useScrollLock } from '../../../hooks/useScrollLock'
 import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { createId } from '../../../utils/id'
 import { resizeImageFile, resizeImageFiles } from '../../../utils/resizeImage'
+import AdminMobileFormActions from './AdminMobileFormActions'
 
 const EMPTY_FORM = {
   code: '',
@@ -101,7 +102,7 @@ const inputClass =
 const DESCRIPTION_MIN_ROWS = 5
 const DESCRIPTION_MAX_ROWS = 15
 
-function resizeDescriptionTextarea(el) {
+function resizeDescriptionTextarea(el, minRows = DESCRIPTION_MIN_ROWS) {
   if (!el) return
   const style = window.getComputedStyle(el)
   const lineHeight = Number.parseFloat(style.lineHeight) || 22
@@ -109,7 +110,7 @@ function resizeDescriptionTextarea(el) {
     (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0)
   const borderY =
     (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0)
-  const minHeight = lineHeight * DESCRIPTION_MIN_ROWS + paddingY + borderY
+  const minHeight = lineHeight * minRows + paddingY + borderY
   const maxHeight = lineHeight * DESCRIPTION_MAX_ROWS + paddingY + borderY
 
   el.style.height = '0px'
@@ -180,7 +181,14 @@ async function preparePickedImage(file) {
   }
 }
 
-function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) {
+function ProductImagesField({
+  images,
+  onChange,
+  disabled,
+  onRemoveCloudImage,
+  compact = false,
+  hideTitle = false,
+}) {
   const inputId = `product-images-${useId().replace(/:/g, '')}`
   const listRef = useRef(null)
   const imagesRef = useRef(images)
@@ -318,29 +326,44 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
       : null
 
   return (
-    <div className="space-y-3" ref={listRef}>
+    <div className={compact ? 'space-y-1.5' : 'space-y-3'} ref={listRef}>
       {pickerInput}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium text-on-surface">Hình ảnh sản phẩm</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        {hideTitle ? (
+          <span className="text-xs text-on-surface-variant">{images.length}/6 ảnh</span>
+        ) : (
+          <p
+            className={
+              compact ? 'text-xs font-medium text-on-surface' : 'text-sm font-medium text-on-surface'
+            }
+          >
+            Hình ảnh sản phẩm
+          </p>
+        )}
         <label
           htmlFor={canAddMore ? inputId : undefined}
           aria-disabled={!canAddMore}
           aria-label={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
           title={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
           className={[
-            'inline-flex cursor-pointer items-center gap-1 rounded-xl border border-outline-variant/40 bg-white px-3 py-2 text-sm font-medium text-primary',
+            'inline-flex cursor-pointer items-center gap-1 border border-outline-variant/40 bg-white font-medium text-primary',
+            compact ? 'rounded-lg px-2 py-1 text-[11px]' : 'rounded-xl px-3 py-2 text-sm',
             canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
           ].join(' ')}
         >
-          <MaterialIcon name="add_photo_alternate" className="text-lg" />
-          {isPicking ? '...' : `(${images.length}/6)`}
+          <MaterialIcon name="add_photo_alternate" className={compact ? 'text-base' : 'text-lg'} />
+          {isPicking ? '...' : 'Thêm'}
         </label>
       </div>
 
       {limitMessage ? (
-        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+        <p
+          className={[
+            'bg-amber-50 text-amber-800',
+            compact ? 'rounded-lg px-2 py-1.5 text-[11px]' : 'rounded-xl px-3 py-2 text-xs',
+          ].join(' ')}
+          role="status"
+        >
           {limitMessage}
         </p>
       ) : null}
@@ -350,15 +373,21 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
           htmlFor={canAddMore ? inputId : undefined}
           aria-disabled={!canAddMore}
           className={[
-            'flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 bg-white px-4 py-8 text-sm text-on-surface-variant',
+            'flex w-full cursor-pointer flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-white text-on-surface-variant',
+            compact
+              ? 'gap-1 rounded-xl px-3 py-4 text-xs'
+              : 'gap-2 rounded-2xl px-4 py-8 text-sm',
             canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
           ].join(' ')}
         >
-          <MaterialIcon name="imagesmode" className="text-3xl text-primary-fixed-dim" />
-          {isPicking ? 'Đang xử lý ảnh...' : 'Chọn ảnh từ thư viện (tối đa 6)'}
+          <MaterialIcon
+            name="imagesmode"
+            className={compact ? 'text-2xl text-primary-fixed-dim' : 'text-3xl text-primary-fixed-dim'}
+          />
+          {isPicking ? 'Đang xử lý ảnh...' : compact ? 'Thêm ảnh (tối đa 6)' : 'Chọn ảnh từ thư viện (tối đa 6)'}
         </label>
       ) : (
-        <ul className="grid grid-cols-3 gap-2 sm:gap-3">
+        <ul className={compact ? 'grid grid-cols-4 gap-1.5' : 'grid grid-cols-3 gap-2 sm:gap-3'}>
           {images.map((image, index) => {
             const isMain = index === 0
             const isDragging = draggingId === image.id
@@ -367,14 +396,15 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
             return (
               <li
                 key={image.id}
-                draggable={!disabled}
+                draggable={!disabled && !compact}
                 onDragStart={(event) => handleDragStart(event, image)}
                 onDragOver={(event) => handleDragOver(event, image)}
                 onDragLeave={() => handleDragLeave(image)}
                 onDrop={handleDrop}
                 onDragEnd={handleDragEnd}
                 className={[
-                  'relative aspect-square overflow-hidden rounded-xl border-2 bg-white transition-all duration-200 ease-out',
+                  'relative aspect-square overflow-hidden border-2 bg-white transition-all duration-200 ease-out',
+                  compact ? 'rounded-lg' : 'rounded-xl',
                   disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
                   isMain
                     ? 'border-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]'
@@ -394,7 +424,14 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
 
                 {isMain ? (
                   <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="rounded-full border border-white/50 bg-white/35 px-1.5 py-0.5 text-[8px] font-bold tracking-[0.12em] text-emerald-800 uppercase shadow-sm backdrop-blur-md sm:px-3 sm:py-1.5 sm:text-[11px] sm:tracking-[0.16em]">
+                    <span
+                      className={[
+                        'rounded-full border border-white/50 bg-white/35 font-bold tracking-[0.12em] text-emerald-800 uppercase shadow-sm backdrop-blur-md',
+                        compact
+                          ? 'px-1 py-0.5 text-[7px]'
+                          : 'px-1.5 py-0.5 text-[8px] sm:px-3 sm:py-1.5 sm:text-[11px] sm:tracking-[0.16em]',
+                      ].join(' ')}
+                    >
                       Main
                     </span>
                   </span>
@@ -406,12 +443,22 @@ function ProductImagesField({ images, onChange, disabled, onRemoveCloudImage }) 
                   onClick={() => removeImage(image)}
                   onMouseDown={(event) => event.stopPropagation()}
                   onPointerDown={(event) => event.stopPropagation()}
-                  className="absolute top-0 right-0 z-10 flex h-9 w-9 items-start justify-end p-0.5 sm:top-2 sm:right-2 sm:h-7 sm:w-7 sm:items-center sm:justify-center sm:p-0"
+                  className={[
+                    'absolute top-0 right-0 z-10 flex items-start justify-end p-0.5',
+                    compact
+                      ? 'h-7 w-7'
+                      : 'h-9 w-9 sm:top-2 sm:right-2 sm:h-7 sm:w-7 sm:items-center sm:justify-center sm:p-0',
+                  ].join(' ')}
                   aria-label="Xóa ảnh"
                   title="Xóa ảnh"
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/50 bg-black/40 text-white backdrop-blur-md transition hover:bg-red-500/90 sm:h-7 sm:w-7">
-                    <MaterialIcon name="close" className="text-sm sm:text-base" />
+                  <span
+                    className={[
+                      'flex items-center justify-center rounded-full border border-white/50 bg-black/40 text-white backdrop-blur-md transition hover:bg-red-500/90',
+                      compact ? 'h-4 w-4' : 'h-5 w-5 sm:h-7 sm:w-7',
+                    ].join(' ')}
+                  >
+                    <MaterialIcon name="close" className={compact ? 'text-xs' : 'text-sm sm:text-base'} />
                   </span>
                 </button>
               </li>
@@ -447,8 +494,20 @@ function ProductFormDialog({
   const [quickCategoryName, setQuickCategoryName] = useState('')
   const [quickCategoryBusy, setQuickCategoryBusy] = useState(false)
   const [quickCategoryError, setQuickCategoryError] = useState('')
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false)
   const quickCategoryRef = useRef(null)
   const descriptionRef = useRef(null)
+  const categoryMenuRef = useRef(null)
+
+  const fieldClass = isPage
+    ? 'w-full rounded-lg border border-outline-variant/25 px-3 py-2.5 text-[15px] text-on-surface outline-none transition placeholder:text-outline/55 focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
+    : inputClass
+  const labelClass = isPage
+    ? 'mb-1 block text-xs font-medium text-on-surface'
+    : 'mb-1 block font-medium text-on-surface'
+  const descMinRows = isPage ? 3 : DESCRIPTION_MIN_ROWS
+  const sectionTitleClass =
+    'text-[10px] font-semibold tracking-wide text-on-surface-variant uppercase'
 
   useEffect(() => {
     if (!open) {
@@ -456,22 +515,33 @@ function ProductFormDialog({
       setQuickCategoryName('')
       setQuickCategoryError('')
       setQuickCategoryBusy(false)
+      setCategoryMenuOpen(false)
     }
   }, [open])
 
   useEffect(() => {
     if (!open) return undefined
     const frame = window.requestAnimationFrame(() => {
-      resizeDescriptionTextarea(descriptionRef.current)
+      resizeDescriptionTextarea(descriptionRef.current, descMinRows)
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [open, values.description])
+  }, [open, values.description, descMinRows])
 
   useEffect(() => {
     if (!quickCategoryOpen) return undefined
     const timer = window.setTimeout(() => quickCategoryRef.current?.focus(), 40)
     return () => window.clearTimeout(timer)
   }, [quickCategoryOpen])
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return undefined
+    function onPointerDown(event) {
+      if (categoryMenuRef.current?.contains(event.target)) return
+      setCategoryMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [categoryMenuOpen])
 
   function toggleCategory(categoryId) {
     const next = selectedIds.includes(categoryId)
@@ -504,119 +574,103 @@ function ProductFormDialog({
     }
   }
 
-  const formBody = (
-    <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-on-surface">Mã SP</span>
+  const selectedCategoryNames = categoryOptions
+    .filter((category) => selectedIds.includes(category.id))
+    .map((category) => category.name)
+  const categorySummary =
+    selectedCategoryNames.length === 0
+      ? 'Chọn danh mục'
+      : selectedCategoryNames.length <= 2
+        ? selectedCategoryNames.join(', ')
+        : `${selectedCategoryNames.slice(0, 2).join(', ')} +${selectedCategoryNames.length - 2}`
+
+  const categoryField = isPage ? (
+    <div ref={categoryMenuRef} className="relative">
+      <div className="mb-1.5 flex items-center justify-between gap-1.5">
+        <h3 className={sectionTitleClass}>Danh mục</h3>
+        <button
+          type="button"
+          onClick={() => {
+            setQuickCategoryOpen((prev) => !prev)
+            setQuickCategoryError('')
+            setCategoryMenuOpen(true)
+          }}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/35 bg-white text-primary"
+          aria-label="Tạo nhanh danh mục"
+          title="Tạo nhanh danh mục"
+        >
+          <MaterialIcon name="add" className="text-base" />
+        </button>
+      </div>
+
+      {quickCategoryOpen ? (
+        <div className="mb-2 rounded-lg border border-outline-variant/25 bg-white p-2">
           <div className="flex gap-2">
             <input
-              value={values.code}
-              onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
-              placeholder="Nhập mã hoặc bấm Random"
-              maxLength={20}
-              className={`${inputClass} font-mono font-bold tracking-wider text-on-surface`}
+              ref={quickCategoryRef}
+              value={quickCategoryName}
+              onChange={(e) => setQuickCategoryName(e.target.value)}
+              placeholder="Tên danh mục mới"
+              className={fieldClass}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleQuickCreateCategory(e)
+                }
+              }}
             />
             <button
               type="button"
-              onClick={onRegenerateCode}
-              className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-outline-variant/40 bg-white px-3 text-sm font-medium text-primary hover:bg-surface-container-low"
-              title="Tạo mã ngẫu nhiên"
+              disabled={quickCategoryBusy || !quickCategoryName.trim()}
+              onClick={handleQuickCreateCategory}
+              className="btn-primary shrink-0 !rounded-lg !px-3 !py-2 text-[10px] disabled:opacity-50"
             >
-              <MaterialIcon name="casino" className="text-lg" />
-              <span className="hidden sm:inline">Random</span>
+              {quickCategoryBusy ? '...' : 'Thêm'}
             </button>
           </div>
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-on-surface">Tên sản phẩm</span>
-          <input
-            required
-            value={values.name}
-            onChange={(e) => onChange('name', e.target.value)}
-            placeholder="VD: Bó hồng đỏ Valentine"
-            className={inputClass}
-          />
-        </label>
-      </div>
-
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium text-on-surface">Mô tả sản phẩm</span>
-        <textarea
-          ref={descriptionRef}
-          rows={DESCRIPTION_MIN_ROWS}
-          value={values.description}
-          onChange={(e) => {
-            onChange('description', e.target.value)
-            resizeDescriptionTextarea(e.target)
-          }}
-          placeholder="Mô tả hoa, ý nghĩa, kích thước, dịp phù hợp..."
-          className={`${inputClass} resize-none overflow-hidden py-3 text-base leading-relaxed sm:py-2.5 sm:text-sm sm:leading-normal`}
-        />
-      </label>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-on-surface">Danh mục</p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuickCategoryOpen((prev) => !prev)
-              setQuickCategoryError('')
-            }}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/35 bg-white text-primary transition hover:bg-primary/10"
-            aria-label="Tạo nhanh danh mục"
-            title="Tạo nhanh danh mục"
-          >
-            <MaterialIcon name="add" className="text-lg" />
-          </button>
+          {quickCategoryError ? (
+            <p className="mt-1.5 text-xs text-error">{quickCategoryError}</p>
+          ) : null}
         </div>
+      ) : null}
 
-        {quickCategoryOpen ? (
-          <div className="mb-3 rounded-xl border border-outline-variant/25 bg-white p-2.5">
-            <div className="flex gap-2">
-              <input
-                ref={quickCategoryRef}
-                value={quickCategoryName}
-                onChange={(e) => setQuickCategoryName(e.target.value)}
-                placeholder="Tên danh mục mới"
-                className={`${inputClass} !py-2`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleQuickCreateCategory(e)
-                  }
-                }}
-              />
-              <button
-                type="button"
-                disabled={quickCategoryBusy || !quickCategoryName.trim()}
-                onClick={handleQuickCreateCategory}
-                className="btn-primary shrink-0 !px-3 !py-2 text-[10px] disabled:opacity-50"
-              >
-                {quickCategoryBusy ? '...' : 'Thêm'}
-              </button>
-            </div>
-            {quickCategoryError ? (
-              <p className="mt-1.5 text-xs text-error">{quickCategoryError}</p>
-            ) : null}
-          </div>
-        ) : null}
+      <button
+        type="button"
+        onClick={() => setCategoryMenuOpen((openMenu) => !openMenu)}
+        className={[
+          fieldClass,
+          'flex items-center justify-between gap-2 text-left',
+          selectedCategoryNames.length ? 'text-on-surface' : 'text-on-surface-variant',
+        ].join(' ')}
+        aria-expanded={categoryMenuOpen}
+        aria-haspopup="listbox"
+      >
+        <span className="min-w-0 flex-1 truncate">{categorySummary}</span>
+        <MaterialIcon
+          name={categoryMenuOpen ? 'expand_less' : 'expand_more'}
+          className="shrink-0 text-lg text-on-surface-variant"
+        />
+      </button>
 
-        {categoryOptions.length === 0 ? (
-          <p className="mt-1 text-xs text-outline">Chưa có danh mục — bấm + để tạo nhanh.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {categoryOptions.map((category) => {
+      {categoryMenuOpen ? (
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          className="absolute z-20 mt-1 max-h-44 w-full overflow-y-auto rounded-lg border border-outline-variant/25 bg-surface-container-lowest py-1 shadow-lg"
+        >
+          {categoryOptions.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-outline">Chưa có danh mục — bấm + để tạo.</p>
+          ) : (
+            categoryOptions.map((category) => {
               const checked = selectedIds.includes(category.id)
               return (
                 <label
                   key={category.id}
+                  role="option"
+                  aria-selected={checked}
                   className={[
-                    'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition',
-                    checked
-                      ? 'border-primary/40 bg-primary/10 text-primary'
-                      : 'border-outline-variant/30 bg-white text-on-surface-variant hover:border-primary/25',
+                    'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-surface-container-low',
+                    checked ? 'text-primary' : 'text-on-surface',
                     !category.active ? 'opacity-50' : '',
                   ].join(' ')}
                 >
@@ -626,13 +680,265 @@ function ProductFormDialog({
                     checked={checked}
                     onChange={() => toggleCategory(category.id)}
                   />
-                  {category.name}
+                  <span className="min-w-0 flex-1 truncate">{category.name}</span>
                 </label>
               )
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
+      ) : null}
+    </div>
+  ) : (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-on-surface">Danh mục</p>
+        <button
+          type="button"
+          onClick={() => {
+            setQuickCategoryOpen((prev) => !prev)
+            setQuickCategoryError('')
+          }}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/35 bg-white text-primary transition hover:bg-primary/10"
+          aria-label="Tạo nhanh danh mục"
+          title="Tạo nhanh danh mục"
+        >
+          <MaterialIcon name="add" className="text-lg" />
+        </button>
       </div>
+
+      {quickCategoryOpen ? (
+        <div className="mb-3 rounded-xl border border-outline-variant/25 bg-white p-2.5">
+          <div className="flex gap-2">
+            <input
+              ref={quickCategoryRef}
+              value={quickCategoryName}
+              onChange={(e) => setQuickCategoryName(e.target.value)}
+              placeholder="Tên danh mục mới"
+              className={`${inputClass} !py-2`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleQuickCreateCategory(e)
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={quickCategoryBusy || !quickCategoryName.trim()}
+              onClick={handleQuickCreateCategory}
+              className="btn-primary shrink-0 !px-3 !py-2 text-[10px] disabled:opacity-50"
+            >
+              {quickCategoryBusy ? '...' : 'Thêm'}
+            </button>
+          </div>
+          {quickCategoryError ? (
+            <p className="mt-1.5 text-xs text-error">{quickCategoryError}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {categoryOptions.length === 0 ? (
+        <p className="mt-1 text-xs text-outline">Chưa có danh mục — bấm + để tạo nhanh.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {categoryOptions.map((category) => {
+            const checked = selectedIds.includes(category.id)
+            return (
+              <label
+                key={category.id}
+                className={[
+                  'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition',
+                  checked
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-outline-variant/30 bg-white text-on-surface-variant hover:border-primary/25',
+                  !category.active ? 'opacity-50' : '',
+                ].join(' ')}
+              >
+                <input
+                  type="checkbox"
+                  className="accent-primary"
+                  checked={checked}
+                  onChange={() => toggleCategory(category.id)}
+                />
+                {category.name}
+              </label>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+
+  const formBodyPage = (
+    <>
+      <section className="overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest">
+        <div className="border-b border-outline-variant/20 p-2.5">
+          <h3 className={sectionTitleClass}>Thông tin</h3>
+          <div className="mt-1.5 space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block min-w-0">
+                <span className={labelClass}>Mã SP</span>
+                <div className="flex gap-1.5">
+                  <input
+                    value={values.code}
+                    onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
+                    placeholder="Mã"
+                    maxLength={20}
+                    className={`${fieldClass} min-w-0 font-mono font-bold tracking-wider`}
+                  />
+                  <button
+                    type="button"
+                    onClick={onRegenerateCode}
+                    className="inline-flex h-[42px] w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-white text-primary"
+                    title="Tạo mã ngẫu nhiên"
+                  >
+                    <MaterialIcon name="casino" className="text-lg" />
+                  </button>
+                </div>
+              </label>
+              <label className="block min-w-0">
+                <span className={labelClass}>
+                  Tên SP <span className="text-primary">*</span>
+                </span>
+                <input
+                  required
+                  value={values.name}
+                  onChange={(e) => onChange('name', e.target.value)}
+                  placeholder="Tên sản phẩm"
+                  className={fieldClass}
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className={labelClass}>Mô tả</span>
+              <textarea
+                ref={descriptionRef}
+                rows={descMinRows}
+                value={values.description}
+                onChange={(e) => {
+                  onChange('description', e.target.value)
+                  resizeDescriptionTextarea(e.target, descMinRows)
+                }}
+                placeholder="Mô tả hoa, ý nghĩa, kích thước..."
+                className={`${fieldClass} resize-none overflow-hidden leading-relaxed`}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="border-b border-outline-variant/20 p-2.5">{categoryField}</div>
+
+        <div className="p-2.5">
+          <h3 className={sectionTitleClass}>Hình ảnh</h3>
+          <div className="mt-1.5">
+            <ProductImagesField
+              images={values.images || []}
+              onChange={(next) => onChange('images', next)}
+              onRemoveCloudImage={onRemoveCloudImage}
+              disabled={false}
+              compact
+              hideTitle
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-2.5">
+        <h3 className={sectionTitleClass}>Giá & bán</h3>
+        <div className="mt-1.5 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              ['costPrice', 'Giá cost', 'Giá vốn'],
+              ['sellPrice', 'Giá bán', 'Giá bán'],
+              ['otherCost', 'Chi phí khác', 'Ship…'],
+              ['soldCount', 'Doanh số', 'Đã bán'],
+            ].map(([field, label, placeholder]) => (
+              <label key={field} className="block">
+                <span className={labelClass}>{label}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step={field === 'soldCount' ? '1' : undefined}
+                  value={values[field]}
+                  onChange={(e) => onChange(field, e.target.value)}
+                  placeholder={placeholder}
+                  className={fieldClass}
+                />
+              </label>
+            ))}
+          </div>
+          <label className="flex items-center gap-2.5 text-sm text-on-surface">
+            <input
+              type="checkbox"
+              className="accent-primary"
+              checked={values.active}
+              onChange={(e) => onChange('active', e.target.checked)}
+            />
+            Đang bán
+          </label>
+        </div>
+      </section>
+
+      {formError ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600" role="alert">
+          {formError}
+        </p>
+      ) : null}
+    </>
+  )
+
+  const formBody = (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm">
+          <span className={labelClass}>Mã SP</span>
+          <div className="flex gap-1.5">
+            <input
+              value={values.code}
+              onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
+              placeholder="Nhập mã hoặc bấm Random"
+              maxLength={20}
+              className={`${fieldClass} font-mono font-bold tracking-wider text-on-surface`}
+            />
+            <button
+              type="button"
+              onClick={onRegenerateCode}
+              className="inline-flex shrink-0 items-center justify-center gap-1 rounded-xl border border-outline-variant/40 bg-white px-3 text-sm font-medium text-primary hover:bg-surface-container-low"
+              title="Tạo mã ngẫu nhiên"
+            >
+              <MaterialIcon name="casino" className="text-lg" />
+              <span className="hidden sm:inline">Random</span>
+            </button>
+          </div>
+        </label>
+        <label className="block text-sm">
+          <span className={labelClass}>Tên sản phẩm</span>
+          <input
+            required
+            value={values.name}
+            onChange={(e) => onChange('name', e.target.value)}
+            placeholder="VD: Bó hồng đỏ Valentine"
+            className={fieldClass}
+          />
+        </label>
+      </div>
+
+      <label className="block text-sm">
+        <span className={labelClass}>Mô tả sản phẩm</span>
+        <textarea
+          ref={descriptionRef}
+          rows={descMinRows}
+          value={values.description}
+          onChange={(e) => {
+            onChange('description', e.target.value)
+            resizeDescriptionTextarea(e.target, descMinRows)
+          }}
+          placeholder="Mô tả hoa, ý nghĩa, kích thước, dịp phù hợp..."
+          className={`${fieldClass} resize-none overflow-hidden py-3 text-base leading-relaxed sm:py-2.5 sm:text-sm sm:leading-normal`}
+        />
+      </label>
+
+      {categoryField}
 
       <ProductImagesField
         images={values.images || []}
@@ -649,7 +955,7 @@ function ProductFormDialog({
           ['soldCount', 'Doanh số', 'Số đã bán'],
         ].map(([field, label, placeholder]) => (
           <label key={field} className="block text-sm">
-            <span className="mb-1 block font-medium text-on-surface">{label}</span>
+            <span className={labelClass}>{label}</span>
             <input
               type="number"
               min="0"
@@ -657,7 +963,7 @@ function ProductFormDialog({
               value={values[field]}
               onChange={(e) => onChange(field, e.target.value)}
               placeholder={placeholder}
-              className={inputClass}
+              className={fieldClass}
             />
           </label>
         ))}
@@ -710,42 +1016,37 @@ function ProductFormDialog({
   if (isPage) {
     if (!open) return null
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background">
-        <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/20 bg-surface-container-lowest/95 px-3 py-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
+        <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/25 bg-surface-container-lowest px-3 py-2">
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-surface-container"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
             aria-label="Quay lại"
           >
             <MaterialIcon name="arrow_back" className="text-xl" />
           </button>
-          <div className="min-w-0 flex-1">
-            <h2
-              id="product-form-page-title"
-              className="font-display truncate text-lg text-primary"
-            >
-              {title}
-            </h2>
-          </div>
+          <h2
+            id="product-form-page-title"
+            className="min-w-0 flex-1 truncate font-display text-base text-primary"
+          >
+            {title}
+          </h2>
         </header>
 
-        <div
-          data-scroll-lock-scrollable
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
-        >
-          <form id="product-form-page" onSubmit={onSubmit} className="space-y-4 px-4 py-4">
-            {formBody}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+          <form id="product-form-page" onSubmit={onSubmit} className="space-y-2.5 px-2.5 py-2.5 pb-4">
+            {formBodyPage}
           </form>
         </div>
 
-        <div className="shrink-0 border-t border-outline-variant/20 bg-surface-container-lowest/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
-          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-2">
+        <AdminMobileFormActions className="px-3 pt-2">
+          <div className="grid grid-cols-2 gap-2">
             {onDelete ? (
               <button
                 type="button"
                 onClick={onDelete}
-                className="rounded-xl border border-red-200/80 bg-red-50/50 px-3 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                className="rounded-xl border border-red-200/80 bg-red-50/50 px-4 py-3 text-sm font-medium text-red-600 transition active:bg-red-50"
               >
                 Xóa
               </button>
@@ -756,14 +1057,14 @@ function ProductFormDialog({
               type="submit"
               form="product-form-page"
               className={[
-                'rounded-xl bg-primary px-3 py-3 text-sm font-semibold text-white transition hover:bg-primary-container',
+                'rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(74,48,32,0.22)] transition active:bg-primary-container',
                 onDelete ? '' : 'col-span-2',
               ].join(' ')}
             >
               Lưu
             </button>
           </div>
-        </div>
+        </AdminMobileFormActions>
       </div>
     )
   }
@@ -786,7 +1087,7 @@ function ProductFormDialog({
             role="dialog"
             aria-modal="true"
             aria-labelledby="product-form-title"
-            className="relative z-10 flex max-h-[min(92dvh,var(--app-vvh,92dvh))] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
+            className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:rounded-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

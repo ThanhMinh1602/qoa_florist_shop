@@ -60,7 +60,7 @@ function AppDialog({ dialog, onResolve }) {
           >
             <div
               data-scroll-lock-scrollable
-              className="max-h-[min(80dvh,var(--app-vvh,80dvh))] overflow-y-auto overscroll-contain p-5 sm:p-6"
+              className="max-h-[min(80dvh,80%)] overflow-y-auto overscroll-contain p-5 sm:p-6"
             >
               <div className="flex gap-3">
                 <span

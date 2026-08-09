@@ -8,6 +8,7 @@ import {
 import CreateOrderSuccess from '../components/CreateOrderSuccess'
 import OrderItemsEditor from '../components/OrderItemsEditor'
 import OrderMoneyFields from '../components/OrderMoneyFields'
+import AdminMobileFormActions from '../components/AdminMobileFormActions'
 
 function CreateOrderMobileView({
   mode = 'create',
@@ -36,8 +37,8 @@ function CreateOrderMobileView({
 
   if (savedRequest && !isEdit) {
     return (
-      <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
-        <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/25 px-3 py-2">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
+        <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/25 bg-surface-container-lowest px-3 py-2">
           {onBack ? (
             <button
               type="button"
@@ -50,10 +51,7 @@ function CreateOrderMobileView({
           ) : null}
           <h2 className="min-w-0 flex-1 font-display text-base text-primary">Đơn đã tạo</h2>
         </header>
-        <div
-          data-scroll-lock-scrollable
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8 touch-pan-y [-webkit-overflow-scrolling:touch]"
-        >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8 [-webkit-overflow-scrolling:touch]">
           <CreateOrderSuccess request={savedRequest} onCreateAnother={onCreateAnother} compact />
           {onBack ? (
             <button
@@ -71,8 +69,8 @@ function CreateOrderMobileView({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
-      <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/25 px-3 py-2">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 items-center gap-2 border-b border-outline-variant/25 bg-surface-container-lowest px-3 py-2">
         {onBack ? (
           <button
             type="button"
@@ -86,11 +84,8 @@ function CreateOrderMobileView({
         <h2 className="min-w-0 flex-1 truncate font-display text-base text-primary">{pageTitle}</h2>
       </header>
 
-      <div
-        data-scroll-lock-scrollable
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2.5 touch-pan-y [-webkit-overflow-scrolling:touch]"
-      >
-        <form id="admin-order-form-mobile" onSubmit={onSubmit} className="space-y-2.5 pb-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+        <form id="admin-order-form-mobile" onSubmit={onSubmit} className="space-y-2.5 px-2.5 py-2.5 pb-4">
           <section className="overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest">
             <div className="border-b border-outline-variant/20 p-2.5">
               <h3 className="text-[10px] font-semibold tracking-wide text-on-surface-variant uppercase">
@@ -149,7 +144,7 @@ function CreateOrderMobileView({
         </form>
       </div>
 
-      <div className="shrink-0 border-t border-outline-variant/20 bg-surface-container-lowest px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <AdminMobileFormActions className="px-3 pt-2">
         <button
           type="submit"
           form="admin-order-form-mobile"
@@ -158,7 +153,7 @@ function CreateOrderMobileView({
         >
           {isSubmitting ? primaryBusyLabel : primaryLabel}
         </button>
-      </div>
+      </AdminMobileFormActions>
     </div>
   )
 }

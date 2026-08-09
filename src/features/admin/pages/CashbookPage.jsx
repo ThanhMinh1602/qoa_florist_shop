@@ -277,7 +277,7 @@ function CashbookPage() {
           />
           <form
             onSubmit={handleSubmit}
-            className="relative z-10 flex max-h-[min(90dvh,var(--app-vvh,90dvh),640px)] w-full flex-col rounded-t-3xl bg-surface-container-lowest shadow-2xl"
+            className="relative z-10 flex max-h-[min(90dvh,640px)] w-full flex-col rounded-t-3xl bg-surface-container-lowest shadow-2xl"
           >
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex flex-1 flex-col items-center">

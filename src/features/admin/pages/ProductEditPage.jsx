@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
 import { useNavigate, useParams } from 'react-router-dom'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
@@ -12,8 +10,7 @@ import { createCategoryApi } from '../../../api/categoriesApi'
 import { deleteUploadedImageApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useAdminCategories, useProducts } from '../../../hooks/swr'
-import { useScrollLock } from '../../../hooks/useScrollLock'
-import { adminMobileSlideTransition, easeOut } from '../../../lib/motion'
+import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import ProductFormDialog, {
   EMPTY_FORM,
   generateProductCode,
@@ -42,12 +39,10 @@ function ProductEditPage() {
   const [formError, setFormError] = useState('')
   const [isBusy, setIsBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
-  const [leaving, setLeaving] = useState(false)
   const removedPublicIdsRef = useRef([])
   const initializedIdRef = useRef(isCreate ? 'new' : null)
-
-  // Cover full viewport — không đụng header/nav layout (tránh giật khi back)
-  useScrollLock(true)
+  const formImagesRef = useRef(form.images)
+  formImagesRef.current = form.images
 
   useEffect(() => {
     if (isCreate) {
@@ -74,16 +69,10 @@ function ProductEditPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ hydrate khi đổi product
   }, [isCreate, product])
 
-  const finishLeave = useCallback(() => {
-    revokeLocalPreviews(form.images)
+  const cleanupLeave = useCallback(() => {
+    revokeLocalPreviews(formImagesRef.current)
     removedPublicIdsRef.current = []
-    navigate('/admin/products')
-  }, [form.images, navigate])
-
-  const goBack = useCallback(() => {
-    if (leaving || isBusy) return
-    setLeaving(true)
-  }, [isBusy, leaving])
+  }, [])
 
   function handleChange(field, value) {
     setFormError('')
@@ -103,7 +92,7 @@ function ProductEditPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (isBusy || leaving) return
+    if (isBusy) return
 
     const snapshot = {
       ...form,
@@ -165,7 +154,7 @@ function ProductEditPage() {
   }
 
   async function handleDelete() {
-    if (isBusy || isCreate || !product || leaving) return
+    if (isBusy || isCreate || !product) return
     const ok = await confirm({
       title: 'Xóa sản phẩm',
       message: `Xóa mềm “${product.name}”? Sản phẩm sẽ biến mất khỏi danh sách quản lý và shop (không xóa vĩnh viễn).`,
@@ -199,81 +188,67 @@ function ProductEditPage() {
     }
   }
 
-  const shell = (child) => {
-    if (typeof document === 'undefined') return null
-    return createPortal(
-      <motion.div
-        className="fixed inset-0 z-[80] flex flex-col bg-background"
-        initial={{ x: '100%' }}
-        animate={{ x: leaving ? '100%' : 0 }}
-        transition={
-          leaving
-            ? { duration: 0.26, ease: easeOut }
-            : adminMobileSlideTransition
-        }
-        onAnimationComplete={() => {
-          if (leaving) finishLeave()
+  return (
+    <>
+      <AdminMobileOverlayShell backTo="/admin/products" onBeforeLeave={cleanupLeave}>
+        {({ requestClose }) => {
+          if (!isCreate && isLoading && !product) {
+            return (
+              <p className="flex flex-1 items-center justify-center p-6 text-sm text-on-surface-variant">
+                Đang tải...
+              </p>
+            )
+          }
+
+          if (!isCreate && !isLoading && !product) {
+            return (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                <p className="text-sm text-on-surface-variant">Không tìm thấy sản phẩm.</p>
+                <button type="button" className="btn-primary" onClick={requestClose}>
+                  Quay lại danh sách
+                </button>
+              </div>
+            )
+          }
+
+          if (!formReady) {
+            return (
+              <p className="flex flex-1 items-center justify-center p-6 text-sm text-on-surface-variant">
+                Đang tải...
+              </p>
+            )
+          }
+
+          return (
+            <ProductFormDialog
+              mode="page"
+              open
+              values={form}
+              onChange={handleChange}
+              onSubmit={handleSubmit}
+              onClose={requestClose}
+              onDelete={isCreate ? undefined : handleDelete}
+              onRegenerateCode={regenerateCode}
+              onRemoveCloudImage={queueRemovedCloudImage}
+              onQuickCreateCategory={async (name) => {
+                const result = await createCategoryApi({
+                  name,
+                  showInQuickFilter: true,
+                  active: true,
+                })
+                await mutateCategories()
+                return result.data
+              }}
+              categoryOptions={categories}
+              isEditing={!isCreate}
+              formError={formError}
+              title={isCreate ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}
+            />
+          )
         }}
-      >
-        {child}
-        <LoadingOverlay open={isBusy} message={busyMessage} />
-      </motion.div>,
-      document.body,
-    )
-  }
-
-  if (!isCreate && isLoading && !product) {
-    return shell(
-      <p className="flex flex-1 items-center justify-center p-6 text-sm text-on-surface-variant">
-        Đang tải...
-      </p>,
-    )
-  }
-
-  if (!isCreate && !isLoading && !product) {
-    return shell(
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-sm text-on-surface-variant">Không tìm thấy sản phẩm.</p>
-        <button type="button" className="btn-primary" onClick={goBack}>
-          Quay lại danh sách
-        </button>
-      </div>,
-    )
-  }
-
-  if (!formReady) {
-    return shell(
-      <p className="flex flex-1 items-center justify-center p-6 text-sm text-on-surface-variant">
-        Đang tải...
-      </p>,
-    )
-  }
-
-  return shell(
-    <ProductFormDialog
-      mode="page"
-      open
-      values={form}
-      onChange={handleChange}
-      onSubmit={handleSubmit}
-      onClose={goBack}
-      onDelete={isCreate ? undefined : handleDelete}
-      onRegenerateCode={regenerateCode}
-      onRemoveCloudImage={queueRemovedCloudImage}
-      onQuickCreateCategory={async (name) => {
-        const result = await createCategoryApi({
-          name,
-          showInQuickFilter: true,
-          active: true,
-        })
-        await mutateCategories()
-        return result.data
-      }}
-      categoryOptions={categories}
-      isEditing={!isCreate}
-      formError={formError}
-      title={isCreate ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}
-    />,
+      </AdminMobileOverlayShell>
+      <LoadingOverlay open={isBusy} message={busyMessage} />
+    </>
   )
 }
 

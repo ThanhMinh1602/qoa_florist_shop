@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useSWRConfig } from 'swr'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import { overlayFade, sheetEnter } from '../../../lib/motion'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   bulkDeleteCategoriesApi,
@@ -13,10 +12,10 @@ import {
 } from '../../../api/categoriesApi'
 import { useDialog } from '../../../context/DialogContext'
 import { useAdminCategories } from '../../../hooks/swr'
-import { useScrollLock } from '../../../hooks/useScrollLock'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { swrKeys } from '../../../hooks/swr/keys'
 import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
+import CategoryFormDialog, { EMPTY_CATEGORY_FORM } from '../components/CategoryFormDialog'
 import CategoriesListMobile, {
   CategoriesListMobileSkeleton,
 } from '../mobile/CategoriesListMobile'
@@ -24,15 +23,6 @@ import CategoriesListMobile, {
 const PAGE_SIZE = 25
 const SEARCH_DEBOUNCE_MS = 300
 const SCROLL_TOGGLE_DELTA = 8
-
-const inputClass =
-  'w-full rounded-xl border border-outline-variant/25 bg-white/50 px-3 py-2.5 text-sm outline-none backdrop-blur-sm focus:ring-2 focus:ring-primary/20'
-
-const EMPTY_FORM = {
-  name: '',
-  showInQuickFilter: true,
-  active: true,
-}
 
 const actionBtnClass =
   'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/40 text-xs font-semibold backdrop-blur-md transition hover:bg-white/70 hover:shadow-sm disabled:opacity-50'
@@ -50,136 +40,8 @@ function buildPageButtons(totalPages, safePage) {
   }, [])
 }
 
-function CategoryFormDialog({
-  open,
-  title,
-  values,
-  onChange,
-  onSubmit,
-  onClose,
-  formError,
-  isEditing,
-}) {
-  useScrollLock(open)
-  const nameRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    const timer = window.setTimeout(() => nameRef.current?.focus(), 50)
-    return () => window.clearTimeout(timer)
-  }, [open])
-
-  return (
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4"
-          {...overlayFade}
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm"
-            aria-label="Đóng"
-            onClick={onClose}
-          />
-
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="category-form-title"
-            className="relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl border border-white/50 bg-surface-container-lowest/90 shadow-2xl backdrop-blur-2xl sm:rounded-2xl"
-            {...sheetEnter}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-white/40 px-5 py-4">
-              <div>
-                <h3 id="category-form-title" className="text-lg font-semibold text-on-surface">
-                  {title}
-                </h3>
-                <p className="mt-1 text-sm text-on-surface-variant">
-                  {isEditing ? 'Cập nhật thông tin danh mục.' : 'Thêm danh mục mới vào hệ thống.'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-white/35 text-outline backdrop-blur-md transition hover:bg-white/60 hover:text-on-surface"
-                aria-label="Đóng"
-              >
-                <MaterialIcon name="close" className="text-xl" />
-              </button>
-            </div>
-
-            <form
-              data-scroll-lock-scrollable
-              onSubmit={onSubmit}
-              className="max-h-[min(80dvh,var(--app-vvh,80dvh))] space-y-4 overflow-y-auto overscroll-contain px-5 py-4"
-            >
-              <label className="block text-sm">
-                <span className="mb-1.5 block font-medium text-on-surface">Tên danh mục</span>
-                <input
-                  ref={nameRef}
-                  required
-                  value={values.name}
-                  onChange={(e) => onChange('name', e.target.value)}
-                  placeholder="Ví dụ: Hoa sáp"
-                  className={inputClass}
-                />
-              </label>
-
-              <div className="space-y-2.5 rounded-2xl border border-white/45 bg-white/30 p-3 backdrop-blur-md">
-                <label className="flex items-center gap-2.5 text-sm text-on-surface">
-                  <input
-                    type="checkbox"
-                    className="accent-primary"
-                    checked={values.showInQuickFilter}
-                    onChange={(e) => onChange('showInQuickFilter', e.target.checked)}
-                  />
-                  Hiện trong lọc nhanh shop
-                </label>
-                <label className="flex items-center gap-2.5 text-sm text-on-surface">
-                  <input
-                    type="checkbox"
-                    className="accent-primary"
-                    checked={values.active}
-                    onChange={(e) => onChange('active', e.target.checked)}
-                  />
-                  Đang dùng
-                </label>
-              </div>
-
-              {formError ? (
-                <p
-                  className="rounded-xl bg-red-50/90 px-4 py-3 text-sm text-red-600 backdrop-blur-sm"
-                  role="alert"
-                >
-                  {formError}
-                </p>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  type="submit"
-                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"
-                >
-                  Lưu
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-xl border border-white/55 bg-white/40 px-4 py-2.5 text-sm font-medium text-on-surface-variant backdrop-blur-md hover:bg-white/70"
-                >
-                  Hủy
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  )
-}
-
 function CategoriesPage() {
+  const navigate = useNavigate()
   const { alert, confirm } = useDialog()
   const { mutate: globalMutate } = useSWRConfig()
   const {
@@ -191,7 +53,7 @@ function CategoriesPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState(EMPTY_CATEGORY_FORM)
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
@@ -341,7 +203,7 @@ function CategoriesPage() {
   function closeForm() {
     setShowForm(false)
     setEditingId(null)
-    setForm(EMPTY_FORM)
+    setForm(EMPTY_CATEGORY_FORM)
     setFormError('')
   }
 
@@ -352,14 +214,22 @@ function CategoriesPage() {
 
   function openCreate() {
     if (busy) return
+    if (!isLgUp) {
+      navigate('/admin/categories/new')
+      return
+    }
     setEditingId(null)
-    setForm(EMPTY_FORM)
+    setForm(EMPTY_CATEGORY_FORM)
     setFormError('')
     setShowForm(true)
   }
 
   function openEdit(category) {
     if (busy) return
+    if (!isLgUp) {
+      navigate(`/admin/categories/${category.id}/edit`)
+      return
+    }
     setEditingId(category.id)
     setForm({
       name: category.name || '',
@@ -694,16 +564,6 @@ function CategoriesPage() {
           </div>
         ) : null}
 
-        <CategoryFormDialog
-          open={showForm}
-          title={editingId ? 'Sửa danh mục' : 'Thêm danh mục'}
-          values={form}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          onClose={closeForm}
-          formError={formError}
-          isEditing={Boolean(editingId)}
-        />
         <LoadingOverlay open={busy} message={busyMessage} />
       </div>
     )
@@ -905,13 +765,21 @@ function CategoriesPage() {
 
   if (!isLgUp) {
     return (
-      <AdminMobileOverlayShell backTo="/admin/products">
-        {({ requestClose }) => renderMobile(requestClose)}
-      </AdminMobileOverlayShell>
+      <>
+        <AdminMobileOverlayShell backTo="/admin/products">
+          {({ requestClose }) => renderMobile(requestClose)}
+        </AdminMobileOverlayShell>
+        <Outlet />
+      </>
     )
   }
 
-  return renderDesktop()
+  return (
+    <>
+      {renderDesktop()}
+      <Outlet />
+    </>
+  )
 }
 
 export default CategoriesPage

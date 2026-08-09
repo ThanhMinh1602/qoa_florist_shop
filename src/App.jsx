@@ -12,6 +12,7 @@ import LoginPage from './features/admin/pages/LoginPage'
 import ProductsPage from './features/admin/pages/ProductsPage'
 import ProductEditPage from './features/admin/pages/ProductEditPage'
 import CategoriesPage from './features/admin/pages/CategoriesPage'
+import CategoryEditPage from './features/admin/pages/CategoryEditPage'
 import QrListPage from './features/admin/pages/QrListPage'
 import SiteSettingsPage from './features/admin/pages/SiteSettingsPage'
 import GalaxyOfLoveScreen from './features/greeting/GalaxyOfLoveScreen'
@@ -53,7 +54,10 @@ function App() {
             <Route path="new" element={<ProductEditPage />} />
             <Route path=":productId/edit" element={<ProductEditPage />} />
           </Route>
-          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="categories" element={<CategoriesPage />}>
+            <Route path="new" element={<CategoryEditPage />} />
+            <Route path=":categoryId/edit" element={<CategoryEditPage />} />
+          </Route>
           <Route path="cashbook" element={<CashbookPage />} />
           <Route path="settings" element={<SiteSettingsPage />} />
           <Route path="create" element={<Navigate to="/admin/qr/new" replace />} />
