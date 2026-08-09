@@ -1,4 +1,5 @@
 import { getAuthToken } from '../utils/authStorage'
+import { logger } from '../utils/logger'
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? '/api'
 
@@ -22,16 +23,29 @@ export async function apiRequest(path, options = {}) {
     headers['Content-Type'] = 'application/json'
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  })
+  const method = options.method || 'GET'
+  const started = performance.now()
 
-  const payload = await response.json().catch(() => ({}))
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    })
 
-  if (!response.ok) {
-    throw new Error(payload.message || 'Yêu cầu thất bại.')
+    const payload = await response.json().catch(() => ({}))
+    const ms = Math.round(performance.now() - started)
+
+    if (!response.ok) {
+      logger.warn('API error', { method, path, status: response.status, ms, message: payload.message })
+      throw new Error(payload.message || 'Yêu cầu thất bại.')
+    }
+
+    logger.debug('API ok', { method, path, status: response.status, ms })
+    return payload
+  } catch (err) {
+    if (err instanceof Error && err.message !== 'Yêu cầu thất bại.') {
+      logger.error('API failed', { method, path, message: err.message })
+    }
+    throw err
   }
-
-  return payload
 }

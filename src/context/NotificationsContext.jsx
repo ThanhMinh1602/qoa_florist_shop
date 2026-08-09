@@ -5,8 +5,10 @@ import {
   markAllNotificationsReadApi,
   markNotificationReadApi,
 } from '../api/notificationsApi'
+// SOCKET TẠM TẮT
 import { connectAdminSocket, disconnectAdminSocket } from '../api/adminSocket'
 import { getAuthToken } from '../utils/authStorage'
+import { logger } from '../utils/logger'
 import { useAuth } from './AuthContext'
 
 const NotificationsContext = createContext(null)
@@ -25,57 +27,71 @@ export function NotificationsProvider({ children }) {
       ])
       setNotifications(listResult.data)
       setUnreadCount(countResult.data.count)
-    } catch {
-      // ignore fetch errors
+      logger.debug('Notifications loaded', {
+        count: listResult.data?.length,
+        unread: countResult.data.count,
+      })
+    } catch (err) {
+      logger.warn('Failed to load notifications', err?.message || err)
     }
   }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
-      disconnectAdminSocket()
+      // disconnectAdminSocket()
       setIsConnected(false)
       return undefined
     }
 
     loadNotifications()
 
+    // SOCKET TẠM TẮT — chỉ poll REST
     const token = getAuthToken()
-    const socket = connectAdminSocket(token)
+    connectAdminSocket(token) // no-op + log
+    setIsConnected(false)
 
-    if (!socket) return undefined
+    const pollId = window.setInterval(() => {
+      void loadNotifications()
+    }, 30000)
 
-    function handleConnect() {
-      setIsConnected(true)
-    }
-
-    function handleDisconnect() {
-      setIsConnected(false)
-    }
-
-    function handleNewNotification(notification) {
-      setNotifications((items) => {
-        const exists = items.some((item) => item.id === notification.id)
-        if (exists) return items
-        return [notification, ...items].slice(0, 15)
-      })
-      setUnreadCount((count) => count + 1)
-      window.dispatchEvent(new CustomEvent('qoa:request:new'))
-    }
-
-    socket.on('connect', handleConnect)
-    socket.on('disconnect', handleDisconnect)
-    socket.on('notification:new', handleNewNotification)
-
-    if (socket.connected) {
-      setIsConnected(true)
-    }
+    // const socket = connectAdminSocket(token)
+    // if (!socket) return undefined
+    //
+    // function handleConnect() {
+    //   setIsConnected(true)
+    // }
+    //
+    // function handleDisconnect() {
+    //   setIsConnected(false)
+    // }
+    //
+    // function handleNewNotification(notification) {
+    //   setNotifications((items) => {
+    //     const exists = items.some((item) => item.id === notification.id)
+    //     if (exists) return items
+    //     return [notification, ...items].slice(0, 15)
+    //   })
+    //   setUnreadCount((count) => count + 1)
+    //   window.dispatchEvent(new CustomEvent('qoa:request:new'))
+    // }
+    //
+    // socket.on('connect', handleConnect)
+    // socket.on('disconnect', handleDisconnect)
+    // socket.on('notification:new', handleNewNotification)
+    //
+    // if (socket.connected) {
+    //   setIsConnected(true)
+    // }
 
     return () => {
-      socket.off('connect', handleConnect)
-      socket.off('disconnect', handleDisconnect)
-      socket.off('notification:new', handleNewNotification)
+      window.clearInterval(pollId)
       disconnectAdminSocket()
       setIsConnected(false)
+      // socket.off('connect', handleConnect)
+      // socket.off('disconnect', handleDisconnect)
+      // socket.off('notification:new', handleNewNotification)
+      // disconnectAdminSocket()
+      // setIsConnected(false)
     }
   }, [isAuthenticated, loadNotifications])
 
