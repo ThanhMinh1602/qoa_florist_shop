@@ -4,8 +4,21 @@ export function fetchPublicCategoriesApi() {
   return apiRequest('/categories/public')
 }
 
-export function fetchCategoriesApi() {
-  return apiRequest('/categories')
+/**
+ * @param {object} [params] `{ q, page, limit, active }` — omit page/limit for full list
+ */
+export function fetchCategoriesApi(params = {}) {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || String(value).trim() === '') return
+    if (typeof value === 'boolean') {
+      search.set(key, value ? 'true' : 'false')
+      return
+    }
+    search.set(key, String(value))
+  })
+  const query = search.toString()
+  return apiRequest(`/categories${query ? `?${query}` : ''}`)
 }
 
 export function createCategoryApi(data) {
