@@ -10,7 +10,7 @@ import { adminMobileSlideTransition, easeOut } from '../../../lib/motion'
  */
 function AdminMobileOverlayShell({
   children,
-  backTo = '/admin/orders/new',
+  backTo = '/admin/manage',
   enabled = true,
 }) {
   const navigate = useNavigate()
@@ -35,7 +35,7 @@ function AdminMobileOverlayShell({
 
   return createPortal(
     <motion.div
-      className="fixed inset-0 z-[80] flex flex-col bg-background"
+      className="fixed inset-0 z-[80] flex h-[var(--app-vvh,100dvh)] max-h-[var(--app-vvh,100dvh)] min-h-0 flex-col overflow-hidden bg-background"
       initial={{ x: '100%' }}
       animate={{ x: leaving ? '100%' : 0 }}
       transition={leaving ? { duration: 0.26, ease: easeOut } : adminMobileSlideTransition}
@@ -43,7 +43,7 @@ function AdminMobileOverlayShell({
         if (leaving) finishLeave()
       }}
     >
-      {content}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{content}</div>
     </motion.div>,
     document.body,
   )

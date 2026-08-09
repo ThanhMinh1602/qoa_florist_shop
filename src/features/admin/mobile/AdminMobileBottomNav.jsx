@@ -56,17 +56,17 @@ function AdminMobileBottomNav() {
       return
     }
 
-    navigate(tab.to || tab.defaultTo)
+    navigate(tab.to || tab.defaultTo, { replace: tab.id === 'sales' })
   }
 
   return (
     <>
       <div
         ref={navRef}
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 lg:hidden"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden"
       >
         <nav
-          className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-0.5 rounded-2xl border border-white/80 bg-surface-container-lowest px-1.5 py-1 shadow-[0_8px_28px_rgba(74,48,32,0.12)] ring-1 ring-outline-variant/20"
+          className="pointer-events-auto relative flex w-full items-center justify-between gap-0.5 border-t border-outline-variant/25 bg-surface-container-lowest px-1 pb-[env(safe-area-inset-bottom)] pt-0.5"
           aria-label="Điều hướng chính"
         >
           {ADMIN_MOBILE_TABS.map((tab) => {
@@ -79,26 +79,33 @@ function AdminMobileBottomNav() {
                 type="button"
                 onClick={() => handleTabPress(tab)}
                 className={[
-                  'relative flex h-9 flex-1 items-center justify-center rounded-xl transition-all duration-200 ease-out active:scale-95',
+                  'relative z-10 mx-0.5 flex h-8 flex-1 items-center justify-center rounded-lg transition-colors duration-200 ease-out active:opacity-80',
                   isActive
-                    ? 'bg-primary text-on-primary shadow-[0_4px_12px_rgba(74,48,32,0.22)]'
-                    : 'text-on-surface-variant hover:bg-surface-container-low/80 hover:text-primary',
+                    ? 'text-on-primary'
+                    : 'text-on-surface-variant hover:text-primary',
                 ].join(' ')}
                 aria-label={tab.label}
                 title={tab.label}
                 aria-current={isActive ? 'page' : undefined}
                 aria-haspopup={hasChildren ? 'dialog' : undefined}
               >
+                {isActive ? (
+                  <motion.span
+                    layoutId="admin-bottom-nav-active"
+                    className="absolute inset-0 -z-10 rounded-lg bg-primary"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.7 }}
+                  />
+                ) : null}
                 <MaterialIcon
                   name={tab.icon}
-                  className={['text-[1.1rem] transition-transform duration-200', isActive ? 'scale-105' : ''].join(
+                  className={['relative text-[1.05rem] transition-transform duration-200', isActive ? 'scale-105' : ''].join(
                     ' ',
                   )}
                 />
                 {hasChildren ? (
                   <span
                     className={[
-                      'absolute right-1.5 top-1.5 h-1 w-1 rounded-full',
+                      'absolute right-1.5 top-1 h-1 w-1 rounded-full',
                       isActive ? 'bg-on-primary/70' : 'bg-primary/45',
                     ].join(' ')}
                   />

@@ -17,6 +17,7 @@ import {
 import CreateOrderSuccess from '../components/CreateOrderSuccess'
 import OrderItemsEditor, { calcItemsSubtotal } from '../components/OrderItemsEditor'
 import OrderMoneyFields from '../components/OrderMoneyFields'
+import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import CreateOrderMobileView from '../mobile/CreateOrderMobileView'
 
 function CreateOrderPage() {
@@ -121,21 +122,27 @@ function CreateOrderPage() {
 
   if (!isLgUp) {
     return (
-      <CreateOrderMobileView
-        deliveryData={deliveryData}
-        products={products}
-        items={items}
-        money={money}
-        productsTotal={productsTotal}
-        error={error}
-        isSubmitting={isSubmitting}
-        savedRequest={savedRequest}
-        onDeliveryChange={handleDeliveryChange}
-        onItemsChange={setItems}
-        onMoneyChange={handleMoneyChange}
-        onSubmit={handleSubmit}
-        onCreateAnother={handleCreateAnother}
-      />
+      <AdminMobileOverlayShell backTo="/admin/manage">
+        {({ requestClose }) => (
+          <CreateOrderMobileView
+            mode="create"
+            deliveryData={deliveryData}
+            products={products}
+            items={items}
+            money={money}
+            productsTotal={productsTotal}
+            error={error}
+            isSubmitting={isSubmitting}
+            savedRequest={savedRequest}
+            onDeliveryChange={handleDeliveryChange}
+            onItemsChange={setItems}
+            onMoneyChange={handleMoneyChange}
+            onSubmit={handleSubmit}
+            onCreateAnother={handleCreateAnother}
+            onBack={requestClose}
+          />
+        )}
+      </AdminMobileOverlayShell>
     )
   }
 

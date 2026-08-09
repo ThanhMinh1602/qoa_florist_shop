@@ -47,9 +47,24 @@ export function markAllNotificationsReadApi() {
   return request('/notifications/read-all', { method: 'PATCH' })
 }
 
-export function fetchCustomRequestsApi(status = '') {
-  const query = status ? `?status=${status}` : ''
-  return request(`/custom-requests${query}`)
+export function fetchCustomRequestsApi(params = {}) {
+  const queryParams = typeof params === 'string' ? { status: params } : { ...params }
+  const search = new URLSearchParams()
+
+  // Luôn gửi page/limit để phân trang server-side
+  const page = Math.max(1, Number(queryParams.page) || 1)
+  const limit = Math.max(1, Number(queryParams.limit) || 25)
+  search.set('page', String(page))
+  search.set('limit', String(limit))
+
+  Object.entries(queryParams).forEach(([key, value]) => {
+    if (key === 'page' || key === 'limit') return
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      search.set(key, String(value))
+    }
+  })
+
+  return request(`/custom-requests?${search.toString()}`)
 }
 
 export function fetchCustomRequestByIdApi(id) {

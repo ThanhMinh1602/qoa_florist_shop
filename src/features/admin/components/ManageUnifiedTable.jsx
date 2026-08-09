@@ -208,4 +208,78 @@ function ManageUnifiedTable({
 }
 
 export default ManageUnifiedTable
+
+export function ManageUnifiedTableSkeleton({ rows = 8 }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[1080px] w-full text-left">
+          <thead className="border-b border-outline-variant/25 bg-surface-container-low text-on-surface-variant">
+            <tr>
+              <th className={`${th} w-10`}>
+                <div className="h-4 w-4 rounded bg-surface-container-high" />
+              </th>
+              <th className={th}>Mã / Ngày</th>
+              <th className={th}>Khách</th>
+              <th className={th}>Sản phẩm</th>
+              <th className={`${th} text-right`}>Tổng</th>
+              <th className={`${th} text-right`}>Cọc</th>
+              <th className={`${th} text-right`}>Ship</th>
+              <th className={`${th} text-right`}>COD</th>
+              <th className={`${th} text-right`}>Thu về</th>
+              <th className={th}>VĐ</th>
+              <th className={`${th} w-[6rem]`}>Giao hàng</th>
+              <th className={`${th} w-10`} />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-outline-variant/20">
+            {Array.from({ length: rows }).map((_, index) => (
+              <tr key={index}>
+                <td className={td}>
+                  <div className="img-shimmer h-4 w-4 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-4 w-24 rounded" />
+                  <div className="img-shimmer mt-2 h-3 w-16 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-4 w-28 rounded" />
+                  <div className="img-shimmer mt-2 h-3 w-20 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-4 w-40 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer ml-auto h-4 w-16 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer ml-auto h-4 w-12 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer ml-auto h-4 w-12 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer ml-auto h-4 w-14 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer ml-auto h-4 w-14 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-4 w-16 rounded" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-8 w-full rounded-md" />
+                </td>
+                <td className={td}>
+                  <div className="img-shimmer h-8 w-8 rounded-md" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 export { formatShipDate, toDateInputValue }

@@ -508,7 +508,7 @@ function ImportOrdersPage() {
 
   if (!isLgUp) {
     return (
-      <AdminMobileOverlayShell backTo="/admin/orders/new">
+      <AdminMobileOverlayShell backTo="/admin/manage">
         {({ requestClose }) => {
           closeRef.current = requestClose
           return page

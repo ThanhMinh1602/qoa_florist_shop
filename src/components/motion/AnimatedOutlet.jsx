@@ -13,10 +13,17 @@ function isProductEditorPath(path) {
   return path === '/admin/products/new' || /^\/admin\/products\/[^/]+\/edit$/.test(path)
 }
 
+function isOrderEditorPath(path) {
+  return path === '/admin/orders/new' || /^\/admin\/orders\/[^/]+\/edit$/.test(path)
+}
+
 /** Giữ layout /admin/products không remount khi vào nested detail */
 function outletAnimationKey(pathname) {
   if (pathname === '/admin/products' || isProductEditorPath(pathname)) {
     return '/admin/products'
+  }
+  if (pathname === '/admin/manage' || isOrderEditorPath(pathname) || pathname === '/admin/orders/import') {
+    return '/admin/manage'
   }
   return pathname
 }
@@ -36,14 +43,14 @@ function resolveAdminDirection(fromPath, toPath, navType) {
 
 function AdminFillShell({ children }) {
   return (
-    <div className="absolute inset-0 flex flex-col overflow-hidden bg-background pb-[var(--admin-bottom-nav-offset)] lg:pb-0">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       {children}
     </div>
   )
 }
 
 function isTransparentAdminPath(path) {
-  return path === '/admin/orders/new'
+  return false
 }
 
 function AnimatedOutlet({ variant = 'shop' }) {

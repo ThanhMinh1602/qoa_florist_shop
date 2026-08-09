@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   bulkDeleteCustomRequestsApi,
   deleteCustomRequestApi,
+  fetchCustomRequestByIdApi,
   fetchCustomRequestsApi,
   updateCustomRequestApi,
   updateCustomRequestStatusApi,
@@ -15,14 +16,17 @@ import { SHIPPING_STATUS_OPTIONS } from '../../../constants/customRequestDefault
 import { ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { buildUnifiedManageItems } from '../../../utils/buildUnifiedManageItems'
-import ManageUnifiedTable from '../components/ManageUnifiedTable'
+import ManageUnifiedTable, { ManageUnifiedTableSkeleton } from '../components/ManageUnifiedTable'
 import OrderDetailModal from '../components/OrderDetailModal'
 import ExportOrdersExcelModal from '../components/ExportOrdersExcelModal'
-import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
-import ManageUnifiedListMobile from '../mobile/ManageUnifiedListMobile'
+import ManageUnifiedListMobile, {
+  ManageUnifiedListMobileSkeleton,
+} from '../mobile/ManageUnifiedListMobile'
 
 const PAGE_SIZE = 25
 const SCROLL_TOGGLE_DELTA = 8
+const SEARCH_DEBOUNCE_MS = 300
+const EXPORT_LIMIT = 2000
 
 function buildPageButtons(totalPages, safePage) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter((page) => {
@@ -47,12 +51,17 @@ const chipClass = (active) =>
 
 function AdminManagePage() {
   const { alert, confirm } = useDialog()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get('highlight')
   const [orders, setOrders] = useState([])
+  const [exportOrders, setExportOrders] = useState([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [shippingFilter, setShippingFilter] = useState('')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [selectedItem, setSelectedItem] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
@@ -67,19 +76,56 @@ function AdminManagePage() {
   const skipScrollOnMount = useRef(true)
   const lastScrollTopRef = useRef(0)
   const [toolsOpen, setToolsOpen] = useState(true)
+  const loadSeqRef = useRef(0)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const next = search.trim()
+      setDebouncedSearch((prev) => {
+        if (prev !== next) setPage(1)
+        return next
+      })
+    }, SEARCH_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [search])
+
+  const listQuery = useMemo(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      q: debouncedSearch,
+      status: statusFilter,
+      shippingStatus: shippingFilter,
+    }),
+    [page, debouncedSearch, statusFilter, shippingFilter],
+  )
 
   const loadOrders = useCallback(async () => {
+    const seq = ++loadSeqRef.current
     setIsLoadingOrders(true)
     setError('')
     try {
-      const result = await fetchCustomRequestsApi('')
-      setOrders(result.data)
+      const result = await fetchCustomRequestsApi(listQuery)
+      if (seq !== loadSeqRef.current) return
+      const rows = Array.isArray(result.data) ? result.data : []
+      setOrders(rows)
+      const pagination = result.pagination || {}
+      const nextTotal =
+        pagination.total != null ? Number(pagination.total) : rows.length
+      const nextTotalPages =
+        pagination.totalPages != null
+          ? Math.max(1, Number(pagination.totalPages))
+          : Math.max(1, Math.ceil(nextTotal / PAGE_SIZE))
+      setTotal(Number.isFinite(nextTotal) ? nextTotal : rows.length)
+      setTotalPages(Number.isFinite(nextTotalPages) ? nextTotalPages : 1)
+      if (page > nextTotalPages) setPage(nextTotalPages)
     } catch (err) {
+      if (seq !== loadSeqRef.current) return
       setError(err.message || 'Không thể tải danh sách.')
     } finally {
-      setIsLoadingOrders(false)
+      if (seq === loadSeqRef.current) setIsLoadingOrders(false)
     }
-  }, [])
+  }, [listQuery, page])
 
   useEffect(() => {
     loadOrders()
@@ -90,53 +136,36 @@ function AdminManagePage() {
     return () => window.removeEventListener('qoa:request:new', handleNewRequest)
   }, [loadOrders])
 
+  useEffect(() => {
+    if (!exportOpen) return undefined
+    let cancelled = false
+    ;(async () => {
+      try {
+        const result = await fetchCustomRequestsApi({
+          q: debouncedSearch,
+          status: statusFilter,
+          shippingStatus: shippingFilter,
+          page: 1,
+          limit: EXPORT_LIMIT,
+        })
+        if (!cancelled) setExportOrders(result.data || [])
+      } catch {
+        if (!cancelled) setExportOrders([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [exportOpen, debouncedSearch, statusFilter, shippingFilter])
+
   const unifiedItems = useMemo(() => buildUnifiedManageItems(orders), [orders])
-
-  const filteredItems = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return unifiedItems.filter((item) => {
-      if (statusFilter) {
-        if (item.kind !== 'order') return false
-        const normalized = item.status === 'reviewed' ? 'arranging' : item.status
-        if (normalized !== statusFilter) return false
-      }
-      if (shippingFilter) {
-        const ship = item.shippingStatus || 'pending'
-        if (ship !== shippingFilter) return false
-      }
-      if (!keyword) return true
-      const haystack = [
-        item.code,
-        item.primaryName,
-        item.secondaryPhone,
-        item.deliveryLine,
-        item.addressLine,
-        item.productsLine,
-      ]
-        .join(' ')
-        .toLowerCase()
-      return haystack.includes(keyword)
-    })
-  }, [unifiedItems, statusFilter, shippingFilter, search])
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-
-  const pagedItems = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE
-    return filteredItems.slice(start, start + PAGE_SIZE)
-  }, [filteredItems, safePage])
-
-  const pageFrom = filteredItems.length ? (safePage - 1) * PAGE_SIZE + 1 : 0
-  const pageTo = Math.min(safePage * PAGE_SIZE, filteredItems.length)
+  const pageFrom = total ? (safePage - 1) * PAGE_SIZE + 1 : 0
+  const pageTo = Math.min(safePage * PAGE_SIZE, total)
   const pageButtons = useMemo(
     () => buildPageButtons(totalPages, safePage),
     [totalPages, safePage],
   )
-
-  useEffect(() => {
-    setPage(1)
-  }, [search, statusFilter, shippingFilter])
 
   useEffect(() => {
     if (skipScrollOnMount.current) {
@@ -177,18 +206,38 @@ function AdminManagePage() {
   }, [isLgUp, isLoadingOrders])
 
   useEffect(() => {
-    setSelectedIds((previous) => previous.filter((id) => filteredItems.some((item) => item.id === id)))
-  }, [filteredItems])
+    setSelectedIds((previous) => previous.filter((id) => unifiedItems.some((item) => item.id === id)))
+  }, [unifiedItems])
 
   useEffect(() => {
-    if (!highlightId || unifiedItems.length === 0) return
-    const matched = unifiedItems.find((item) => item.kind === 'order' && item.id === highlightId)
-    if (matched) {
-      setSelectedItem(matched)
-      const index = filteredItems.findIndex((item) => item.id === matched.id)
-      if (index >= 0) setPage(Math.floor(index / PAGE_SIZE) + 1)
+    if (!highlightId) return undefined
+    if (!isLgUp) {
+      navigate(`/admin/orders/${highlightId}/edit`, { replace: true })
+      return undefined
     }
-  }, [highlightId, unifiedItems, filteredItems])
+    let cancelled = false
+    ;(async () => {
+      try {
+        const result = await fetchCustomRequestByIdApi(highlightId)
+        if (cancelled || !result?.data) return
+        const [matched] = buildUnifiedManageItems([result.data])
+        if (matched) setSelectedItem(matched)
+      } catch {
+        // ignore missing highlight target
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [highlightId, isLgUp, navigate])
+
+  function handleSelectOrder(item) {
+    if (!isLgUp) {
+      navigate(`/admin/orders/${item.id}/edit`)
+      return
+    }
+    setSelectedItem(item)
+  }
 
   function toggleSelect(id) {
     setSelectedIds((previous) =>
@@ -198,12 +247,12 @@ function AdminManagePage() {
 
   function toggleSelectAll(checked) {
     if (!checked) {
-      setSelectedIds((previous) => previous.filter((id) => !pagedItems.some((item) => item.id === id)))
+      setSelectedIds((previous) => previous.filter((id) => !unifiedItems.some((item) => item.id === id)))
       return
     }
     setSelectedIds((previous) => {
       const next = new Set(previous)
-      pagedItems.forEach((item) => next.add(item.id))
+      unifiedItems.forEach((item) => next.add(item.id))
       return Array.from(next)
     })
   }
@@ -273,10 +322,10 @@ function AdminManagePage() {
     setBusy(true)
     try {
       await deleteCustomRequestApi(item.id)
-      setOrders((previous) => previous.filter((order) => order.id !== item.id))
       setSelectedIds((previous) => previous.filter((id) => id !== item.id))
       if (selectedItem?.id === item.id) setSelectedItem(null)
       setBusy(false)
+      await loadOrders()
     } catch (err) {
       setBusy(false)
       await alert({
@@ -302,10 +351,10 @@ function AdminManagePage() {
     setBusy(true)
     try {
       await bulkDeleteCustomRequestsApi(ids)
-      setOrders((previous) => previous.filter((order) => !ids.includes(order.id)))
       setSelectedIds([])
       if (selectedItem && ids.includes(selectedItem.id)) setSelectedItem(null)
       setBusy(false)
+      await loadOrders()
     } catch (err) {
       setBusy(false)
       await alert({
@@ -316,22 +365,21 @@ function AdminManagePage() {
     }
   }
 
-  const isLoading = isLoadingOrders && unifiedItems.length === 0
   const selectedCount = selectedIds.length
   const iconBtn =
     'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/40 text-primary hover:bg-surface-container-low'
 
   function renderPaginationBar() {
-    if (isLoading || filteredItems.length === 0) return null
+    if (total === 0) return null
     return (
-      <div className="flex items-center justify-between gap-2 px-2 py-1.5 md:px-3 lg:px-4">
+      <div className="flex items-center justify-between gap-2 px-2 py-2 md:px-3 lg:px-4">
         <p className="text-[11px] text-on-surface-variant">
-          {pageFrom}–{pageTo}/{filteredItems.length}
+          {pageFrom}–{pageTo}/{total}
         </p>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            disabled={safePage <= 1}
+            disabled={safePage <= 1 || isLoadingOrders}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
           >
@@ -346,6 +394,7 @@ function AdminManagePage() {
               <button
                 key={item}
                 type="button"
+                disabled={isLoadingOrders}
                 onClick={() => setPage(item)}
                 className={[
                   'min-w-6 rounded-md px-1.5 py-1 text-[11px] font-medium',
@@ -360,7 +409,7 @@ function AdminManagePage() {
           )}
           <button
             type="button"
-            disabled={safePage >= totalPages}
+            disabled={safePage >= totalPages || isLoadingOrders}
             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             className="rounded-md border border-outline-variant/40 px-2 py-1 text-[11px] disabled:opacity-40"
           >
@@ -371,24 +420,14 @@ function AdminManagePage() {
     )
   }
 
-  const showPagination = !isLoading && filteredItems.length > 0
+  const showPagination = total > 0
   const showTools = isLgUp || toolsOpen
 
-  function renderPage(requestClose) {
+  function renderPage() {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
         <header className="shrink-0 border-b border-outline-variant/25 bg-surface-container-lowest">
           <div className="flex items-center gap-2 px-3 py-2 lg:px-6">
-            {requestClose ? (
-              <button
-                type="button"
-                onClick={requestClose}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
-                aria-label="Quay lại"
-              >
-                <MaterialIcon name="arrow_back" className="text-xl" />
-              </button>
-            ) : null}
             <h2 className="min-w-0 flex-1 truncate font-display text-base text-primary lg:text-xl">
               Đơn hàng
             </h2>
@@ -416,6 +455,14 @@ function AdminManagePage() {
                 <button type="button" onClick={() => setExportOpen(true)} className={iconBtn} title="Xuất Excel">
                   <MaterialIcon name="download" className="text-lg" />
                 </button>
+                <Link
+                  to="/admin/orders/new"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary-container"
+                  title="Lên đơn"
+                  aria-label="Lên đơn"
+                >
+                  <MaterialIcon name="add" className="text-lg" />
+                </Link>
               </>
             )}
           </div>
@@ -484,28 +531,48 @@ function AdminManagePage() {
                 </div>
 
                 <div className="flex gap-1 overflow-x-auto overscroll-x-contain touch-pan-x pb-0.5 [-webkit-overflow-scrolling:touch]">
-                  <button type="button" onClick={() => setShippingFilter('')} className={chipClass(shippingFilter === '')}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShippingFilter('')
+                      setPage(1)
+                    }}
+                    className={chipClass(shippingFilter === '')}
+                  >
                     Giao: tất cả
                   </button>
                   {SHIPPING_STATUS_OPTIONS.map((item) => (
                     <button
                       key={item.value}
                       type="button"
-                      onClick={() => setShippingFilter(item.value)}
+                      onClick={() => {
+                        setShippingFilter(item.value)
+                        setPage(1)
+                      }}
                       className={chipClass(shippingFilter === item.value)}
                     >
                       {item.label}
                     </button>
                   ))}
                   <span className="mx-0.5 w-px shrink-0 self-stretch bg-outline-variant/30" />
-                  <button type="button" onClick={() => setStatusFilter('')} className={chipClass(statusFilter === '')}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter('')
+                      setPage(1)
+                    }}
+                    className={chipClass(statusFilter === '')}
+                  >
                     Làm: tất cả
                   </button>
                   {ORDER_STATUS_OPTIONS.map((item) => (
                     <button
                       key={item.value}
                       type="button"
-                      onClick={() => setStatusFilter(item.value)}
+                      onClick={() => {
+                        setStatusFilter(item.value)
+                        setPage(1)
+                      }}
                       className={chipClass(statusFilter === item.value)}
                     >
                       {item.label}
@@ -527,16 +594,21 @@ function AdminManagePage() {
           ref={listScrollRef}
           data-scroll-lock-scrollable
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pt-2 touch-pan-y [-webkit-overflow-scrolling:touch] md:px-3 lg:px-4"
+          aria-busy={isLoadingOrders || undefined}
         >
-          {isLoading ? (
-            <p className="py-12 text-center text-xs text-on-surface-variant">Đang tải…</p>
+          {isLoadingOrders ? (
+            isLgUp ? (
+              <ManageUnifiedTableSkeleton rows={8} />
+            ) : (
+              <ManageUnifiedListMobileSkeleton rows={8} />
+            )
           ) : isLgUp ? (
             <ManageUnifiedTable
-              items={pagedItems}
+              items={unifiedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onToggleSelectAll={toggleSelectAll}
-              onSelect={setSelectedItem}
+              onSelect={handleSelectOrder}
               onDelete={handleDelete}
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
@@ -544,10 +616,10 @@ function AdminManagePage() {
             />
           ) : (
             <ManageUnifiedListMobile
-              items={pagedItems}
+              items={unifiedItems}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
-              onSelect={setSelectedItem}
+              onSelect={handleSelectOrder}
               onDelete={handleDelete}
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
@@ -557,7 +629,7 @@ function AdminManagePage() {
         </div>
 
         {showPagination ? (
-          <div className="mt-auto shrink-0 border-t border-outline-variant/25 bg-surface-container-lowest">
+          <div className="relative z-10 mt-auto shrink-0 border-t border-outline-variant/25 bg-surface-container-lowest">
             {renderPaginationBar()}
           </div>
         ) : null}
@@ -576,21 +648,13 @@ function AdminManagePage() {
           ) : null}
         </AnimatePresence>
 
-        <ExportOrdersExcelModal open={exportOpen} orders={orders} onClose={() => setExportOpen(false)} />
+        <ExportOrdersExcelModal open={exportOpen} orders={exportOrders} onClose={() => setExportOpen(false)} />
         <LoadingOverlay open={busy} message={busyMessage} />
       </div>
     )
   }
 
-  if (!isLgUp) {
-    return (
-      <AdminMobileOverlayShell backTo="/admin/orders/new">
-        {({ requestClose }) => renderPage(requestClose)}
-      </AdminMobileOverlayShell>
-    )
-  }
-
-  return renderPage(null)
+  return renderPage()
 }
 
 export default AdminManagePage

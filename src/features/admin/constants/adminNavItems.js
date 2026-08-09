@@ -132,9 +132,9 @@ export const ADMIN_MOBILE_TABS = [
     label: 'Bán hàng',
     shortLabel: 'Bán hàng',
     icon: 'storefront',
-    to: '/admin/orders/new',
-    defaultTo: '/admin/orders/new',
-    matchPrefixes: ['/admin/orders/new'],
+    to: '/admin/manage',
+    defaultTo: '/admin/manage',
+    matchPrefixes: ['/admin/manage', '/admin/orders'],
   },
   {
     id: 'catalog',

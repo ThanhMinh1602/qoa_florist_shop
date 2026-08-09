@@ -15,12 +15,17 @@ export function importCustomRequestsBulkApi(payload) {
 }
 
 export function fetchCustomRequestsApi(params = {}) {
+  const queryParams = { ...params }
   const search = new URLSearchParams()
-  Object.entries(params).forEach(([key, value]) => {
+  const page = Math.max(1, Number(queryParams.page) || 1)
+  const limit = Math.max(1, Number(queryParams.limit) || 25)
+  search.set('page', String(page))
+  search.set('limit', String(limit))
+  Object.entries(queryParams).forEach(([key, value]) => {
+    if (key === 'page' || key === 'limit') return
     if (value !== undefined && value !== null && String(value).trim() !== '') {
       search.set(key, String(value))
     }
   })
-  const query = search.toString()
-  return apiRequest(`/custom-requests${query ? `?${query}` : ''}`)
+  return apiRequest(`/custom-requests?${search.toString()}`)
 }
