@@ -13,7 +13,7 @@ import { updateCustomRequestApi } from '../../../api/notificationsApi'
 import { toIsoDateInput } from '../../../utils/dateFormat'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
-import { formatMoney, toDateInputValue } from '../../../utils/money'
+import { formatMoney, normalizeOrderItems, toDateInputValue } from '../../../utils/money'
 import { calcOrderMoney } from '../../../utils/orderMoney'
 import { normalizeTrackingCode } from '../../../utils/trackingCode'
 import { buildZaloChatUrlToCustomer, openZaloChatWithCustomer } from '../../../utils/zalo'
@@ -48,7 +48,7 @@ function OrderDetailModal({
   const shippingKey = request.shippingStatus || 'pending'
 
   const [products, setProducts] = useState([])
-  const [items, setItems] = useState(request.items || [])
+  const [items, setItems] = useState(() => normalizeOrderItems(request.items))
   const [money, setMoney] = useState(() => moneyStateFromRequest(request))
   const [note, setNote] = useState(request.note || '')
   const [customerName, setCustomerName] = useState(request.customerName || '')
@@ -62,7 +62,11 @@ function OrderDetailModal({
       '',
   )
   const [shipDate, setShipDate] = useState(
-    toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '',
+    toDateInputValue(request.shipDate) ||
+      toIsoDateInput(request.deliveryTimeSlot) ||
+      toIsoDateInput(request.deliveryDate) ||
+      toDateInputValue(request.deliveryDate) ||
+      '',
   )
   const [shippingProvider, setShippingProvider] = useState(request.shippingProvider || '')
   const [trackingCode, setTrackingCode] = useState(() =>
@@ -94,7 +98,7 @@ function OrderDetailModal({
   }, [])
 
   useEffect(() => {
-    setItems(request.items || [])
+    setItems(normalizeOrderItems(request.items))
     setMoney(moneyStateFromRequest(request))
     setNote(request.note || '')
     setCustomerName(request.customerName || '')
@@ -107,7 +111,13 @@ function OrderDetailModal({
         toDateInputValue(request.shipDate) ||
         '',
     )
-    setShipDate(toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '')
+    setShipDate(
+      toDateInputValue(request.shipDate) ||
+        toIsoDateInput(request.deliveryTimeSlot) ||
+        toIsoDateInput(request.deliveryDate) ||
+        toDateInputValue(request.deliveryDate) ||
+        '',
+    )
     setShippingProvider(request.shippingProvider || '')
     setTrackingCode(normalizeTrackingCode(request.shippingTrackingCode))
     setMonthEndChecked(Boolean(request.monthEndChecked))

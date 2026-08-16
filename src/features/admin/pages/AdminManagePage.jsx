@@ -12,13 +12,18 @@ import {
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useDialog } from '../../../context/DialogContext'
-import { SHIPPING_STATUS_OPTIONS } from '../../../constants/customRequestDefaults'
-import { ORDER_STATUS_OPTIONS } from '../../../constants/orderStatus'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { buildUnifiedManageItems } from '../../../utils/buildUnifiedManageItems'
+import {
+  EMPTY_ORDER_FILTERS,
+  parseOrderFiltersFromSearch,
+  serializeOrderFilters,
+  toOrderListQuery,
+} from '../../../utils/orderFilters'
 import ManageUnifiedTable, { ManageUnifiedTableSkeleton } from '../components/ManageUnifiedTable'
 import OrderDetailModal from '../components/OrderDetailModal'
 import ExportOrdersExcelModal from '../components/ExportOrdersExcelModal'
+import OrderFilters from '../components/OrderFilters'
 import ManageUnifiedListMobile, {
   ManageUnifiedListMobileSkeleton,
 } from '../mobile/ManageUnifiedListMobile'
@@ -41,27 +46,17 @@ function buildPageButtons(totalPages, safePage) {
   }, [])
 }
 
-const chipClass = (active) =>
-  [
-    'shrink-0 rounded-md px-2 py-1 text-[11px] font-medium transition',
-    active
-      ? 'bg-primary text-white'
-      : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high',
-  ].join(' ')
-
 function AdminManagePage() {
   const { alert, confirm } = useDialog()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const highlightId = searchParams.get('highlight')
+  const filters = useMemo(() => parseOrderFiltersFromSearch(searchParams), [searchParams])
   const [orders, setOrders] = useState([])
   const [exportOrders, setExportOrders] = useState([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [statusFilter, setStatusFilter] = useState('')
-  const [shippingFilter, setShippingFilter] = useState('')
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [page, setPage] = useState(1)
   const [selectedItem, setSelectedItem] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
@@ -75,30 +70,34 @@ function AdminManagePage() {
   const listScrollRef = useRef(null)
   const skipScrollOnMount = useRef(true)
   const lastScrollTopRef = useRef(0)
-  const [toolsOpen, setToolsOpen] = useState(true)
+  const [filtersOpen, setFiltersOpen] = useState(true)
   const loadSeqRef = useRef(0)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const next = search.trim()
-      setDebouncedSearch((prev) => {
-        if (prev !== next) setPage(1)
-        return next
-      })
+      if (next === (filters.q || '')) return
+      setPage(1)
+      setSearchParams(serializeOrderFilters({ ...filters, q: next }), { replace: true })
     }, SEARCH_DEBOUNCE_MS)
     return () => window.clearTimeout(timer)
-  }, [search])
+  }, [search, filters, setSearchParams])
 
   const listQuery = useMemo(
-    () => ({
-      page,
-      limit: PAGE_SIZE,
-      q: debouncedSearch,
-      status: statusFilter,
-      shippingStatus: shippingFilter,
-    }),
-    [page, debouncedSearch, statusFilter, shippingFilter],
+    () => toOrderListQuery(filters, { page, limit: PAGE_SIZE }),
+    [page, filters],
   )
+
+  function patchFilters(patch) {
+    setPage(1)
+    setSearchParams(serializeOrderFilters({ ...filters, ...patch }), { replace: true })
+  }
+
+  function resetFilters() {
+    setSearch('')
+    setPage(1)
+    setSearchParams(serializeOrderFilters(EMPTY_ORDER_FILTERS), { replace: true })
+  }
 
   const loadOrders = useCallback(async () => {
     const seq = ++loadSeqRef.current
@@ -142,11 +141,7 @@ function AdminManagePage() {
     ;(async () => {
       try {
         const result = await fetchCustomRequestsApi({
-          q: debouncedSearch,
-          status: statusFilter,
-          shippingStatus: shippingFilter,
-          page: 1,
-          limit: EXPORT_LIMIT,
+          ...toOrderListQuery(filters, { page: 1, limit: EXPORT_LIMIT }),
         })
         if (!cancelled) setExportOrders(result.data || [])
       } catch {
@@ -156,7 +151,7 @@ function AdminManagePage() {
     return () => {
       cancelled = true
     }
-  }, [exportOpen, debouncedSearch, statusFilter, shippingFilter])
+  }, [exportOpen, filters])
 
   const unifiedItems = useMemo(() => buildUnifiedManageItems(orders), [orders])
   const safePage = Math.min(page, totalPages)
@@ -173,15 +168,11 @@ function AdminManagePage() {
       return
     }
     listScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-    setToolsOpen(true)
+    setFiltersOpen(true)
     lastScrollTopRef.current = 0
   }, [safePage])
 
   useEffect(() => {
-    if (isLgUp) {
-      setToolsOpen(true)
-      return undefined
-    }
     const el = listScrollRef.current
     if (!el) return undefined
 
@@ -190,20 +181,18 @@ function AdminManagePage() {
       const delta = top - lastScrollTopRef.current
       lastScrollTopRef.current = top
 
-      if (top <= 12) {
-        setToolsOpen(true)
+      if (top <= 16) {
+        setFiltersOpen(true)
         return
       }
       if (delta > SCROLL_TOGGLE_DELTA) {
-        setToolsOpen(false)
-      } else if (delta < -SCROLL_TOGGLE_DELTA) {
-        setToolsOpen(true)
+        setFiltersOpen(false)
       }
     }
 
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [isLgUp, isLoadingOrders])
+  }, [isLoadingOrders])
 
   useEffect(() => {
     setSelectedIds((previous) => previous.filter((id) => unifiedItems.some((item) => item.id === id)))
@@ -421,7 +410,15 @@ function AdminManagePage() {
   }
 
   const showPagination = total > 0
-  const showTools = isLgUp || toolsOpen
+  const emptyLabel =
+    filters.q?.trim() ||
+    filters.status ||
+    filters.shippingStatus ||
+    filters.paymentStatus ||
+    filters.from ||
+    filters.to
+      ? 'Không có đơn khớp bộ lọc'
+      : 'Chưa có đơn'
 
   function renderPage() {
     return (
@@ -467,17 +464,8 @@ function AdminManagePage() {
             )}
           </div>
 
-          <div
-            className={[
-              'grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
-              showTools
-                ? 'grid-rows-[1fr] opacity-100'
-                : 'pointer-events-none grid-rows-[0fr] opacity-0',
-            ].join(' ')}
-            aria-hidden={!showTools}
-          >
-            <div className="min-h-0 overflow-hidden">
-              <div className="space-y-1.5 border-t border-outline-variant/20 px-2 pb-2 pt-1.5 md:px-3 lg:border-t-0 lg:px-4 lg:pb-2 lg:pt-0">
+          <div className="bg-surface-container-low/60">
+            <div className="space-y-1.5 px-2 pb-2 pt-1.5 md:px-3 lg:px-4 lg:pb-3 lg:pt-2">
                 {!isLgUp && selectedCount > 0 ? (
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
@@ -499,89 +487,38 @@ function AdminManagePage() {
                   </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Mã / SĐT / tên…"
-                    tabIndex={showTools ? 0 : -1}
-                    className="min-w-0 flex-1 rounded-lg border border-outline-variant/25 bg-surface-container-lowest px-2.5 py-1.5 text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary/20 sm:max-w-xs"
-                  />
-                  {isLgUp && selectedCount > 0 ? (
-                    <>
-                      <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedIds([])}
-                        className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-surface-container-low"
-                      >
-                        Bỏ
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void handleBulkDelete()}
-                        className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 disabled:opacity-50"
-                      >
-                        Xóa
-                      </button>
-                    </>
-                  ) : null}
-                </div>
+                <OrderFilters
+                  filters={filters}
+                  search={search}
+                  onSearchChange={setSearch}
+                  onChange={patchFilters}
+                  onReset={resetFilters}
+                  expanded={filtersOpen}
+                  onToggleExpanded={() => setFiltersOpen((open) => !open)}
+                />
 
-                <div className="flex gap-1 overflow-x-auto overscroll-x-contain touch-pan-x pb-0.5 [-webkit-overflow-scrolling:touch]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShippingFilter('')
-                      setPage(1)
-                    }}
-                    className={chipClass(shippingFilter === '')}
-                  >
-                    Giao: tất cả
-                  </button>
-                  {SHIPPING_STATUS_OPTIONS.map((item) => (
+                {isLgUp && selectedCount > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-on-surface-variant">{selectedCount} chọn</span>
                     <button
-                      key={item.value}
                       type="button"
-                      onClick={() => {
-                        setShippingFilter(item.value)
-                        setPage(1)
-                      }}
-                      className={chipClass(shippingFilter === item.value)}
+                      onClick={() => setSelectedIds([])}
+                      className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-surface-container-low"
                     >
-                      {item.label}
+                      Bỏ
                     </button>
-                  ))}
-                  <span className="mx-0.5 w-px shrink-0 self-stretch bg-outline-variant/30" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter('')
-                      setPage(1)
-                    }}
-                    className={chipClass(statusFilter === '')}
-                  >
-                    Làm: tất cả
-                  </button>
-                  {ORDER_STATUS_OPTIONS.map((item) => (
                     <button
-                      key={item.value}
                       type="button"
-                      onClick={() => {
-                        setStatusFilter(item.value)
-                        setPage(1)
-                      }}
-                      className={chipClass(statusFilter === item.value)}
+                      disabled={busy}
+                      onClick={() => void handleBulkDelete()}
+                      className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 disabled:opacity-50"
                     >
-                      {item.label}
+                      Xóa
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
         </header>
 
         {error ? (
@@ -613,6 +550,7 @@ function AdminManagePage() {
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
               updatingId={updatingId}
+              emptyLabel={emptyLabel}
             />
           ) : (
             <ManageUnifiedListMobile
@@ -624,6 +562,7 @@ function AdminManagePage() {
               onShippingStatusChange={handleShippingStatusChange}
               busy={busy}
               updatingId={updatingId}
+              emptyLabel={emptyLabel}
             />
           )}
         </div>

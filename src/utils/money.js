@@ -1,3 +1,5 @@
+import { toIsoDateInput } from './dateFormat'
+
 export function formatMoney(value) {
   const amount = Number(value) || 0
   return new Intl.NumberFormat('vi-VN').format(amount) + '₫'
@@ -23,6 +25,8 @@ export function formatMoneyTyping(value) {
 
 export function toDateInputValue(value) {
   if (!value) return ''
+  const fromKnown = toIsoDateInput(value)
+  if (fromKnown) return fromKnown
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
   const y = date.getFullYear()
@@ -32,12 +36,26 @@ export function toDateInputValue(value) {
 }
 
 export function summarizeItems(items = []) {
-  if (!items.length) return '—'
+  if (!Array.isArray(items) || items.length === 0) return '—'
   return items
     .map((item) => {
-      const color = item.color ? ` (${item.color})` : ''
-      const note = item.note ? ` — ${item.note}` : ''
-      return `${item.quantity || 1}× ${item.productName}${color}${note}`
+      const name = item?.productName || item?.name || 'Sản phẩm'
+      const color = item?.color ? ` (${item.color})` : ''
+      const note = item?.note ? ` — ${item.note}` : ''
+      return `${item?.quantity || 1}× ${name}${color}${note}`
     })
     .join(', ')
+}
+
+export function normalizeOrderItems(items = []) {
+  if (!Array.isArray(items)) return []
+  return items.map((item) => ({
+    productId: item?.productId || '',
+    productName: String(item?.productName || item?.name || '').trim(),
+    quantity: Math.max(1, Number(item?.quantity) || 1),
+    unitPrice: Math.max(0, Number(item?.unitPrice) || 0),
+    unitCost: Math.max(0, Number(item?.unitCost) || 0),
+    color: String(item?.color || '').trim(),
+    note: String(item?.note || '').trim(),
+  }))
 }

@@ -102,7 +102,7 @@ function ImportOrdersPage() {
       if (!(parsed.orders || []).length) {
         setError(
           parsed.errors?.[0] ||
-            'Không đọc được đơn nào. Hãy export CSV/Excel từ Google Sheet ĐƠN HÀNG QOA.',
+            'Không đọc được đơn nào. Hãy dùng file Excel xuất từ Quản lý đơn, hoặc sheet cùng cột (Ngày đặt, Thời gian ship, Note đơn, Mã hóa đơn).',
         )
       }
     } catch (err) {
@@ -226,7 +226,7 @@ function ImportOrdersPage() {
             <div className="min-w-0">
               <h2 className="font-display text-base text-primary lg:text-2xl">Import đơn từ Sheet</h2>
               <p className="mt-0.5 hidden text-xs text-on-surface-variant lg:block lg:text-sm">
-                Nhập file CSV/Excel export từ sổ ĐƠN HÀNG QOA (Tháng 7 / Tháng 8).
+                Nhập Excel/CSV đúng cột form hiện tại (Ngày đặt, Ngày cần, Thời gian ship, Note SP, Note đơn, Mã hóa đơn).
               </p>
             </div>
           </div>
@@ -253,13 +253,13 @@ function ImportOrdersPage() {
         <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm">
           <h3 className="text-sm font-semibold text-on-surface">1. Chuẩn bị file</h3>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-on-surface-variant">
-            <li>Mở Google Sheet ĐƠN HÀNG QOA</li>
+            <li>Xuất file từ Quản lý đơn (Excel hiện tại), hoặc Google Sheet cùng cột đó</li>
             <li>
-              <strong className="text-on-surface">File → Tải xuống → Microsoft Excel (.xlsx)</strong>{' '}
-              (khuyến nghị — lấy đủ mọi tab Tháng 7/8)
+              <strong className="text-on-surface">Cột cần có:</strong> Ngày đặt, Ngày cần, Thời gian
+              ship, Sản phẩm, Note sản phẩm, Note đơn, Mã hóa đơn
             </li>
-            <li>CSV cũng được, nhưng nếu báo lỗi tiêu đề hãy dùng lại .xlsx</li>
-            <li>Không dùng PDF</li>
+            <li>File → Tải xuống → Microsoft Excel (.xlsx) nếu dùng Google Sheet</li>
+            <li>CSV UTF-8 cũng được; không dùng PDF</li>
           </ol>
         </section>
 
@@ -381,12 +381,13 @@ function ImportOrdersPage() {
                 <thead className="sticky top-0 bg-surface-container-low text-on-surface-variant">
                   <tr>
                     <th className="px-2 py-2 font-medium">#</th>
+                    <th className="px-2 py-2 font-medium">Mã</th>
                     <th className="px-2 py-2 font-medium">KH</th>
                     <th className="px-2 py-2 font-medium">SĐT</th>
+                    <th className="px-2 py-2 font-medium">Ship</th>
                     <th className="px-2 py-2 font-medium">SP</th>
                     <th className="px-2 py-2 font-medium">Tổng</th>
                     <th className="px-2 py-2 font-medium">Cọc</th>
-                    <th className="px-2 py-2 font-medium">Ship</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -396,23 +397,31 @@ function ImportOrdersPage() {
                       className="border-t border-outline-variant/15"
                     >
                       <td className="px-2 py-1.5 text-on-surface-variant">{order.rowLabel}</td>
+                      <td className="px-2 py-1.5 whitespace-nowrap font-mono text-[11px] text-on-surface">
+                        {order.invoiceCode || '—'}
+                      </td>
                       <td className="max-w-[8rem] truncate px-2 py-1.5 font-medium text-on-surface">
                         {order.customerName}
                       </td>
                       <td className="px-2 py-1.5 whitespace-nowrap text-on-surface-variant">
                         {order.customerPhone || '—'}
                       </td>
+                      <td className="px-2 py-1.5 whitespace-nowrap text-on-surface-variant">
+                        {order.shipDate || order.deliveryDate || '—'}
+                      </td>
                       <td className="max-w-[12rem] truncate px-2 py-1.5 text-on-surface-variant">
-                        {(order.items || []).map((item) => item.productName).join(', ') || '—'}
+                        {(order.items || [])
+                          .map((item) => {
+                            const note = item.note ? ` (${item.note})` : ''
+                            return `${item.productName}${note}`
+                          })
+                          .join(', ') || '—'}
                       </td>
                       <td className="px-2 py-1.5 whitespace-nowrap">
                         {formatMoney(order.subtotal || 0)}
                       </td>
                       <td className="px-2 py-1.5 whitespace-nowrap">
                         {formatMoney(order.deposit || 0)}
-                      </td>
-                      <td className="px-2 py-1.5 whitespace-nowrap">
-                        {formatMoney(order.shippingFee || 0)}
                       </td>
                     </tr>
                   ))}

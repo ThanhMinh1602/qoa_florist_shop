@@ -1,7 +1,11 @@
 export function getInvoiceCode(request) {
-  if (request.invoiceCode) {
-    return request.invoiceCode.toUpperCase()
-  }
+  if (!request || typeof request !== 'object') return ''
 
-  return request.id.replace(/-/g, '').slice(0, 8).toUpperCase()
+  const stored = String(request.invoiceCode || '').trim()
+  if (stored) return stored.toUpperCase()
+
+  const id = String(request.id || '')
+    .replace(/-/g, '')
+    .toUpperCase()
+  return id.slice(0, 8)
 }

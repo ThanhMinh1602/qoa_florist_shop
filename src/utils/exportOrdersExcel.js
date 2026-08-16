@@ -20,7 +20,7 @@ const HEADERS = [
   'Tổng giá sản phẩm',
   'Thêm theo y/c',
   'Tổng giá trị đơn hàng',
-  'Note',
+  'Note đơn',
   'Cọc+ Chuyển khoản (Ny nhận)',
   'Ghi chú TT',
   'Tiền ship báo khách',
@@ -46,11 +46,11 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-/** Ưu tiên ngày cần nhận (theo tab Tháng trên Sheet), fallback ngày đặt / tạo. */
+/** Ưu tiên ngày cần, rồi thời gian ship, rồi ngày đặt. */
 export function getOrderMonthDate(order) {
   return (
-    toDate(order.shipDate) ||
     toDate(order.deliveryDate) ||
+    toDate(order.shipDate) ||
     toDate(order.orderDate) ||
     toDate(order.createdAt)
   )
@@ -151,6 +151,7 @@ export function buildOrdersExportRows(orders = []) {
             quantity: 1,
             unitPrice: money.productsTotal,
             color: '',
+            note: '',
           },
         ]
 
@@ -203,19 +204,21 @@ export function buildOrdersExportRows(orders = []) {
 }
 
 const TRACKING_COL_INDEX = HEADERS.indexOf('Mã vận đơn')
+const INVOICE_COL_INDEX = HEADERS.indexOf('Mã hóa đơn')
 
-function forceTrackingCodesAsText(worksheet, rowCount) {
-  if (TRACKING_COL_INDEX < 0) return
+function forceTextColumn(worksheet, rowCount, colIndex) {
+  if (colIndex < 0) return
   for (let r = 1; r < rowCount; r += 1) {
-    const addr = XLSX.utils.encode_cell({ r, c: TRACKING_COL_INDEX })
+    const addr = XLSX.utils.encode_cell({ r, c: colIndex })
     const cell = worksheet[addr]
     if (!cell) continue
-    const text = normalizeTrackingCode(cell.v)
+    const text = colIndex === TRACKING_COL_INDEX
+      ? normalizeTrackingCode(cell.v)
+      : String(cell.v || '').trim()
     if (!text) {
       delete worksheet[addr]
       continue
     }
-    // Ép kiểu text để Excel không đổi thành số / scientific
     worksheet[addr] = { t: 's', v: text, z: '@' }
   }
 }
@@ -223,7 +226,8 @@ function forceTrackingCodesAsText(worksheet, rowCount) {
 function buildWorksheet(orders) {
   const rows = buildOrdersExportRows(orders)
   const worksheet = XLSX.utils.aoa_to_sheet(rows)
-  forceTrackingCodesAsText(worksheet, rows.length)
+  forceTextColumn(worksheet, rows.length, TRACKING_COL_INDEX)
+  forceTextColumn(worksheet, rows.length, INVOICE_COL_INDEX)
   worksheet['!cols'] = HEADERS.map((header) => ({
     wch: Math.min(36, Math.max(12, String(header).length + 2)),
   }))

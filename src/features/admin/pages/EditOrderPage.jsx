@@ -13,7 +13,7 @@ import {
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { toIsoDateInput } from '../../../utils/dateFormat'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
-import { toDateInputValue } from '../../../utils/money'
+import { normalizeOrderItems, toDateInputValue } from '../../../utils/money'
 import { calcOrderMoney } from '../../../utils/orderMoney'
 import { normalizeTrackingCode } from '../../../utils/trackingCode'
 import OrderDetailModal from '../components/OrderDetailModal'
@@ -47,7 +47,11 @@ function deliveryStateFromRequest(request) {
       toDateInputValue(request.shipDate) ||
       '',
     shipDate:
-      toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '',
+      toDateInputValue(request.shipDate) ||
+      toIsoDateInput(request.deliveryTimeSlot) ||
+      toIsoDateInput(request.deliveryDate) ||
+      toDateInputValue(request.deliveryDate) ||
+      '',
     deliveryTimeSlot: request.deliveryTimeSlot || '',
     shippingProvider: request.shippingProvider || '',
     shippingTrackingCode: normalizeTrackingCode(request.shippingTrackingCode),
@@ -104,7 +108,7 @@ function EditOrderPage() {
         if (!data) throw new Error('Không tìm thấy đơn.')
         setRequest(data)
         setDeliveryData(deliveryStateFromRequest(data))
-        setItems(data.items || [])
+        setItems(normalizeOrderItems(data.items))
         setMoney(moneyStateFromRequest(data))
       } catch (err) {
         if (!cancelled) setLoadError(err.message || 'Không tải được đơn.')

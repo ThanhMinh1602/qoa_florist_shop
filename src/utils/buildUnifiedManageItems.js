@@ -1,18 +1,25 @@
 import { isoToDmY, toIsoDateInput } from './dateFormat'
 import { getInvoiceCode } from './invoiceCode'
-import { summarizeItems, toDateInputValue } from './money'
+import { normalizeOrderItems, summarizeItems, toDateInputValue } from './money'
 import { calcOrderMoney } from './orderMoney'
 import { normalizeTrackingCode } from './trackingCode'
+
+function safeTime(value) {
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : 0
+}
 
 /**
  * Danh sách đơn hàng — map theo sổ ĐƠN HÀNG QOA.
  */
 export function buildUnifiedManageItems(orders = []) {
-  return orders
+  return (Array.isArray(orders) ? orders : [])
+    .filter((order) => order && (order.id || order.invoiceCode))
     .map((order) => {
+      const items = normalizeOrderItems(order.items)
       const productsTotal =
         order.productsTotal ??
-        (order.items || []).reduce(
+        items.reduce(
           (sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.quantity) || 1),
           0,
         )
@@ -25,23 +32,28 @@ export function buildUnifiedManageItems(orders = []) {
         incidentalAmount: order.incidentalAmount,
         codOverride: order.codAmount,
       })
+      const shipDate = order.shipDate || order.deliveryDate || null
 
       return {
         kind: 'order',
         id: order.id,
         createdAt: order.createdAt,
         orderDate: order.orderDate || order.createdAt || null,
-        neededDate: order.deliveryDate || order.shipDate || null,
+        neededDate: shipDate,
         shipTime:
-          isoToDmY(toDateInputValue(order.shipDate) || toIsoDateInput(order.deliveryTimeSlot)) ||
-          order.deliveryTimeSlot ||
+          isoToDmY(
+            toDateInputValue(order.shipDate) ||
+              toIsoDateInput(order.deliveryTimeSlot) ||
+              toIsoDateInput(order.deliveryDate),
+          ) ||
+          (toIsoDateInput(order.deliveryTimeSlot) ? '' : order.deliveryTimeSlot) ||
           '',
         code: getInvoiceCode(order),
-        primaryName: order.customerName,
+        primaryName: order.customerName || 'Khách',
         secondaryPhone: order.customerPhone || '',
-        deliveryLine: order.deliveryRecipientName || order.recipientName || '—',
+        deliveryLine: order.deliveryRecipientName || order.recipientName || order.customerName || '—',
         addressLine: order.deliveryAddress || '',
-        productsLine: summarizeItems(order.items),
+        productsLine: summarizeItems(items),
         note: order.note || '',
         subtotal: money.orderTotal,
         deposit: money.deposit,
@@ -53,16 +65,11 @@ export function buildUnifiedManageItems(orders = []) {
         paymentNote: order.paymentNote || '',
         trackingCode: normalizeTrackingCode(order.shippingTrackingCode),
         monthEndChecked: Boolean(order.monthEndChecked),
-        status: order.status,
-        shippingStatus: order.shippingStatus,
+        status: order.status || 'pending',
+        shippingStatus: order.shippingStatus || 'pending',
         raw: order,
-        // legacy aliases
-        shipDate: order.shipDate || order.deliveryDate || null,
+        shipDate,
       }
     })
-    .sort((a, b) => {
-      const aDate = new Date(a.neededDate || a.createdAt).getTime()
-      const bDate = new Date(b.neededDate || b.createdAt).getTime()
-      return bDate - aDate
-    })
+    .sort((a, b) => safeTime(b.neededDate || b.createdAt) - safeTime(a.neededDate || a.createdAt))
 }

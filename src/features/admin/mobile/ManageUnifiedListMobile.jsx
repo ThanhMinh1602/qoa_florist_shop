@@ -16,11 +16,12 @@ function ManageUnifiedListMobile({
   onShippingStatusChange,
   busy = false,
   updatingId = null,
+  emptyLabel = 'Chưa có đơn',
 }) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-outline-variant/40 px-3 py-8 text-center text-xs text-on-surface-variant">
-        Chưa có đơn
+        {emptyLabel}
       </div>
     )
   }

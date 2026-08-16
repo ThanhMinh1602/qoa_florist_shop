@@ -96,7 +96,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
               >
                 <div className="grid grid-cols-[minmax(0,1fr)_3.25rem_6.5rem_auto] items-center gap-1.5 sm:grid-cols-[minmax(0,1.4fr)_3.25rem_6.5rem_minmax(0,1fr)_auto_auto]">
                   <input
-                    value={item.productName}
+                    value={item.productName || ''}
                     onChange={(e) => updateItem(index, { productName: e.target.value })}
                     placeholder="Tên SP"
                     className={`${lineInput} min-w-0`}

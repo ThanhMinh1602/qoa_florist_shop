@@ -72,3 +72,9 @@ export const SHIPPING_STATUS_META = {
 export const SHIPPING_STATUS_OPTIONS = Object.entries(SHIPPING_STATUS_LABELS).map(
   ([value, label]) => ({ value, label }),
 )
+
+export const PAYMENT_STATUS_OPTIONS = [
+  { value: 'unpaid', label: 'Chưa thanh toán' },
+  { value: 'deposit', label: 'Đã cọc' },
+  { value: 'paid', label: 'Đã thanh toán' },
+]

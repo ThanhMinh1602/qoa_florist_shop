@@ -10,7 +10,8 @@ const HEADER_ALIASES = {
   stt: ['stt', 'stt.'],
   orderDate: ['ngày đặt', 'ngay dat', 'ngày đặt đơn', 'ngay dat don'],
   deliveryDate: ['ngày cần', 'ngay can', 'ngày cần nhận', 'ngay can nhan'],
-  deliveryTimeSlot: ['thời gian ship', 'thoi gian ship', 'thời gian'],
+  shipDate: ['thời gian ship', 'thoi gian ship', 'ngày ship', 'ngay ship', 'thời gian'],
+  deliveryTimeSlot: ['khung giờ', 'khung gio', 'giờ giao'],
   customerName: ['tên kh', 'ten kh', 'tên khách', 'ten khach', 'khách hàng'],
   customerPhone: ['sđt', 'sdt', 'điện thoại', 'dien thoai', 'phone'],
   deliveryAddress: ['địa chỉ', 'dia chi', 'address'],
@@ -26,7 +27,7 @@ const HEADER_ALIASES = {
     'tổng đơn',
     'tong don',
   ],
-  note: ['note', 'ghi chú đơn'],
+  note: ['note đơn', 'note don', 'ghi chú đơn', 'ghi chu don', 'note'],
   deposit: [
     'cọc',
     'cọc+ chuyển khoản',
@@ -34,7 +35,7 @@ const HEADER_ALIASES = {
     'cọc+ chuyển khoản (ny nhận)',
     'chuyển khoản',
   ],
-  paymentNote: ['ghi chú', 'ghi chu', 'ghi chú tt'],
+  paymentNote: ['ghi chú tt', 'ghi chu tt', 'ghi chú thanh toán'],
   shippingFee: ['tiền ship báo khách', 'ship báo khách', 'ship bao khach'],
   actualShippingFee: ['ship thực tế', 'ship thuc te'],
   incidentalAmount: ['tiền phát sinh', 'phát sinh', 'đền bù', 'phat sinh'],
@@ -42,6 +43,9 @@ const HEADER_ALIASES = {
   shippingTrackingCode: ['mã vận đơn', 'ma van don', 'mã vận', 'tracking'],
   monthEndChecked: ['check cuối tháng', 'check cuoi thang'],
   shippingProvider: ['đơn vị vận chuyển', 'don vi van chuyen', 'đvvc'],
+  status: ['trạng thái làm hàng', 'trang thai lam hang'],
+  shippingStatus: ['trạng thái giao hàng', 'trang thai giao hang'],
+  invoiceCode: ['mã hóa đơn', 'ma hoa don', 'mã đơn', 'ma don', 'invoice'],
 }
 
 function normalizeHeader(value) {
@@ -155,6 +159,32 @@ function parseSheetDate(value) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+function parseStatusKey(value, labels) {
+  const text = normalizeHeader(value)
+  if (!text) return ''
+  for (const [key, meta] of Object.entries(labels)) {
+    if (normalizeHeader(key) === text) return key
+    const label = typeof meta === 'string' ? meta : meta.label
+    if (normalizeHeader(label) === text) return key === 'reviewed' ? 'arranging' : key
+  }
+  return ''
+}
+
+const ORDER_STATUS_IMPORT = {
+  pending: 'Mới',
+  arranging: 'Đang cắm',
+  ready: 'Sẵn sàng',
+  done: 'Hoàn thành',
+  reviewed: 'Đang cắm',
+}
+
+const SHIPPING_STATUS_IMPORT = {
+  pending: 'Chưa giao',
+  booked: 'Đã lên đơn',
+  shipping: 'Đang giao',
+  delivered: 'Đã giao',
+}
+
 function isChecked(value) {
   const text = String(value || '')
     .toLowerCase()
@@ -234,9 +264,13 @@ function emptyDraft(stt) {
     deliveryAddress: '',
     orderDate: '',
     deliveryDate: '',
+    shipDate: '',
     deliveryTimeSlot: '',
     note: '',
     paymentNote: '',
+    invoiceCode: '',
+    status: '',
+    shippingStatus: '',
     productsTotal: '',
     addOnAmount: '',
     deposit: '',
@@ -307,10 +341,14 @@ function finalizeDraft(draft) {
     deliveryAddress: draft.deliveryAddress.trim(),
     orderDate: draft.orderDate || undefined,
     deliveryDate: draft.deliveryDate || '',
-    shipDate: parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryDate || undefined,
-    deliveryTimeSlot: parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryTimeSlot.trim(),
+    shipDate: draft.shipDate || parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryDate || undefined,
+    deliveryTimeSlot:
+      draft.shipDate || parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryTimeSlot.trim(),
     note: draft.note.trim(),
     paymentNote: draft.paymentNote.trim(),
+    invoiceCode: String(draft.invoiceCode || '').trim().toUpperCase(),
+    status: draft.status || undefined,
+    shippingStatus: draft.shippingStatus || undefined,
     items,
     productsTotal,
     addOnAmount,
@@ -497,14 +535,15 @@ function parseSheetRows(rows, { sheetName = '', filename = '' } = {}) {
       current.deliveryAddress = String(cell(row, map, 'deliveryAddress') || '').trim()
       current.orderDate = parseSheetDate(cell(row, map, 'orderDate'))
       current.deliveryDate = parseSheetDate(cell(row, map, 'deliveryDate'))
-      // Free-text in date cells (e.g. "Minh ship") → time slot
-      const orderDateRaw = String(cell(row, map, 'orderDate') || '').trim()
-      const deliveryDateRaw = String(cell(row, map, 'deliveryDate') || '').trim()
-      const timeSlot = String(cell(row, map, 'deliveryTimeSlot') || '').trim()
-      const timeBits = [timeSlot]
-      if (orderDateRaw && !current.orderDate) timeBits.push(orderDateRaw)
-      if (deliveryDateRaw && !current.deliveryDate) timeBits.push(deliveryDateRaw)
-      current.deliveryTimeSlot = timeBits.filter(Boolean).join(' · ')
+      const shipRaw = cell(row, map, 'shipDate') || cell(row, map, 'deliveryTimeSlot')
+      current.shipDate = parseSheetDate(shipRaw)
+      current.deliveryTimeSlot = current.shipDate || String(shipRaw || '').trim()
+      current.invoiceCode = String(cell(row, map, 'invoiceCode') || '').trim()
+      current.status = parseStatusKey(cell(row, map, 'status'), ORDER_STATUS_IMPORT)
+      current.shippingStatus = parseStatusKey(
+        cell(row, map, 'shippingStatus'),
+        SHIPPING_STATUS_IMPORT,
+      )
       applyMoneyFields(current, row, map, { primary: true })
       if (item) current.items.push(item)
       continue
@@ -573,7 +612,7 @@ export function parseOrderSheetFile(input, filename = '') {
     return {
       orders: [],
       errors: [
-        'Không nhận ra tiêu đề cột. Hãy tải lại bằng Excel (.xlsx) từ Google Sheet (ĐƠN HÀNG QOA), hoặc CSV UTF-8.',
+        'Không nhận ra tiêu đề cột. Dùng file xuất từ app (Ngày đặt, Ngày cần, Thời gian ship, Note sản phẩm, Note đơn, Mã hóa đơn), Excel .xlsx hoặc CSV UTF-8.',
       ],
     }
   }
