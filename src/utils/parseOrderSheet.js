@@ -17,6 +17,7 @@ const HEADER_ALIASES = {
   productName: ['sản phẩm', 'san pham', 'tên sp', 'ten sp'],
   quantity: ['số lượng', 'so luong', 'sl', 'qty'],
   color: ['màu', 'mau', 'color'],
+  itemNote: ['note sản phẩm', 'note sp', 'ghi chú sp', 'ghi chu sp'],
   productsTotal: ['tổng giá sản phẩm', 'tong gia san pham', 'tổng giá sp'],
   addOnAmount: ['thêm theo y/c', 'them theo y/c', 'thêm theo yc', 'phụ thu'],
   orderTotal: [
@@ -220,7 +221,7 @@ function makeItem(row, map, { allowOrderTotalFallback = false } = {}) {
     unitPrice: Math.max(0, unitPrice),
     unitCost: 0,
     color: String(cell(row, map, 'color') || '').trim(),
-    note: '',
+    note: String(cell(row, map, 'itemNote') || '').trim(),
   }
 }
 
@@ -306,8 +307,8 @@ function finalizeDraft(draft) {
     deliveryAddress: draft.deliveryAddress.trim(),
     orderDate: draft.orderDate || undefined,
     deliveryDate: draft.deliveryDate || '',
-    shipDate: draft.deliveryDate || undefined,
-    deliveryTimeSlot: draft.deliveryTimeSlot.trim(),
+    shipDate: parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryDate || undefined,
+    deliveryTimeSlot: parseSheetDate(draft.deliveryTimeSlot) || draft.deliveryTimeSlot.trim(),
     note: draft.note.trim(),
     paymentNote: draft.paymentNote.trim(),
     items,

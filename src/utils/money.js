@@ -8,6 +8,19 @@ export function formatMoneyInput(value) {
   return digits ? Number(digits) : 0
 }
 
+/** Rỗng giữ '', còn lại ra số — dùng cho ô tiền gõ tay */
+export function parseMoneyInput(raw) {
+  const digits = String(raw ?? '').replace(/[^\d]/g, '')
+  return digits === '' ? '' : Number(digits)
+}
+
+export function formatMoneyTyping(value) {
+  if (value === '' || value === null || value === undefined) return ''
+  const digits = String(value).replace(/[^\d]/g, '')
+  if (!digits) return ''
+  return new Intl.NumberFormat('vi-VN').format(Number(digits))
+}
+
 export function toDateInputValue(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -23,7 +36,8 @@ export function summarizeItems(items = []) {
   return items
     .map((item) => {
       const color = item.color ? ` (${item.color})` : ''
-      return `${item.quantity || 1}× ${item.productName}${color}`
+      const note = item.note ? ` — ${item.note}` : ''
+      return `${item.quantity || 1}× ${item.productName}${color}${note}`
     })
     .join(', ')
 }

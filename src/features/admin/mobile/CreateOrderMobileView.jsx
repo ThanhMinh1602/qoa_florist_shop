@@ -116,7 +116,7 @@ function CreateOrderMobileView({
 
           <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-2.5">
             <h3 className="text-[10px] font-semibold tracking-wide text-on-surface-variant uppercase">
-              Note
+              Note đơn
             </h3>
             <div className="mt-1.5">
               <OrderNoteFieldsMobile values={deliveryData} onChange={onDeliveryChange} />

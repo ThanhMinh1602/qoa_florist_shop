@@ -4,7 +4,9 @@ import {
   SHIPPING_PROVIDERS,
   SHIPPING_STATUS_LABELS,
 } from '../../../constants/customRequestDefaults'
+import { isoToDmY, toIsoDateInput } from '../../../utils/dateFormat'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
+import { toDateInputValue } from '../../../utils/money'
 import { normalizeTrackingCode } from '../../../utils/trackingCode'
 
 const BLACK = '#000000'
@@ -42,6 +44,11 @@ function formatPrintDate(isoString) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(isoString))
+}
+
+function formatPrintDay(value) {
+  const iso = toDateInputValue(value) || toIsoDateInput(value)
+  return isoToDmY(iso) || String(value || '').trim() || '—'
 }
 
 function getProviderLabel(id) {
@@ -134,11 +141,11 @@ const RequestPrintSheet = forwardRef(function RequestPrintSheet({ request }, ref
             </tr>
             <tr>
               <LabelCell>Ngày giao</LabelCell>
-              <ValueCell>{request.deliveryDate || '—'}</ValueCell>
+              <ValueCell>{formatPrintDay(request.deliveryDate)}</ValueCell>
             </tr>
             <tr>
-              <LabelCell>Khung giờ giao</LabelCell>
-              <ValueCell>{request.deliveryTimeSlot || '—'}</ValueCell>
+              <LabelCell>Thời gian ship</LabelCell>
+              <ValueCell>{formatPrintDay(request.shipDate || request.deliveryTimeSlot)}</ValueCell>
             </tr>
             {request.deliveryNote ? (
               <tr>

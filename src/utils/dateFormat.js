@@ -31,6 +31,15 @@ export function dmYToIso(display) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+/** Chuỗi bất kỳ → yyyy-mm-dd nếu nhận ra được ngày */
+export function toIsoDateInput(value) {
+  if (!value) return ''
+  const raw = String(value).trim()
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`
+  return dmYToIso(raw) || ''
+}
+
 /** Gõ dần: chỉ giữ số và thêm / */
 export function maskDmYInput(raw) {
   const digits = String(raw || '')

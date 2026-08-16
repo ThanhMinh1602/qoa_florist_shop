@@ -17,6 +17,7 @@ export const DEFAULT_DELIVERY_STEP = {
   customerPhone: '',
   deliveryAddress: '',
   deliveryDate: '',
+  shipDate: '',
   deliveryTimeSlot: '',
   note: '',
   shippingProvider: '',

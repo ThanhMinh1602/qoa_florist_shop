@@ -1,5 +1,6 @@
+import { isoToDmY, toIsoDateInput } from './dateFormat'
 import { getInvoiceCode } from './invoiceCode'
-import { summarizeItems } from './money'
+import { summarizeItems, toDateInputValue } from './money'
 import { calcOrderMoney } from './orderMoney'
 import { normalizeTrackingCode } from './trackingCode'
 
@@ -30,8 +31,11 @@ export function buildUnifiedManageItems(orders = []) {
         id: order.id,
         createdAt: order.createdAt,
         orderDate: order.orderDate || order.createdAt || null,
-        neededDate: order.shipDate || order.deliveryDate || null,
-        shipTime: order.deliveryTimeSlot || '',
+        neededDate: order.deliveryDate || order.shipDate || null,
+        shipTime:
+          isoToDmY(toDateInputValue(order.shipDate) || toIsoDateInput(order.deliveryTimeSlot)) ||
+          order.deliveryTimeSlot ||
+          '',
         code: getInvoiceCode(order),
         primaryName: order.customerName,
         secondaryPhone: order.customerPhone || '',

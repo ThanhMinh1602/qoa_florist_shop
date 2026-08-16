@@ -11,6 +11,7 @@ import {
   EMPTY_ORDER_MONEY,
 } from '../../../constants/customRequestDefaults'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import { toIsoDateInput } from '../../../utils/dateFormat'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { toDateInputValue } from '../../../utils/money'
 import { calcOrderMoney } from '../../../utils/orderMoney'
@@ -40,7 +41,13 @@ function deliveryStateFromRequest(request) {
     customerPhone: request.customerPhone || '',
     deliveryAddress: request.deliveryAddress || '',
     orderDate: toDateInputValue(request.orderDate || request.createdAt) || '',
-    deliveryDate: toDateInputValue(request.shipDate) || request.deliveryDate || '',
+    deliveryDate:
+      toIsoDateInput(request.deliveryDate) ||
+      toDateInputValue(request.deliveryDate) ||
+      toDateInputValue(request.shipDate) ||
+      '',
+    shipDate:
+      toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '',
     deliveryTimeSlot: request.deliveryTimeSlot || '',
     shippingProvider: request.shippingProvider || '',
     shippingTrackingCode: normalizeTrackingCode(request.shippingTrackingCode),
@@ -175,9 +182,9 @@ function EditOrderPage() {
         deliveryPhone: customerPhone || request.deliveryPhone,
         deliveryAddress: deliveryData.deliveryAddress.trim(),
         orderDate: deliveryData.orderDate || null,
-        shipDate: deliveryData.deliveryDate || null,
+        shipDate: deliveryData.shipDate || deliveryData.deliveryDate || null,
         deliveryDate: deliveryData.deliveryDate || '',
-        deliveryTimeSlot: deliveryData.deliveryTimeSlot || '',
+        deliveryTimeSlot: deliveryData.shipDate || deliveryData.deliveryTimeSlot || '',
         shippingProvider: deliveryData.shippingProvider || '',
         shippingTrackingCode: normalizeTrackingCode(deliveryData.shippingTrackingCode),
         monthEndChecked: Boolean(request.monthEndChecked),

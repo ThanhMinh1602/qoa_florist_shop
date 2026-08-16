@@ -87,6 +87,10 @@ function AnimatedOutlet({ variant = 'shop' }) {
   }
 
   if (variant === 'admin' && isFillHeightAdminPath(animKey)) {
+    const pathname = location.pathname
+    if (isOrderEditorPath(pathname) || pathname === '/admin/orders/import') {
+      return outlet
+    }
     return <AdminFillShell>{outlet}</AdminFillShell>
   }
 

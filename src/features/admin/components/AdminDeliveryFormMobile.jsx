@@ -134,7 +134,6 @@ export function OrderCustomerFieldsMobile({ values, onChange }) {
 }
 
 export function OrderScheduleFieldsMobile({ values, onChange }) {
-  const handleChange = makeFieldChange(onChange)
   const dateClassName =
     `${fieldClassName} min-w-0 max-w-full py-2 pl-2.5 pr-8 text-[13px] tabular-nums`
 
@@ -160,12 +159,10 @@ export function OrderScheduleFieldsMobile({ values, onChange }) {
       </div>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-on-surface">Thời gian ship</span>
-        <input
-          type="text"
-          value={values.deliveryTimeSlot || ''}
-          onChange={handleChange('deliveryTimeSlot')}
-          className={fieldClassName}
-          placeholder="vd: 8h–12h · Sáng"
+        <DateDmYField
+          value={values.shipDate || ''}
+          onChange={(next) => onChange('shipDate', next)}
+          className={dateClassName}
         />
       </label>
     </div>
@@ -177,13 +174,13 @@ export function OrderNoteFieldsMobile({ values, onChange }) {
 
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-on-surface">Note</span>
+      <span className="mb-1 block text-xs font-medium text-on-surface">Note đơn</span>
       <textarea
         value={values.note}
         onChange={handleChange('note')}
         rows={2}
         className={`${fieldClassName} resize-y leading-snug`}
-        placeholder="Tag SN · lời thiệp…"
+        placeholder="Note cho cả đơn hàng"
       />
     </label>
   )
@@ -248,7 +245,7 @@ function AdminDeliveryFormMobile({ values, onChange }) {
         </div>
       </section>
       <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-3 shadow-sm">
-        <h4 className="text-xs font-semibold text-on-surface">Note</h4>
+        <h4 className="text-xs font-semibold text-on-surface">Note đơn</h4>
         <div className="mt-2">
           <OrderNoteFieldsMobile values={values} onChange={onChange} />
         </div>

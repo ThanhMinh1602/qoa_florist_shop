@@ -1,5 +1,6 @@
 import { formatMoney } from '../../../utils/money'
 import { calcOrderMoney } from '../../../utils/orderMoney'
+import MoneyInput from './MoneyInput'
 
 const inputClass =
   'w-full rounded-md border border-outline-variant/25 px-2 py-1.5 text-sm outline-none placeholder:text-outline/55 focus:ring-2 focus:ring-primary/20'
@@ -34,55 +35,45 @@ function OrderMoneyFields({ values, onChange, productsTotal = 0 }) {
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
           <span className="mb-0.5 block text-[11px] text-on-surface-variant">Thêm y/c</span>
-          <input
-            type="number"
-            min="0"
+          <MoneyInput
             value={values.addOnAmount}
-            onChange={(e) => onChange('addOnAmount', e.target.value)}
+            onChange={(next) => onChange('addOnAmount', next)}
             placeholder="0"
             className={inputClass}
           />
         </label>
         <label className="block">
           <span className="mb-0.5 block text-[11px] text-on-surface-variant">Cọc / CK</span>
-          <input
-            type="number"
-            min="0"
+          <MoneyInput
             value={values.deposit}
-            onChange={(e) => onChange('deposit', e.target.value)}
+            onChange={(next) => onChange('deposit', next)}
             placeholder="0"
             className={inputClass}
           />
         </label>
         <label className="block">
           <span className="mb-0.5 block text-[11px] text-on-surface-variant">Ship báo KH</span>
-          <input
-            type="number"
-            min="0"
+          <MoneyInput
             value={values.shippingFee}
-            onChange={(e) => onChange('shippingFee', e.target.value)}
+            onChange={(next) => onChange('shippingFee', next)}
             placeholder="0"
             className={inputClass}
           />
         </label>
         <label className="block">
           <span className="mb-0.5 block text-[11px] text-on-surface-variant">Ship thực</span>
-          <input
-            type="number"
-            min="0"
+          <MoneyInput
             value={values.actualShippingFee}
-            onChange={(e) => onChange('actualShippingFee', e.target.value)}
+            onChange={(next) => onChange('actualShippingFee', next)}
             placeholder="0"
             className={inputClass}
           />
         </label>
         <label className="block">
           <span className="mb-0.5 block text-[11px] text-on-surface-variant">Phát sinh</span>
-          <input
-            type="number"
-            min="0"
+          <MoneyInput
             value={values.incidentalAmount}
-            onChange={(e) => onChange('incidentalAmount', e.target.value)}
+            onChange={(next) => onChange('incidentalAmount', next)}
             placeholder="0"
             className={inputClass}
           />
@@ -114,13 +105,11 @@ function OrderMoneyFields({ values, onChange, productsTotal = 0 }) {
             Sửa tay
           </label>
         </span>
-        <input
-          type="number"
-          min="0"
+        <MoneyInput
           value={values.codManual ? values.codAmount : money.autoCod}
-          onChange={(e) => {
+          onChange={(next) => {
             if (!values.codManual) onChange('codManual', true)
-            onChange('codAmount', e.target.value)
+            onChange('codAmount', next)
           }}
           placeholder="Tổng + ship − cọc"
           className={inputClass}

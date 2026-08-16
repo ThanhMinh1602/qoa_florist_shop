@@ -16,6 +16,7 @@ const HEADERS = [
   'Sản phẩm',
   'Số lượng',
   'Màu',
+  'Note sản phẩm',
   'Tổng giá sản phẩm',
   'Thêm theo y/c',
   'Tổng giá trị đơn hàng',
@@ -162,16 +163,20 @@ export function buildOrdersExportRows(orders = []) {
         isPrimary ? stt : '',
         isPrimary ? formatSheetDate(order.orderDate || order.createdAt) : '',
         isPrimary
-          ? formatSheetDate(order.shipDate || order.deliveryDate) ||
-            String(order.deliveryDate || '')
+          ? formatSheetDate(order.deliveryDate) || String(order.deliveryDate || '')
           : '',
-        isPrimary ? order.deliveryTimeSlot || '' : '',
+        isPrimary
+          ? formatSheetDate(order.shipDate) ||
+            formatSheetDate(order.deliveryTimeSlot) ||
+            String(order.deliveryTimeSlot || '')
+          : '',
         isPrimary ? order.customerName || '' : '',
         isPrimary ? order.customerPhone || '' : '',
         isPrimary ? order.deliveryAddress || '' : '',
         item.productName || '',
         qty,
         item.color || '',
+        item.note || '',
         lineTotal || (isPrimary ? money.productsTotal : ''),
         isPrimary ? moneyValue(order.addOnAmount) : '',
         isPrimary ? money.orderTotal : '',

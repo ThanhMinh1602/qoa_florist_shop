@@ -18,7 +18,10 @@ export function getZaloShopId() {
 
 function itemSummary(order) {
   if (!Array.isArray(order?.items) || order.items.length === 0) return ''
-  return order.items.map((item) => `${item.productName} x${item.quantity}`).join(', ')
+  return order.items.map((item) => {
+    const note = item.note ? ` (${item.note})` : ''
+    return `${item.productName} x${item.quantity}${note}`
+  }).join(', ')
 }
 
 /** Tin đầy đủ — hiện trên web để copy */

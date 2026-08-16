@@ -10,6 +10,7 @@ import {
 } from '../../../constants/customRequestDefaults'
 import { fetchProductsApi } from '../../../api/productsApi'
 import { updateCustomRequestApi } from '../../../api/notificationsApi'
+import { toIsoDateInput } from '../../../utils/dateFormat'
 import { formatTimeAgo } from '../../../utils/formatTimeAgo'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
@@ -55,9 +56,14 @@ function OrderDetailModal({
   const [deliveryAddress, setDeliveryAddress] = useState(request.deliveryAddress || '')
   const [orderDate, setOrderDate] = useState(toDateInputValue(request.orderDate || request.createdAt) || '')
   const [neededDate, setNeededDate] = useState(
-    toDateInputValue(request.shipDate) || request.deliveryDate || '',
+    toIsoDateInput(request.deliveryDate) ||
+      toDateInputValue(request.deliveryDate) ||
+      toDateInputValue(request.shipDate) ||
+      '',
   )
-  const [shipTime, setShipTime] = useState(request.deliveryTimeSlot || '')
+  const [shipDate, setShipDate] = useState(
+    toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '',
+  )
   const [shippingProvider, setShippingProvider] = useState(request.shippingProvider || '')
   const [trackingCode, setTrackingCode] = useState(() =>
     normalizeTrackingCode(request.shippingTrackingCode),
@@ -95,8 +101,13 @@ function OrderDetailModal({
     setCustomerPhone(request.customerPhone || '')
     setDeliveryAddress(request.deliveryAddress || '')
     setOrderDate(toDateInputValue(request.orderDate || request.createdAt) || '')
-    setNeededDate(toDateInputValue(request.shipDate) || request.deliveryDate || '')
-    setShipTime(request.deliveryTimeSlot || '')
+    setNeededDate(
+      toIsoDateInput(request.deliveryDate) ||
+        toDateInputValue(request.deliveryDate) ||
+        toDateInputValue(request.shipDate) ||
+        '',
+    )
+    setShipDate(toDateInputValue(request.shipDate) || toIsoDateInput(request.deliveryTimeSlot) || '')
     setShippingProvider(request.shippingProvider || '')
     setTrackingCode(normalizeTrackingCode(request.shippingTrackingCode))
     setMonthEndChecked(Boolean(request.monthEndChecked))
@@ -124,9 +135,9 @@ function OrderDetailModal({
         deliveryPhone: customerPhone.trim() || request.deliveryPhone,
         deliveryAddress: deliveryAddress.trim(),
         orderDate: orderDate || null,
-        shipDate: neededDate || null,
+        shipDate: shipDate || neededDate || null,
         deliveryDate: neededDate || '',
-        deliveryTimeSlot: shipTime,
+        deliveryTimeSlot: shipDate || request.deliveryTimeSlot || '',
         shippingProvider,
         shippingTrackingCode: normalizeTrackingCode(trackingCode),
         monthEndChecked,
@@ -292,10 +303,10 @@ function OrderDetailModal({
               <label className="block min-w-0 text-sm">
                 <span className="mb-1 block font-medium text-on-surface">Thời gian ship</span>
                 <input
-                  type="text"
-                  value={shipTime}
-                  onChange={(e) => setShipTime(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/20"
+                  type="date"
+                  value={shipDate}
+                  onChange={(e) => setShipDate(e.target.value)}
+                  className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
                 />
               </label>
               <label className="block text-sm">
@@ -352,7 +363,7 @@ function OrderDetailModal({
               />
             </div>
             <label className="mt-3 block text-sm">
-              <span className="mb-1 block font-medium text-on-surface">Note</span>
+              <span className="mb-1 block font-medium text-on-surface">Note đơn</span>
               <textarea
                 rows={2}
                 value={note}

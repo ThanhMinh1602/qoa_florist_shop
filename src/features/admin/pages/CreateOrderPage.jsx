@@ -87,10 +87,10 @@ function CreateOrderPage() {
         deliveryPhone: customerPhone,
         deliveryAddress: deliveryData.deliveryAddress.trim(),
         deliveryDate: deliveryData.deliveryDate || '',
-        deliveryTimeSlot: deliveryData.deliveryTimeSlot || '',
+        deliveryTimeSlot: deliveryData.shipDate || deliveryData.deliveryTimeSlot || '',
         note: deliveryData.note || '',
         orderDate: deliveryData.orderDate || undefined,
-        shipDate: deliveryData.deliveryDate || undefined,
+        shipDate: deliveryData.shipDate || deliveryData.deliveryDate || undefined,
         shippingProvider: deliveryData.shippingProvider || '',
         shippingTrackingCode: normalizeTrackingCode(deliveryData.shippingTrackingCode),
         items,
@@ -148,7 +148,7 @@ function CreateOrderPage() {
 
   if (savedRequest) {
     return (
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-col">
         <header className="border-b border-outline-variant/25 bg-surface-container-lowest/80 px-4 py-3 backdrop-blur lg:px-8 lg:py-5">
           <h2 className="font-display text-lg text-primary lg:text-3xl">Tạo đơn hàng mới</h2>
           <p className="mt-1 text-xs text-on-surface-variant lg:mt-2 lg:text-sm">Đơn đã được tạo.</p>
@@ -161,7 +161,7 @@ function CreateOrderPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-col">
       <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
         <div>
           <h2 className="font-display text-lg text-primary lg:text-3xl">Tạo đơn hàng mới</h2>
@@ -214,7 +214,7 @@ function CreateOrderPage() {
 
               <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-3 shadow-sm">
                 <h3 className="text-[11px] font-semibold tracking-wide text-on-surface-variant uppercase">
-                  Note
+                  Note đơn
                 </h3>
                 <div className="mt-2">
                   <OrderNoteFields values={deliveryData} onChange={handleDeliveryChange} />

@@ -57,7 +57,7 @@ export function OrderScheduleFields({ values, onChange }) {
   const handleChange = makeFieldChange(onChange)
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2 sm:grid-cols-3">
       <label className="block">
         <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">Ngày đặt</span>
         <input
@@ -76,16 +76,15 @@ export function OrderScheduleFields({ values, onChange }) {
           className={fieldClassName}
         />
       </label>
-      <label className="block sm:col-span-2">
+      <label className="block">
         <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">
           Thời gian ship
         </span>
         <input
-          type="text"
-          value={values.deliveryTimeSlot || ''}
-          onChange={handleChange('deliveryTimeSlot')}
+          type="date"
+          value={values.shipDate || ''}
+          onChange={handleChange('shipDate')}
           className={fieldClassName}
-          placeholder="vd: 8h–12h · Sáng"
         />
       </label>
     </div>
@@ -97,13 +96,13 @@ export function OrderNoteFields({ values, onChange }) {
 
   return (
     <label className="block">
-      <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">Note</span>
+      <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">Note đơn</span>
       <textarea
         value={values.note}
         onChange={handleChange('note')}
         rows={2}
         className={`${fieldClassName} resize-y leading-snug`}
-        placeholder="vd: Tag SN đỏ · Hpbd…"
+        placeholder="Note cho cả đơn hàng"
       />
     </label>
   )

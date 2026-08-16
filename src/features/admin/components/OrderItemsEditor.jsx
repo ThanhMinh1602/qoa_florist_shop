@@ -1,4 +1,5 @@
 import { formatMoney } from '../../../utils/money'
+import MoneyInput from './MoneyInput'
 
 function OrderItemsEditor({ products = [], items = [], onChange }) {
   function updateItem(index, patch) {
@@ -93,7 +94,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
                 key={`${item.productId || 'custom'}-${index}`}
                 className="rounded-lg border border-outline-variant/25 bg-surface-container-low/15 p-2"
               >
-                <div className="grid grid-cols-[minmax(0,1fr)_3.25rem_5.5rem_auto] items-center gap-1.5 sm:grid-cols-[minmax(0,1.4fr)_3.25rem_5.5rem_minmax(0,1fr)_auto_auto]">
+                <div className="grid grid-cols-[minmax(0,1fr)_3.25rem_6.5rem_auto] items-center gap-1.5 sm:grid-cols-[minmax(0,1.4fr)_3.25rem_6.5rem_minmax(0,1fr)_auto_auto]">
                   <input
                     value={item.productName}
                     onChange={(e) => updateItem(index, { productName: e.target.value })}
@@ -101,19 +102,24 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
                     className={`${lineInput} min-w-0`}
                   />
                   <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, { quantity: Number(e.target.value) || 1 })}
-                    className={lineInput}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={item.quantity || ''}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^\d]/g, '')
+                      updateItem(index, { quantity: digits === '' ? '' : Math.max(1, Number(digits)) })
+                    }}
+                    onBlur={() => {
+                      if (!item.quantity) updateItem(index, { quantity: 1 })
+                    }}
+                    className={`${lineInput} tabular-nums`}
                     title="Số lượng"
                     placeholder="SL"
                   />
-                  <input
-                    type="number"
-                    min="0"
+                  <MoneyInput
                     value={item.unitPrice}
-                    onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) || 0 })}
+                    onChange={(next) => updateItem(index, { unitPrice: next === '' ? 0 : next })}
                     className={lineInput}
                     title="Đơn giá"
                     placeholder="Giá"
@@ -135,6 +141,13 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
                     Xóa
                   </button>
                 </div>
+                <textarea
+                  rows={2}
+                  value={item.note || ''}
+                  onChange={(e) => updateItem(index, { note: e.target.value })}
+                  placeholder="Note sản phẩm"
+                  className={`${lineInput} mt-1.5 w-full resize-y leading-snug`}
+                />
                 <p className="mt-1 text-right text-xs font-medium text-on-surface sm:hidden">
                   {formatMoney(lineTotal)}
                 </p>
