@@ -10,6 +10,9 @@ import {
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useDialog } from '../../../context/DialogContext'
 
+const DEFAULT_TIMES = ['08:00', '13:00', '17:00']
+const MAX_TIMES = 10
+
 function emailsToText(emails = []) {
   return (emails || []).join('\n')
 }
@@ -22,17 +25,27 @@ function textToEmails(text) {
     .slice(0, 3)
 }
 
+function normalizeTimeValue(value) {
+  const raw = String(value || '').trim()
+  const match = raw.match(/^([01]?\d|2[0-3]):([0-5]\d)$/)
+  if (!match) return ''
+  return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+}
+
 function GoogleCalendarSettingsSection({ open, onToggle }) {
   const { alert, confirm } = useDialog()
   const [searchParams, setSearchParams] = useSearchParams()
   const [status, setStatus] = useState(null)
   const [calendarId, setCalendarId] = useState('')
   const [emailsText, setEmailsText] = useState('')
+  const [notifyTimes, setNotifyTimes] = useState(() => [...DEFAULT_TIMES])
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState('')
+
+  const maxTimes = status?.maxNotifyTimes || MAX_TIMES
 
   const loadStatus = useCallback(async () => {
     setLoading(true)
@@ -43,6 +56,11 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
       setStatus(data)
       setCalendarId(data.calendarId || '')
       setEmailsText(emailsToText(data.notifyEmails))
+      setNotifyTimes(
+        Array.isArray(data.notifyTimes) && data.notifyTimes.length > 0
+          ? data.notifyTimes
+          : [...(data.defaultNotifyTimes || DEFAULT_TIMES)],
+      )
       setEnabled(Boolean(data.enabled))
     } catch (err) {
       setError(err.message || 'Không tải được trạng thái Google Calendar.')
@@ -69,7 +87,7 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
       void loadStatus()
       void alert({
         title: 'Đã kết nối Google',
-        message: 'Tài khoản Google đã liên kết. Hãy điền Calendar ID, 3 Gmail và bật đồng bộ.',
+        message: 'Tài khoản Google đã liên kết. Hãy điền Calendar ID, Gmail và khung giờ nhắc.',
         variant: 'success',
       })
       return
@@ -81,6 +99,32 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
       variant: 'error',
     })
   }, [alert, loadStatus, searchParams, setSearchParams])
+
+  function updateTimeAt(index, value) {
+    setNotifyTimes((previous) => {
+      const next = [...previous]
+      next[index] = value
+      return next
+    })
+  }
+
+  function addTimeSlot() {
+    setNotifyTimes((previous) => {
+      if (previous.length >= maxTimes) return previous
+      return [...previous, '09:00']
+    })
+  }
+
+  function removeTimeSlot(index) {
+    setNotifyTimes((previous) => {
+      if (previous.length <= 1) return previous
+      return previous.filter((_, i) => i !== index)
+    })
+  }
+
+  function resetDefaultTimes() {
+    setNotifyTimes([...(status?.defaultNotifyTimes || DEFAULT_TIMES)])
+  }
 
   async function handleConnect() {
     setConnecting(true)
@@ -130,28 +174,47 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
   }
 
   async function handleSave() {
+    const cleanedTimes = [
+      ...new Set(notifyTimes.map(normalizeTimeValue).filter(Boolean)),
+    ]
+      .sort()
+      .slice(0, maxTimes)
+
+    if (cleanedTimes.length === 0) {
+      await alert({
+        title: 'Thiếu khung giờ',
+        message: 'Hãy thêm ít nhất 1 khung giờ nhắc hợp lệ (vd. 08:00).',
+        variant: 'error',
+      })
+      return
+    }
+
     setSaving(true)
     try {
       const result = await updateGoogleCalendarSettingsApi({
         calendarId: calendarId.trim(),
         notifyEmails: textToEmails(emailsText),
+        notifyTimes: cleanedTimes,
         enabled,
         syncShares: true,
       })
       setStatus(result.data)
       setCalendarId(result.data.calendarId || '')
       setEmailsText(emailsToText(result.data.notifyEmails))
+      setNotifyTimes(
+        Array.isArray(result.data.notifyTimes) && result.data.notifyTimes.length > 0
+          ? result.data.notifyTimes
+          : cleanedTimes,
+      )
       setEnabled(Boolean(result.data.enabled))
 
       const share = result.data.shareResult
       const shareMsg = share
-        ? `Share: +${(share.added || []).length} / −${(share.removed || []).length}` +
-          (share.errors?.length ? ` · lỗi ${share.errors.length}` : '')
-        : 'Chưa sync share (chưa Connect hoặc thiếu Calendar ID).'
-
+        ? `Share: +${(share.added || []).length} / −${(share.removed || []).length}`
+        : 'Chưa sync share'
       await alert({
         title: 'Đã lưu Google Calendar',
-        message: shareMsg,
+        message: `${cleanedTimes.length} khung giờ nhắc · ${shareMsg}`,
         variant: 'success',
       })
     } catch (err) {
@@ -193,7 +256,7 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
   const summary = loading
     ? 'Đang tải...'
     : connected
-      ? `${enabled ? 'Đang đồng bộ' : 'Tắt đồng bộ'} · ${status?.connectedEmail || 'Google'} · ${(status?.notifyEmails || []).length}/3 mail`
+      ? `${enabled ? 'Đang đồng bộ' : 'Tắt đồng bộ'} · ${notifyTimes.length} giờ nhắc · ${(status?.notifyEmails || []).length}/3 mail`
       : status?.configured
         ? 'Chưa Connect Google'
         : 'Chưa cấu hình env API'
@@ -209,7 +272,7 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-primary md:text-lg">Google Calendar</h3>
           <p className="mt-0.5 text-xs text-on-surface-variant md:text-sm">
-            Đồng bộ ngày giao đơn lên 1 lịch chung, chỉ share cho tối đa 3 Gmail.
+            Đồng bộ đơn giao, share Gmail, và đặt nhiều khung giờ nhắc trong ngày (tối đa {maxTimes}).
           </p>
           <p
             className={[
@@ -310,9 +373,6 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
                   placeholder="xxxx@group.calendar.google.com hoặc primary"
                   className="input-glass mt-1.5"
                 />
-                <span className="mt-1 block text-xs text-outline">
-                  Lấy trong Settings lịch “QOA Giao hàng” → Integrate calendar.
-                </span>
               </label>
 
               <label className="block">
@@ -326,10 +386,63 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
                   placeholder={'mail1@gmail.com\nmail2@gmail.com\nmail3@gmail.com'}
                   className="input-glass mt-1.5 resize-y font-mono text-sm"
                 />
-                <span className="mt-1 block text-xs text-outline">
-                  Tối đa 3 mail. Khi lưu, hệ thống share calendar cho đúng các mail này.
-                </span>
               </label>
+
+              <div className="rounded-xl border border-outline-variant/25 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="label-caps text-on-surface-variant">
+                      Khung giờ nhắc trong ngày
+                    </p>
+                    <p className="mt-1 text-xs text-outline">
+                      Giống báo thức: nếu ngày đó còn đơn chưa giao, Calendar sẽ nhắc đúng các giờ
+                      này. Tối đa {maxTimes} khung · mặc định 08:00, 13:00, 17:00.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetDefaultTimes}
+                    className="btn-glass px-2.5 py-1 text-xs"
+                  >
+                    Đặt lại mặc định
+                  </button>
+                </div>
+
+                <ul className="mt-3 space-y-2">
+                  {notifyTimes.map((time, index) => (
+                    <li key={`notify-time-${index}`} className="flex items-center gap-2">
+                      <span className="w-6 text-center text-xs font-semibold text-outline">
+                        {index + 1}
+                      </span>
+                      <input
+                        type="time"
+                        value={time}
+                        onChange={(event) => updateTimeAt(index, event.target.value)}
+                        className="input-glass max-w-[10rem]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeTimeSlot(index)}
+                        disabled={notifyTimes.length <= 1}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-error-container/40 hover:text-error disabled:opacity-30"
+                        aria-label={`Xóa khung giờ ${index + 1}`}
+                      >
+                        <MaterialIcon name="delete" className="text-lg" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  onClick={addTimeSlot}
+                  disabled={notifyTimes.length >= maxTimes}
+                  className="btn-glass mt-3 inline-flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <MaterialIcon name="alarm_add" className="text-lg" />
+                  Thêm khung giờ ({notifyTimes.length}/{maxTimes})
+                </button>
+              </div>
 
               <div className="flex justify-end">
                 <button
