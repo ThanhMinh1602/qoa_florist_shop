@@ -55,6 +55,11 @@ export const ADMIN_SIDEBAR_SECTIONS = [
         label: 'Quản lý đơn',
         icon: 'receipt_long',
       },
+      {
+        to: '/admin/calendar',
+        label: 'Lịch giao hàng',
+        icon: 'calendar_month',
+      },
     ],
   },
   {
@@ -134,7 +139,7 @@ export const ADMIN_MOBILE_TABS = [
     icon: 'storefront',
     to: '/admin/manage',
     defaultTo: '/admin/manage',
-    matchPrefixes: ['/admin/manage', '/admin/orders'],
+    matchPrefixes: ['/admin/manage', '/admin/orders', '/admin/calendar'],
   },
   {
     id: 'catalog',

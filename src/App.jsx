@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './features/admin/layouts/AdminLayout'
+import AdminCalendarPage from './features/admin/pages/AdminCalendarPage'
 import AdminManagePage from './features/admin/pages/AdminManagePage'
 import CashbookPage from './features/admin/pages/CashbookPage'
 import ChangePasswordPage from './features/admin/pages/ChangePasswordPage'
@@ -49,6 +50,7 @@ function App() {
           <Route path="qr/new" element={<CreateQrPage />} />
           <Route path="qr" element={<QrListPage />} />
           <Route path="manage" element={<AdminManagePage />} />
+          <Route path="calendar" element={<AdminCalendarPage />} />
           <Route path="orders" element={<Navigate to="/admin/manage" replace />} />
           <Route path="products" element={<ProductsPage />}>
             <Route path="new" element={<ProductEditPage />} />

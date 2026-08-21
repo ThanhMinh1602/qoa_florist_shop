@@ -10,6 +10,7 @@ import { useLandingSettings } from '../../../hooks/swr'
 import { resizeImageFiles } from '../../../utils/resizeImage'
 import LandingHeroCarousel from '../../landing/components/LandingHeroCarousel'
 import PriceTierCard from '../../landing/components/priceTiers/PriceTierCard'
+import GoogleCalendarSettingsSection from '../components/GoogleCalendarSettingsSection'
 
 const COPY_FIELD_KEYS = Object.keys(LANDING_COPY_DEFAULTS)
 
@@ -533,7 +534,7 @@ function SiteSettingsPage() {
         <div className="min-w-0">
           <h2 className="font-display text-lg text-primary lg:text-3xl">Cài đặt web</h2>
           <p className="mt-0.5 text-xs text-on-surface-variant lg:mt-1 lg:text-base">
-            Ảnh hero, chữ banner, section trang chủ và footer.
+            Ảnh hero, chữ banner, section trang chủ, footer và Google Calendar.
           </p>
         </div>
         <button
@@ -556,6 +557,11 @@ function SiteSettingsPage() {
         <p className="py-12 text-center text-sm text-on-surface-variant">Đang tải...</p>
       ) : (
         <div className="space-y-3 lg:space-y-4">
+          <GoogleCalendarSettingsSection
+            open={openSections.has('googleCalendar')}
+            onToggle={() => toggleSection('googleCalendar')}
+          />
+
           <SettingsSection
             title="Banner / Hero"
             description="Ảnh slideshow, tiêu đề, phụ đề và nút CTA."

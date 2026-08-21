@@ -29,7 +29,6 @@ import ManageUnifiedListMobile, {
 } from '../mobile/ManageUnifiedListMobile'
 
 const PAGE_SIZE = 25
-const SCROLL_TOGGLE_DELTA = 8
 const SEARCH_DEBOUNCE_MS = 300
 const EXPORT_LIMIT = 2000
 
@@ -70,7 +69,7 @@ function AdminManagePage() {
   const listScrollRef = useRef(null)
   const skipScrollOnMount = useRef(true)
   const lastScrollTopRef = useRef(0)
-  const [filtersOpen, setFiltersOpen] = useState(true)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const loadSeqRef = useRef(0)
 
   useEffect(() => {
@@ -167,32 +166,9 @@ function AdminManagePage() {
       skipScrollOnMount.current = false
       return
     }
-    listScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-    setFiltersOpen(true)
+    listScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
     lastScrollTopRef.current = 0
   }, [safePage])
-
-  useEffect(() => {
-    const el = listScrollRef.current
-    if (!el) return undefined
-
-    const onScroll = () => {
-      const top = el.scrollTop
-      const delta = top - lastScrollTopRef.current
-      lastScrollTopRef.current = top
-
-      if (top <= 16) {
-        setFiltersOpen(true)
-        return
-      }
-      if (delta > SCROLL_TOGGLE_DELTA) {
-        setFiltersOpen(false)
-      }
-    }
-
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [isLoadingOrders])
 
   useEffect(() => {
     setSelectedIds((previous) => previous.filter((id) => unifiedItems.some((item) => item.id === id)))
@@ -530,7 +506,7 @@ function AdminManagePage() {
         <div
           ref={listScrollRef}
           data-scroll-lock-scrollable
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pt-2 touch-pan-y [-webkit-overflow-scrolling:touch] md:px-3 lg:px-4"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pt-2 touch-pan-y [overflow-anchor:none] [-webkit-overflow-scrolling:touch] md:px-3 lg:px-4"
           aria-busy={isLoadingOrders || undefined}
         >
           {isLoadingOrders ? (
