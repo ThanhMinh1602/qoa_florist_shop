@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
+import { useDialog } from '../../../context/DialogContext'
 import { useScrollLock } from '../../../hooks/useScrollLock'
 import { drawerEnter, overlayFade } from '../../../lib/motion'
 import AdminNavMenu from '../components/AdminNavMenu'
@@ -9,7 +10,21 @@ import { ADMIN_MOBILE_MORE_SECTIONS } from '../constants/adminNavItems'
 
 function AdminMobileDrawer({ isOpen, onClose, sections = ADMIN_MOBILE_MORE_SECTIONS }) {
   const { logout, username } = useAuth()
+  const { confirm } = useDialog()
   useScrollLock(isOpen)
+
+  async function handleLogout() {
+    const ok = await confirm({
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc muốn đăng xuất khỏi trang quản trị?',
+      confirmLabel: 'Đăng xuất',
+      cancelLabel: 'Ở lại',
+      variant: 'danger',
+    })
+    if (!ok) return
+    onClose()
+    logout()
+  }
 
   return (
     <AnimatePresence>
@@ -56,10 +71,7 @@ function AdminMobileDrawer({ isOpen, onClose, sections = ADMIN_MOBILE_MORE_SECTI
             <div className="border-t border-outline-variant/20 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <button
                 type="button"
-                onClick={() => {
-                  onClose()
-                  logout()
-                }}
+                onClick={() => void handleLogout()}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/40 px-4 py-3 text-sm font-medium text-on-surface-variant transition-colors hover:border-primary/30 hover:bg-surface-container-low hover:text-primary"
               >
                 <MaterialIcon name="logout" className="text-[1.15rem]" />

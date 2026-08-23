@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { fetchCustomRequestsApi } from '../../../api/customRequestsApi'
 import { fetchGoogleCalendarStatusApi } from '../../../api/googleCalendarApi'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import { useScrollLock } from '../../../hooks/useScrollLock'
+import { modalEnter, overlayFade } from '../../../lib/motion'
 import { formatDeliverySlotDisplay, formatViDate } from '../../../utils/dateFormat'
 import AdminPageHeader from '../components/AdminPageHeader'
 
@@ -213,7 +216,10 @@ function AdminCalendarPage() {
   const [orders, setOrders] = useState([])
   const [ordersLoading, setOrdersLoading] = useState(true)
   const [ordersError, setOrdersError] = useState('')
-  const [selectedIso, setSelectedIso] = useState(() => todayIso())
+  const [selectedIso, setSelectedIso] = useState(null)
+
+  const detailOpen = Boolean(selectedIso)
+  useScrollLock(detailOpen)
 
   const calendarId = status?.calendarId || ''
   const googleReady = Boolean(status?.connected && calendarId)
@@ -256,16 +262,6 @@ function AdminCalendarPage() {
     void loadOrders()
   }, [loadOrders])
 
-  useEffect(() => {
-    const { from, to } = monthBounds(year, month)
-    setSelectedIso((prev) => {
-      if (prev >= from && prev <= to) return prev
-      const today = todayIso()
-      if (today >= from && today <= to) return today
-      return from
-    })
-  }, [month, year])
-
   const monthLabel = `${MONTH_LABELS[month - 1]} năm ${year}`
   const weeks = useMemo(() => buildMonthCells(year, month), [month, year])
   const today = todayIso()
@@ -289,10 +285,15 @@ function AdminCalendarPage() {
     return map
   }, [orders])
 
-  const selectedOrders = ordersByDay.get(selectedIso) || []
+  const selectedOrders = selectedIso ? ordersByDay.get(selectedIso) || [] : []
+
+  function closeDayDetail() {
+    setSelectedIso(null)
+  }
 
   function shiftMonth(delta) {
     const date = new Date(year, month - 1 + delta, 1)
+    setSelectedIso(null)
     setYear(date.getFullYear())
     setMonth(date.getMonth() + 1)
   }
@@ -481,60 +482,109 @@ function AdminCalendarPage() {
           </div>
         </section>
 
-        <section className="glass-card rounded-2xl p-4 sm:p-5">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h3 className="text-base font-semibold text-primary">Chi tiết ngày</h3>
-              <p className="text-xs text-on-surface-variant">{formatVietnameseDate(selectedIso)}</p>
-            </div>
-            <p className="text-xs text-outline">{selectedOrders.length} đơn</p>
-          </div>
-
-          {ordersLoading ? (
-            <p className="mt-4 text-sm text-on-surface-variant">Đang tải...</p>
-          ) : selectedOrders.length === 0 ? (
-            <p className="mt-4 text-sm text-on-surface-variant">Không có đơn giao ngày này.</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-outline-variant/20">
-              {selectedOrders.map((order) => {
-                const orderTone = TONE[getOrderTone(order, today)]
-                return (
-                  <li key={order.id}>
-                    <Link
-                      to={`/admin/manage?highlight=${encodeURIComponent(order.id)}`}
-                      className="flex items-start gap-3 py-3 transition hover:bg-surface-container-low/60"
-                    >
-                      <span
-                        className={[
-                          'mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset',
-                          orderTone.chip,
-                        ].join(' ')}
-                      >
-                        {orderTone.label}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-on-surface">
-                          {order.invoiceCode || '—'} ·{' '}
-                          {order.deliveryRecipientName || order.customerName}
-                        </span>
-                        <span className="mt-0.5 block truncate text-xs text-on-surface-variant">
-                          {orderDetailMeta(order)}
-                        </span>
-                        {formatViDate(order.shipDate || order.deliveryDate) ? (
-                          <span className="mt-0.5 block text-[11px] text-outline">
-                            Ngày giao: {formatViDate(order.shipDate || order.deliveryDate)}
-                          </span>
-                        ) : null}
-                      </span>
-                      <MaterialIcon name="chevron_right" className="mt-0.5 text-outline" />
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
       </div>
+
+      <AnimatePresence>
+        {detailOpen ? (
+          <motion.div
+            className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4"
+            {...overlayFade}
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-on-surface/45 backdrop-blur-[2px]"
+              aria-label="Đóng"
+              onClick={closeDayDetail}
+            />
+
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="calendar-day-detail-title"
+              className="relative z-10 flex max-h-[min(88dvh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+              {...modalEnter}
+            >
+              <div className="shrink-0 border-b border-outline-variant/15 px-4 pb-3 pt-3 sm:px-5 sm:pt-4">
+                <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-outline-variant/40 sm:hidden" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3
+                      id="calendar-day-detail-title"
+                      className="text-base font-semibold text-primary"
+                    >
+                      Chi tiết ngày
+                    </h3>
+                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                      {formatVietnameseDate(selectedIso)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <p className="text-xs text-outline">{selectedOrders.length} đơn</p>
+                    <button
+                      type="button"
+                      onClick={closeDayDetail}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container"
+                      aria-label="Đóng"
+                    >
+                      <MaterialIcon name="close" className="text-xl" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-5">
+                {ordersLoading ? (
+                  <p className="py-6 text-sm text-on-surface-variant">Đang tải...</p>
+                ) : selectedOrders.length === 0 ? (
+                  <p className="py-6 text-sm text-on-surface-variant">
+                    Không có đơn giao ngày này.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-outline-variant/20">
+                    {selectedOrders.map((order) => {
+                      const orderTone = TONE[getOrderTone(order, today)]
+                      return (
+                        <li key={order.id}>
+                          <Link
+                            to={`/admin/manage?highlight=${encodeURIComponent(order.id)}`}
+                            onClick={closeDayDetail}
+                            className="flex items-start gap-3 py-3 transition hover:bg-surface-container-low/60"
+                          >
+                            <span
+                              className={[
+                                'mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset',
+                                orderTone.chip,
+                              ].join(' ')}
+                            >
+                              {orderTone.label}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-on-surface">
+                                {order.invoiceCode || '—'} ·{' '}
+                                {order.deliveryRecipientName || order.customerName}
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs text-on-surface-variant">
+                                {orderDetailMeta(order)}
+                              </span>
+                              {formatViDate(order.shipDate || order.deliveryDate) ? (
+                                <span className="mt-0.5 block text-[11px] text-outline">
+                                  Ngày giao:{' '}
+                                  {formatViDate(order.shipDate || order.deliveryDate)}
+                                </span>
+                              ) : null}
+                            </span>
+                            <MaterialIcon name="chevron_right" className="mt-0.5 text-outline" />
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

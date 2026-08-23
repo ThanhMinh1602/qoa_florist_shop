@@ -1,10 +1,23 @@
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import BrandLogo from '../../../components/common/BrandLogo'
 import { useAuth } from '../../../context/AuthContext'
+import { useDialog } from '../../../context/DialogContext'
 import AdminNavMenu from './AdminNavMenu'
 
 function AdminSidebar() {
   const { logout, username } = useAuth()
+  const { confirm } = useDialog()
+
+  async function handleLogout() {
+    const ok = await confirm({
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc muốn đăng xuất khỏi trang quản trị?',
+      confirmLabel: 'Đăng xuất',
+      cancelLabel: 'Ở lại',
+      variant: 'danger',
+    })
+    if (ok) logout()
+  }
 
   return (
     <aside className="sticky top-0 hidden h-dvh min-h-dvh w-64 shrink-0 flex-col border-r border-white/55 bg-surface-container-lowest/80 backdrop-blur-xl lg:flex">
@@ -24,7 +37,7 @@ function AdminSidebar() {
         ) : null}
         <button
           type="button"
-          onClick={logout}
+          onClick={() => void handleLogout()}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/40 px-4 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:border-primary/30 hover:bg-surface-container-low hover:text-primary"
         >
           <MaterialIcon name="logout" className="text-[1.15rem]" />
