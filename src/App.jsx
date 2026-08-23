@@ -13,6 +13,7 @@ import DashboardPage from './features/admin/pages/DashboardPage'
 import LoginPage from './features/admin/pages/LoginPage'
 import ProductsPage from './features/admin/pages/ProductsPage'
 import ProductEditPage from './features/admin/pages/ProductEditPage'
+import ProductDetailPage from './features/admin/pages/ProductDetailPage'
 import CategoriesPage from './features/admin/pages/CategoriesPage'
 import CategoryEditPage from './features/admin/pages/CategoryEditPage'
 import QrListPage from './features/admin/pages/QrListPage'
@@ -59,10 +60,10 @@ function App() {
           <Route path="manage" element={<AdminManagePage />} />
           <Route path="calendar" element={<AdminCalendarPage />} />
           <Route path="orders" element={<Navigate to="/admin/manage" replace />} />
-          <Route path="products" element={<ProductsPage />}>
-            <Route path="new" element={<ProductEditPage />} />
-            <Route path=":productId/edit" element={<ProductEditPage />} />
-          </Route>
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/new" element={<ProductDetailPage />} />
+          <Route path="products/:productId" element={<ProductDetailPage />} />
+          <Route path="products/:productId/edit" element={<ProductEditPage />} />
           <Route path="categories" element={<CategoriesPage />}>
             <Route path="new" element={<CategoryEditPage />} />
             <Route path=":categoryId/edit" element={<CategoryEditPage />} />

@@ -9,6 +9,7 @@ import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { createId } from '../../../utils/id'
 import { resizeImageFile, resizeImageFiles } from '../../../utils/resizeImage'
 import AdminMobileFormActions from './AdminMobileFormActions'
+import { formatMoney } from '../../../utils/money'
 
 const EMPTY_FORM = {
   code: '',
@@ -340,20 +341,22 @@ function ProductImagesField({
             Hình ảnh sản phẩm
           </p>
         )}
-        <label
-          htmlFor={canAddMore ? inputId : undefined}
-          aria-disabled={!canAddMore}
-          aria-label={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
-          title={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
-          className={[
-            'inline-flex cursor-pointer items-center gap-1 border border-outline-variant/40 bg-white font-medium text-primary',
-            compact ? 'rounded-lg px-2 py-1 text-[11px]' : 'rounded-xl px-3 py-2 text-sm',
-            canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
-          ].join(' ')}
-        >
-          <MaterialIcon name="add_photo_alternate" className={compact ? 'text-base' : 'text-lg'} />
-          {isPicking ? '...' : 'Thêm'}
-        </label>
+        {!disabled ? (
+          <label
+            htmlFor={canAddMore ? inputId : undefined}
+            aria-disabled={!canAddMore}
+            aria-label={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
+            title={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
+            className={[
+              'inline-flex cursor-pointer items-center gap-1 border border-outline-variant/40 bg-white font-medium text-primary',
+              compact ? 'rounded-lg px-2 py-1 text-[11px]' : 'rounded-xl px-3 py-2 text-sm',
+              canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
+            ].join(' ')}
+          >
+            <MaterialIcon name="add_photo_alternate" className={compact ? 'text-base' : 'text-lg'} />
+            {isPicking ? '...' : 'Thêm'}
+          </label>
+        ) : null}
       </div>
 
       {limitMessage ? (
@@ -369,23 +372,44 @@ function ProductImagesField({
       ) : null}
 
       {images.length === 0 ? (
-        <label
-          htmlFor={canAddMore ? inputId : undefined}
-          aria-disabled={!canAddMore}
-          className={[
-            'flex w-full cursor-pointer flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-white text-on-surface-variant',
-            compact
-              ? 'gap-1 rounded-xl px-3 py-4 text-xs'
-              : 'gap-2 rounded-2xl px-4 py-8 text-sm',
-            canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
-          ].join(' ')}
-        >
-          <MaterialIcon
-            name="imagesmode"
-            className={compact ? 'text-2xl text-primary-fixed-dim' : 'text-3xl text-primary-fixed-dim'}
-          />
-          {isPicking ? 'Đang xử lý ảnh...' : compact ? 'Thêm ảnh (tối đa 6)' : 'Chọn ảnh từ thư viện (tối đa 6)'}
-        </label>
+        disabled ? (
+          <div
+            className={[
+              'flex w-full flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant',
+              compact ? 'gap-1 rounded-xl px-3 py-4 text-xs' : 'gap-2 rounded-2xl px-4 py-8 text-sm',
+            ].join(' ')}
+          >
+            <MaterialIcon
+              name="imagesmode"
+              className={compact ? 'text-2xl opacity-40' : 'text-3xl opacity-40'}
+            />
+            Chưa có ảnh
+          </div>
+        ) : (
+          <label
+            htmlFor={canAddMore ? inputId : undefined}
+            aria-disabled={!canAddMore}
+            className={[
+              'flex w-full cursor-pointer flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-white text-on-surface-variant',
+              compact
+                ? 'gap-1 rounded-xl px-3 py-4 text-xs'
+                : 'gap-2 rounded-2xl px-4 py-8 text-sm',
+              canAddMore ? 'hover:bg-surface-container-low' : 'pointer-events-none opacity-60',
+            ].join(' ')}
+          >
+            <MaterialIcon
+              name="imagesmode"
+              className={
+                compact ? 'text-2xl text-primary-fixed-dim' : 'text-3xl text-primary-fixed-dim'
+              }
+            />
+            {isPicking
+              ? 'Đang xử lý ảnh...'
+              : compact
+                ? 'Thêm ảnh (tối đa 6)'
+                : 'Chọn ảnh từ thư viện (tối đa 6)'}
+          </label>
+        )
       ) : (
         <ul className={compact ? 'grid grid-cols-4 gap-1.5' : 'grid grid-cols-3 gap-2 sm:gap-3'}>
           {images.map((image, index) => {
@@ -437,30 +461,35 @@ function ProductImagesField({
                   </span>
                 ) : null}
 
-                <button
-                  type="button"
-                  disabled={disabled || isPicking}
-                  onClick={() => removeImage(image)}
-                  onMouseDown={(event) => event.stopPropagation()}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  className={[
-                    'absolute top-0 right-0 z-10 flex items-start justify-end p-0.5',
-                    compact
-                      ? 'h-7 w-7'
-                      : 'h-9 w-9 sm:top-2 sm:right-2 sm:h-7 sm:w-7 sm:items-center sm:justify-center sm:p-0',
-                  ].join(' ')}
-                  aria-label="Xóa ảnh"
-                  title="Xóa ảnh"
-                >
-                  <span
+                {!disabled ? (
+                  <button
+                    type="button"
+                    disabled={isPicking}
+                    onClick={() => removeImage(image)}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => event.stopPropagation()}
                     className={[
-                      'flex items-center justify-center rounded-full border border-white/50 bg-black/40 text-white backdrop-blur-md transition hover:bg-red-500/90',
-                      compact ? 'h-4 w-4' : 'h-5 w-5 sm:h-7 sm:w-7',
+                      'absolute top-0 right-0 z-10 flex items-start justify-end p-0.5',
+                      compact
+                        ? 'h-7 w-7'
+                        : 'h-9 w-9 sm:top-2 sm:right-2 sm:h-7 sm:w-7 sm:items-center sm:justify-center sm:p-0',
                     ].join(' ')}
+                    aria-label="Xóa ảnh"
+                    title="Xóa ảnh"
                   >
-                    <MaterialIcon name="close" className={compact ? 'text-xs' : 'text-sm sm:text-base'} />
-                  </span>
-                </button>
+                    <span
+                      className={[
+                        'flex items-center justify-center rounded-full border border-white/50 bg-black/40 text-white backdrop-blur-md transition hover:bg-red-500/90',
+                        compact ? 'h-4 w-4' : 'h-5 w-5 sm:h-7 sm:w-7',
+                      ].join(' ')}
+                    >
+                      <MaterialIcon
+                        name="close"
+                        className={compact ? 'text-xs' : 'text-sm sm:text-base'}
+                      />
+                    </span>
+                  </button>
+                ) : null}
               </li>
             )
           })}
@@ -484,11 +513,18 @@ function ProductFormDialog({
   isEditing,
   formError,
   title,
-  /** `dialog` = bottom sheet/modal (desktop). `page` = màn hình edit full (mobile). */
+  formId = 'product-form-page',
+  readOnly = false,
+  /**
+   * `dialog` = bottom sheet/modal (desktop).
+   * `page` = màn hình edit full (mobile overlay).
+   * `embedded` = form fields only (parent page shell + header actions).
+   */
   mode = 'dialog',
 }) {
   const isPage = mode === 'page'
-  useScrollLock(!isPage && open)
+  const isEmbedded = mode === 'embedded'
+  useScrollLock(!isPage && !isEmbedded && open)
   const selectedIds = Array.isArray(values.categoryIds) ? values.categoryIds : []
   const [quickCategoryOpen, setQuickCategoryOpen] = useState(false)
   const [quickCategoryName, setQuickCategoryName] = useState('')
@@ -499,13 +535,14 @@ function ProductFormDialog({
   const descriptionRef = useRef(null)
   const categoryMenuRef = useRef(null)
 
-  const fieldClass = isPage
+  const useCompactFields = isPage || isEmbedded
+  const fieldClass = useCompactFields
     ? 'w-full rounded-lg border border-outline-variant/25 px-3 py-2.5 text-[15px] text-on-surface outline-none transition placeholder:text-outline/55 focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
     : inputClass
-  const labelClass = isPage
+  const labelClass = useCompactFields
     ? 'mb-1 block text-xs font-medium text-on-surface'
     : 'mb-1 block font-medium text-on-surface'
-  const descMinRows = isPage ? 3 : DESCRIPTION_MIN_ROWS
+  const descMinRows = useCompactFields ? 3 : DESCRIPTION_MIN_ROWS
   const sectionTitleClass =
     'text-[10px] font-semibold tracking-wide text-on-surface-variant uppercase'
 
@@ -584,7 +621,7 @@ function ProductFormDialog({
         ? selectedCategoryNames.join(', ')
         : `${selectedCategoryNames.slice(0, 2).join(', ')} +${selectedCategoryNames.length - 2}`
 
-  const categoryField = isPage ? (
+  const categoryField = useCompactFields ? (
     <div ref={categoryMenuRef} className="relative">
       <div className="mb-1.5 flex items-center justify-between gap-1.5">
         <h3 className={sectionTitleClass}>Danh mục</h3>
@@ -1013,6 +1050,214 @@ function ProductFormDialog({
     </>
   )
 
+  const selectedCategoryLabels = categoryOptions
+    .filter((category) => (values.categoryIds || []).includes(category.id))
+    .map((category) => category.name)
+
+  const readValueClass =
+    'mt-1 min-h-[42px] rounded-lg border border-transparent bg-surface-container-low/60 px-3 py-2.5 text-[15px] text-on-surface'
+
+  const formBodyEmbedded = (
+    <div className="grid w-full gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:gap-6 xl:gap-8">
+      <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
+        <h3 className={sectionTitleClass}>Hình ảnh</h3>
+        {!readOnly ? (
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Kéo thả để đổi thứ tự · ảnh đầu là ảnh chính
+          </p>
+        ) : null}
+        <div className="mt-3">
+          {(values.images || []).length === 0 && readOnly ? (
+            <div className="flex aspect-square items-center justify-center rounded-xl bg-surface-container-low text-on-surface-variant">
+              <MaterialIcon name="image" className="text-5xl opacity-35" />
+            </div>
+          ) : (
+            <ProductImagesField
+              images={values.images || []}
+              onChange={(next) => onChange('images', next)}
+              onRemoveCloudImage={onRemoveCloudImage}
+              disabled={readOnly}
+              hideTitle
+            />
+          )}
+        </div>
+      </section>
+
+      <div className="min-w-0 space-y-4">
+        <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
+          <h3 className={sectionTitleClass}>Thông tin</h3>
+          <div className="mt-3 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="min-w-0">
+                <span className={labelClass}>Mã SP</span>
+                {readOnly ? (
+                  <p className={`${readValueClass} font-mono font-bold tracking-wider`}>
+                    {values.code || '—'}
+                  </p>
+                ) : (
+                  <div className="flex gap-1.5">
+                    <input
+                      value={values.code}
+                      onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
+                      placeholder="Mã"
+                      maxLength={20}
+                      className={`${fieldClass} min-w-0 font-mono font-bold tracking-wider`}
+                    />
+                    <button
+                      type="button"
+                      onClick={onRegenerateCode}
+                      className="inline-flex h-[42px] w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-white text-primary"
+                      title="Tạo mã ngẫu nhiên"
+                    >
+                      <MaterialIcon name="casino" className="text-lg" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <span className={labelClass}>
+                  Tên SP {!readOnly ? <span className="text-primary">*</span> : null}
+                </span>
+                {readOnly ? (
+                  <p className={readValueClass}>{values.name || '—'}</p>
+                ) : (
+                  <input
+                    required
+                    value={values.name}
+                    onChange={(e) => onChange('name', e.target.value)}
+                    placeholder="Tên sản phẩm"
+                    className={fieldClass}
+                  />
+                )}
+              </div>
+            </div>
+            <div>
+              <span className={labelClass}>Mô tả</span>
+              {readOnly ? (
+                <p className={`${readValueClass} min-h-[120px] whitespace-pre-wrap leading-relaxed`}>
+                  {String(values.description || '').trim() || '—'}
+                </p>
+              ) : (
+                <textarea
+                  ref={descriptionRef}
+                  rows={Math.max(descMinRows, 5)}
+                  value={values.description}
+                  onChange={(e) => {
+                    onChange('description', e.target.value)
+                    resizeDescriptionTextarea(e.target, Math.max(descMinRows, 5))
+                  }}
+                  placeholder="Mô tả hoa, ý nghĩa, kích thước..."
+                  className={`${fieldClass} min-h-[120px] resize-none overflow-hidden leading-relaxed`}
+                />
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
+          {readOnly ? (
+            <div>
+              <h3 className={sectionTitleClass}>Danh mục</h3>
+              {selectedCategoryLabels.length ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {selectedCategoryLabels.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-lg bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">Chưa gán danh mục</p>
+              )}
+            </div>
+          ) : (
+            categoryField
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
+          <h3 className={sectionTitleClass}>Giá & bán</h3>
+          <div className="mt-3 space-y-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                ['costPrice', 'Giá cost', 'Giá vốn'],
+                ['sellPrice', 'Giá bán', 'Giá bán'],
+                ['otherCost', 'Chi phí khác', 'Ship…'],
+                ['soldCount', 'Doanh số', 'Đã bán'],
+              ].map(([field, label, placeholder]) => (
+                <div key={field} className="min-w-0">
+                  <span className={labelClass}>{label}</span>
+                  {readOnly ? (
+                    <p className={`${readValueClass} tabular-nums`}>
+                      {field === 'soldCount'
+                        ? String(values.soldCount ?? 0)
+                        : formatMoney(values[field])}
+                    </p>
+                  ) : (
+                    <input
+                      type="number"
+                      min="0"
+                      step={field === 'soldCount' ? '1' : undefined}
+                      value={values[field]}
+                      onChange={(e) => onChange(field, e.target.value)}
+                      placeholder={placeholder}
+                      className={fieldClass}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {readOnly ? (
+              <p className="text-sm text-on-surface">
+                Trạng thái:{' '}
+                <span
+                  className={
+                    values.active
+                      ? 'font-medium text-emerald-700'
+                      : 'font-medium text-on-surface-variant'
+                  }
+                >
+                  {values.active ? 'Đang bán' : 'Đã ẩn'}
+                </span>
+              </p>
+            ) : (
+              <label className="flex items-center gap-2.5 text-sm text-on-surface">
+                <input
+                  type="checkbox"
+                  className="accent-primary"
+                  checked={values.active}
+                  onChange={(e) => onChange('active', e.target.checked)}
+                />
+                Đang bán
+              </label>
+            )}
+          </div>
+        </section>
+
+        {!readOnly && formError ? (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+            {formError}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  )
+
+  if (isEmbedded) {
+    if (!open) return null
+    if (readOnly) {
+      return <div className="w-full">{formBodyEmbedded}</div>
+    }
+    return (
+      <form id={formId} onSubmit={onSubmit} className="w-full">
+        {formBodyEmbedded}
+      </form>
+    )
+  }
+
   if (isPage) {
     if (!open) return null
     return (
@@ -1035,7 +1280,7 @@ function ProductFormDialog({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
-          <form id="product-form-page" onSubmit={onSubmit} className="space-y-2.5 px-2.5 py-2.5 pb-4">
+          <form id={formId} onSubmit={onSubmit} className="space-y-2.5 px-2.5 py-2.5 pb-4">
             {formBodyPage}
           </form>
         </div>
@@ -1055,7 +1300,7 @@ function ProductFormDialog({
             )}
             <button
               type="submit"
-              form="product-form-page"
+              form={formId}
               className={[
                 'rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(74,48,32,0.22)] transition active:bg-primary-container',
                 onDelete ? '' : 'col-span-2',

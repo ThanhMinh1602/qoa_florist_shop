@@ -9,9 +9,6 @@ import {
 } from '../../lib/motion'
 import { useIsLgUp } from '../../hooks/useMediaQuery'
 
-function isProductEditorPath(path) {
-  return path === '/admin/products/new' || /^\/admin\/products\/[^/]+\/edit$/.test(path)
-}
 
 function isCategoryEditorPath(path) {
   return path === '/admin/categories/new' || /^\/admin\/categories\/[^/]+\/edit$/.test(path)
@@ -24,11 +21,12 @@ function isOrderOverlayPath(path) {
 /** Giữ layout /admin/products không remount khi vào nested detail */
 function outletAnimationKey(pathname) {
   if (
-    pathname === '/admin/products' ||
-    isProductEditorPath(pathname) ||
     pathname === '/admin/categories' ||
     isCategoryEditorPath(pathname)
   ) {
+    return '/admin/categories'
+  }
+  if (pathname === '/admin/products') {
     return '/admin/products'
   }
   if (pathname === '/admin/manage') {
@@ -37,9 +35,14 @@ function outletAnimationKey(pathname) {
   return pathname
 }
 
+function isProductDetailPath(path) {
+  return path === '/admin/products/new' || /^\/admin\/products\/[^/]+$/.test(path)
+}
+
 function isFillHeightAdminPath(path) {
   if (path === '/admin/manage' || path === '/admin/products') return true
   if (path === '/admin/orders/new' || path === '/admin/orders/import') return true
+  if (isProductDetailPath(path)) return true
   // Full-page order detail (not import overlay)
   if (
     /^\/admin\/orders\/[^/]+$/.test(path) &&

@@ -1,30 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, Outlet } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
   activateProductApi,
   bulkDeleteProductsApi,
-  createProductApi,
   deactivateProductApi,
   deleteProductApi,
   fetchProductsApi,
-  updateProductApi,
 } from '../../../api/productsApi'
-import { createCategoryApi } from '../../../api/categoriesApi'
-import { deleteUploadedImageApi } from '../../../api/uploadsApi'
 import { useDialog } from '../../../context/DialogContext'
-import { useAdminCategories, useProducts } from '../../../hooks/swr'
+import { useProducts } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
-import ProductFormDialog, {
-  EMPTY_FORM,
-  generateProductCode,
-  prepareImagesPayload,
-  revokeLocalPreviews,
-  toForm,
-} from '../components/ProductFormDialog'
 import ProductsListMobile, { ProductsListMobileSkeleton } from '../mobile/ProductsListMobile'
 
 const PAGE_SIZE = 25
@@ -178,17 +167,11 @@ function ProductsPage() {
     error: productsError,
     mutate: mutateProducts,
   } = useProducts()
-  const { categories, mutate: mutateCategories } = useAdminCategories()
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [editingId, setEditingId] = useState(null)
-  const [showForm, setShowForm] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
-  const [formError, setFormError] = useState('')
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
   const isLgUp = useIsLgUp()
-  const removedPublicIdsRef = useRef([])
   const error = productsError?.message || ''
 
   const [page, setPage] = useState(1)
@@ -345,129 +328,22 @@ function ProductsPage() {
     setSelectedIds([])
   }
 
-  function dismissFormUi() {
-    setShowForm(false)
-    setEditingId(null)
-    setForm(EMPTY_FORM)
-    setFormError('')
-  }
 
-  function closeForm() {
-    revokeLocalPreviews(form.images)
-    removedPublicIdsRef.current = []
-    dismissFormUi()
-  }
 
-  function handleChange(field, value) {
-    setFormError('')
-    setForm((previous) => ({ ...previous, [field]: value }))
-  }
 
-  function queueRemovedCloudImage(publicId) {
-    if (!publicId) return
-    if (!removedPublicIdsRef.current.includes(publicId)) {
-      removedPublicIdsRef.current.push(publicId)
-    }
-  }
 
   function openCreate() {
     if (isBusy) return
-    if (!isLgUp) {
-      navigate('/admin/products/new')
-      return
-    }
-    revokeLocalPreviews(form.images)
-    removedPublicIdsRef.current = []
-    setEditingId(null)
-    setForm({ ...EMPTY_FORM, images: [], code: generateProductCode() })
-    setFormError('')
-    setShowForm(true)
+    navigate('/admin/products/new')
   }
 
   function openEdit(product) {
     if (isBusy) return
-    if (!isLgUp) {
-      navigate(`/admin/products/${product.id}/edit`)
-      return
-    }
-    revokeLocalPreviews(form.images)
-    removedPublicIdsRef.current = []
-    setEditingId(product.id)
-    setForm(toForm(product))
-    setFormError('')
-    setShowForm(true)
+    navigate(`/admin/products/${product.id}`)
   }
 
-  function regenerateCode() {
-    setForm((previous) => ({ ...previous, code: generateProductCode() }))
-  }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    if (isBusy) return
 
-    const wasEdit = Boolean(editingId)
-    const productId = editingId
-    const snapshot = {
-      ...form,
-      images: [...(form.images || [])],
-    }
-    const toDelete = [...removedPublicIdsRef.current]
-
-    setFormError('')
-    setBusyMessage(wasEdit ? 'Đang cập nhật sản phẩm...' : 'Đang thêm sản phẩm...')
-    setIsBusy(true)
-    // Cho overlay Lottie mount + paint trước khi resize chặn main thread
-    await new Promise((resolve) => setTimeout(resolve, 80))
-
-    try {
-      const images = await prepareImagesPayload(snapshot.images)
-      const payload = {
-        ...snapshot,
-        images,
-        categoryIds: Array.isArray(snapshot.categoryIds) ? snapshot.categoryIds : [],
-        costPrice: Number(snapshot.costPrice) || 0,
-        makeMinutes: Number(snapshot.makeMinutes) || 0,
-        listPrice: Number(snapshot.listPrice) || 0,
-        sellPrice: Number(snapshot.sellPrice) || 0,
-        otherCost: Number(snapshot.otherCost) || 0,
-        soldCount: Math.max(0, Math.floor(Number(snapshot.soldCount) || 0)),
-      }
-
-      if (productId) {
-        await updateProductApi(productId, payload)
-      } else {
-        await createProductApi(payload)
-      }
-
-      await Promise.all(
-        toDelete.map((publicId) => deleteUploadedImageApi(publicId).catch(() => null)),
-      )
-      await load()
-
-      removedPublicIdsRef.current = []
-      revokeLocalPreviews(snapshot.images)
-      setForm({ ...EMPTY_FORM, images: [], code: generateProductCode() })
-      dismissFormUi()
-      setIsBusy(false)
-
-      await alert({
-        title: wasEdit ? 'Đã cập nhật' : 'Thêm sản phẩm thành công',
-        message: wasEdit
-          ? 'Thông tin sản phẩm đã được cập nhật.'
-          : 'Sản phẩm mới đã được thêm vào danh sách.',
-        variant: 'success',
-      })
-    } catch (err) {
-      setIsBusy(false)
-      setFormError(err.message || 'Không thể lưu sản phẩm.')
-      await alert({
-        title: wasEdit ? 'Không thể cập nhật' : 'Không thể thêm sản phẩm',
-        message: err.message || 'Không thể lưu sản phẩm.',
-        variant: 'error',
-      })
-    }
-  }
 
   async function handleDeactivate(product) {
     if (isBusy) return
@@ -514,9 +390,6 @@ function ProductsPage() {
     })
     if (!ok) return
 
-    if (editingId === product.id || showForm) {
-      closeForm()
-    }
 
     setBusyMessage('Đang xóa sản phẩm...')
     setIsBusy(true)
@@ -551,9 +424,6 @@ function ProductsPage() {
     })
     if (!ok) return
 
-    if (editingId && selectedIds.includes(editingId)) {
-      closeForm()
-    }
 
     const ids = [...selectedIds]
     setBusyMessage(`Đang xóa ${ids.length} sản phẩm...`)
@@ -579,34 +449,6 @@ function ProductsPage() {
     }
   }
 
-  const formDialogProps = {
-    open: showForm,
-    values: form,
-    onChange: handleChange,
-    onSubmit: handleSubmit,
-    onClose: closeForm,
-    onRegenerateCode: regenerateCode,
-    onRemoveCloudImage: queueRemovedCloudImage,
-    onQuickCreateCategory: async (name) => {
-      const result = await createCategoryApi({
-        name,
-        showInQuickFilter: true,
-        active: true,
-      })
-      await mutateCategories()
-      return result.data
-    },
-    categoryOptions: categories,
-    isEditing: Boolean(editingId),
-    onDelete: editingId
-      ? () => {
-          const product = products.find((item) => item.id === editingId)
-          if (product) handleDelete(product)
-        }
-      : undefined,
-    formError,
-    title: editingId ? 'Sửa sản phẩm' : 'Thêm sản phẩm',
-  }
 
   // Mobile: shell giống đơn hàng — header / list / pagination
   if (!isLgUp) {
@@ -777,7 +619,6 @@ function ProductsPage() {
         </div>
 
         <LoadingOverlay open={isBusy} message={busyMessage} />
-        <Outlet />
       </>
     )
   }
@@ -1057,10 +898,8 @@ function ProductsPage() {
         )}
       </div>
 
-      <ProductFormDialog mode="dialog" {...formDialogProps} />
 
       <LoadingOverlay open={isBusy} message={busyMessage} />
-      <Outlet />
     </div>
   )
 }
