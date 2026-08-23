@@ -16,14 +16,30 @@ function ShopProductPage() {
   const { id } = useParams()
   const { product, isLoading, error } = useCatalogProduct(id)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [selectedColorId, setSelectedColorId] = useState('')
   const [orderSheetOpen, setOrderSheetOpen] = useState(false)
 
-  const images = useMemo(() => {
+  const colors = useMemo(() => {
     if (!product) return []
-    if (product.images?.length) return product.images
-    if (product.mainImage) return [{ id: 'main', url: product.mainImage }]
+    if (Array.isArray(product.colors) && product.colors.length > 0) {
+      return product.colors.filter((color) => Array.isArray(color.images) && color.images.length > 0)
+    }
     return []
   }, [product])
+
+  const selectedColor = useMemo(() => {
+    if (!colors.length) return null
+    return colors.find((color) => color.id === selectedColorId) || colors[0]
+  }, [colors, selectedColorId])
+
+  const images = useMemo(() => {
+    if (selectedColor?.images?.length) return selectedColor.images
+    if (product?.images?.length) return product.images
+    if (product?.mainImage) return [{ id: 'main', url: product.mainImage }]
+    return []
+  }, [selectedColor, product])
+
+  const showColorPicker = colors.length > 0
 
   const goImage = useCallback(
     (direction) => {
@@ -39,7 +55,13 @@ function ShopProductPage() {
 
   useEffect(() => {
     setActiveIndex(0)
-  }, [product?.id])
+    const firstColorId = product?.colors?.find((color) => color?.images?.length)?.id || ''
+    setSelectedColorId(firstColorId)
+  }, [product?.id, product?.colors])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [selectedColorId])
 
   useEffect(() => {
     if (!product) return undefined
@@ -247,6 +269,61 @@ function ShopProductPage() {
               </div>
             </motion.div>
 
+            {showColorPicker ? (
+              <motion.div variants={fadeUp} className="space-y-2.5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-sm font-semibold text-on-surface">Chọn màu hoa</p>
+                  {selectedColor ? (
+                    <p className="text-xs text-on-surface-variant">
+                      Đang chọn:{' '}
+                      <span className="font-medium text-on-surface">
+                        {selectedColor.name || selectedColor.hex || 'Màu hoa'}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2.5" role="listbox" aria-label="Màu hoa">
+                  {colors.map((color) => {
+                    const selected = selectedColor?.id === color.id
+                    const hex = color.hex || '#C4A484'
+                    const label = color.name || hex
+                    return (
+                      <button
+                        key={color.id}
+                        type="button"
+                        role="option"
+                        aria-selected={selected}
+                        onClick={() => setSelectedColorId(color.id)}
+                        className={[
+                          'inline-flex min-h-11 items-center gap-2.5 rounded-2xl border px-3 py-2 text-sm font-medium transition',
+                          selected
+                            ? 'border-primary bg-primary/10 text-primary shadow-[0_6px_16px_rgba(74,48,32,0.12)]'
+                            : 'border-outline-variant/40 bg-white text-on-surface hover:border-primary/40',
+                        ].join(' ')}
+                        title={label}
+                      >
+                        <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center">
+                          <span
+                            className="h-7 w-7 rounded-full border border-black/10 shadow-sm"
+                            style={{ backgroundColor: hex }}
+                          />
+                          {selected ? (
+                            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/25">
+                              <MaterialIcon name="check" className="text-sm text-white" />
+                            </span>
+                          ) : null}
+                        </span>
+                        <span>{label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-[11px] leading-relaxed text-outline">
+                  Ảnh bên trái sẽ đổi theo màu bạn chọn. Màu đã chọn được gửi kèm khi đặt hoa.
+                </p>
+              </motion.div>
+            ) : null}
+
             {product.description ? (
               <motion.div
                 variants={fadeUp}
@@ -382,7 +459,18 @@ function ShopProductPage() {
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] text-on-surface-variant">{product.name}</p>
-            <p className="text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-primary">{formatMoney(product.price)}</p>
+              {selectedColor ? (
+                <span className="inline-flex items-center gap-1 truncate text-[10px] text-on-surface-variant">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full border border-black/10"
+                    style={{ backgroundColor: selectedColor.hex || '#C4A484' }}
+                  />
+                  {selectedColor.name || selectedColor.hex}
+                </span>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
@@ -397,6 +485,7 @@ function ShopProductPage() {
       <MessengerOrderSheet
         open={orderSheetOpen}
         product={product}
+        selectedColor={selectedColor}
         onClose={() => setOrderSheetOpen(false)}
       />
     </motion.div>

@@ -44,10 +44,19 @@ export function buildFacebookMessengerUrl(text = '') {
   return `${base}?text=${encodeURIComponent(message)}`
 }
 
+function formatSelectedColor(color) {
+  if (!color) return ''
+  const name = String(color.name || '').trim()
+  const hex = String(color.hex || '').trim().toUpperCase()
+  if (name && hex) return `${name} (${hex})`
+  return name || hex || ''
+}
+
 /** Tin đầy đủ — copy clipboard / desktop */
-export function buildProductOrderMessage(product) {
+export function buildProductOrderMessage(product, options = {}) {
   if (!product) return 'Xin chào QOA Florist, mình muốn đặt hoa ạ.'
   const shopName = import.meta.env.VITE_SHOP_NAME || 'QOA Florist'
+  const colorLabel = formatSelectedColor(options.selectedColor)
   const lines = [
     `Xin chào ${shopName},`,
     'Mình muốn đặt bó hoa:',
@@ -56,6 +65,7 @@ export function buildProductOrderMessage(product) {
     product.price != null && product.price !== ''
       ? `- Giá: ${formatMoney(product.price)}`
       : null,
+    colorLabel ? `- Màu: ${colorLabel}` : null,
     '',
     'Ghi chú thêm: ',
   ]
@@ -63,13 +73,15 @@ export function buildProductOrderMessage(product) {
 }
 
 /** Tin ngắn cho ?text= — giữ dưới ~280 ký tự, 1 dòng */
-export function buildProductOrderMessageShort(product) {
+export function buildProductOrderMessageShort(product, options = {}) {
   if (!product) return 'Xin chào QOA Florist, mình muốn đặt hoa ạ.'
   const shopName = import.meta.env.VITE_SHOP_NAME || 'QOA Florist'
+  const colorLabel = formatSelectedColor(options.selectedColor)
   const parts = [
     `Xin chào ${shopName}, mình muốn đặt:`,
     product.name || 'bó hoa',
     product.code ? `(mã ${product.code})` : null,
+    colorLabel ? `màu ${colorLabel}` : null,
     product.price != null && product.price !== '' ? `- ${formatMoney(product.price)}` : null,
   ]
   return parts.filter(Boolean).join(' ')

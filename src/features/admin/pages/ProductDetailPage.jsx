@@ -15,7 +15,9 @@ import { formatMoney } from '../../../utils/money'
 import ProductFormDialog, {
   EMPTY_FORM,
   generateProductCode,
+  prepareColorsPayload,
   prepareImagesPayload,
+  revokeFormMedia,
   revokeLocalPreviews,
   toForm,
 } from '../components/ProductFormDialog'
@@ -39,7 +41,7 @@ function ProductDetailPage() {
   const editFromQuery = searchParams.get('edit') === '1'
   const [isEditing, setIsEditing] = useState(isCreate || editFromQuery)
   const [form, setForm] = useState(() =>
-    isCreate ? { ...EMPTY_FORM, images: [], code: generateProductCode() } : EMPTY_FORM,
+    isCreate ? { ...EMPTY_FORM, code: generateProductCode() } : EMPTY_FORM,
   )
   const [formReady, setFormReady] = useState(isCreate)
   const [formError, setFormError] = useState('')
@@ -61,9 +63,9 @@ function ProductDetailPage() {
   useEffect(() => {
     if (isCreate) {
       if (initializedIdRef.current !== 'new') {
-        revokeLocalPreviews(formImagesRef.current)
+        revokeFormMedia({ images: formImagesRef.current, colors: form?.colors })
         removedPublicIdsRef.current = []
-        setForm({ ...EMPTY_FORM, images: [], code: generateProductCode() })
+        setForm({ ...EMPTY_FORM, code: generateProductCode() })
         setFormError('')
         setFormReady(true)
         initializedIdRef.current = 'new'
@@ -74,7 +76,7 @@ function ProductDetailPage() {
     if (!product) return
     if (initializedIdRef.current === product.id) return
 
-    revokeLocalPreviews(formImagesRef.current)
+    revokeFormMedia({ images: formImagesRef.current, colors: form?.colors })
     removedPublicIdsRef.current = []
     setForm(toForm(product))
     setFormError('')
@@ -84,7 +86,7 @@ function ProductDetailPage() {
 
   useEffect(() => {
     return () => {
-      revokeLocalPreviews(formImagesRef.current)
+      revokeFormMedia({ images: formImagesRef.current, colors: form?.colors })
     }
   }, [])
 
@@ -113,11 +115,11 @@ function ProductDetailPage() {
 
   function handleCancel() {
     if (isCreate) {
-      revokeLocalPreviews(form.images)
+      revokeFormMedia(form)
       navigate('/admin/products')
       return
     }
-    revokeLocalPreviews(form.images)
+    revokeFormMedia(form)
     removedPublicIdsRef.current = []
     if (product) setForm(toForm(product))
     setFormError('')
@@ -147,6 +149,10 @@ function ProductDetailPage() {
     const snapshot = {
       ...form,
       images: [...(form.images || [])],
+      colors: (form.colors || []).map((color) => ({
+        ...color,
+        images: [...(color.images || [])],
+      })),
     }
     const toDelete = [...removedPublicIdsRef.current]
 
@@ -156,9 +162,18 @@ function ProductDetailPage() {
     await new Promise((resolve) => setTimeout(resolve, 80))
 
     try {
-      const images = await prepareImagesPayload(snapshot.images)
+      const colors = await prepareColorsPayload(snapshot.colors, prepareImagesPayload)
+      const images = colors.length
+        ? colors.flatMap((color, colorIndex) =>
+            (color.images || []).map((image, imageIndex) => ({
+              ...image,
+              isMain: colorIndex === 0 && imageIndex === 0,
+            })),
+          )
+        : await prepareImagesPayload(snapshot.images)
       const payload = {
         ...snapshot,
+        colors,
         images,
         categoryIds: Array.isArray(snapshot.categoryIds) ? snapshot.categoryIds : [],
         costPrice: Number(snapshot.costPrice) || 0,
@@ -183,7 +198,7 @@ function ProductDetailPage() {
       await mutateProducts()
 
       removedPublicIdsRef.current = []
-      revokeLocalPreviews(snapshot.images)
+      revokeFormMedia(snapshot)
       setIsBusy(false)
 
       await alert({
@@ -230,7 +245,7 @@ function ProductDetailPage() {
     try {
       await deleteProductApi(product.id)
       await mutateProducts()
-      revokeLocalPreviews(form.images)
+      revokeFormMedia(form)
       removedPublicIdsRef.current = []
       setIsBusy(false)
       await alert({

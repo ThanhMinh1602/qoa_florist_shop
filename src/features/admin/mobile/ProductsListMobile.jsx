@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { formatMoney } from '../../../utils/money'
 import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
+import ProductColorSwatches from '../components/ProductColorSwatches'
 
 function ProductThumb({ product }) {
   const src =
@@ -202,6 +203,7 @@ function ProductsListMobile({
                 <ProductThumb product={product} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-on-surface">{product.name}</p>
+                  <ProductColorSwatches colors={product.colors} />
                   <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">
                     <span className="font-mono">{product.code || '—'}</span>
                     {' · '}

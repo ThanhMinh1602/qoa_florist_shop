@@ -12,6 +12,15 @@ import { createId } from '../../../utils/id'
 import { resizeImageFile, resizeImageFiles } from '../../../utils/resizeImage'
 import AdminMobileFormActions from './AdminMobileFormActions'
 import { formatMoney } from '../../../utils/money'
+import {
+  MAX_IMAGES_PER_COLOR,
+  collectColorImages,
+  colorsFromProduct,
+  createEmptyColor,
+  flattenColorsToImages,
+  normalizeHexInput,
+  prepareColorsPayload,
+} from '../../../utils/productColors'
 
 const EMPTY_FORM = {
   code: '',
@@ -19,6 +28,7 @@ const EMPTY_FORM = {
   materials: '',
   description: '',
   images: [],
+  colors: [createEmptyColor({ name: 'Mặc định' })],
   categoryIds: [],
   costPrice: '',
   makeMinutes: '',
@@ -57,6 +67,12 @@ function revokeLocalPreview(image) {
 
 function revokeLocalPreviews(images = []) {
   for (const image of images) revokeLocalPreview(image)
+}
+
+function revokeFormMedia(form) {
+  revokeLocalPreviews(collectColorImages(form?.colors))
+  // legacy flat images (nếu còn)
+  if (Array.isArray(form?.images)) revokeLocalPreviews(form.images)
 }
 
 /** Resize + upload ảnh local; giữ nguyên ảnh đã có trên Cloudinary */
@@ -110,23 +126,16 @@ function withMainFirst(list = []) {
 }
 
 function toForm(product) {
-  const images = Array.isArray(product.images)
-    ? product.images.map((image) => ({
-        id: image.id,
-        url: image.url,
-        publicId: image.publicId || '',
-        isMain: Boolean(image.isMain),
-      }))
-    : []
-
-  const sortedImages = [...images].sort((a, b) => Number(b.isMain) - Number(a.isMain))
+  const colors = colorsFromProduct(product)
+  const images = withMainFirst(flattenColorsToImages(colors))
 
   return {
     code: product.code || '',
     name: product.name || '',
     materials: product.materials || '',
     description: product.description || '',
-    images: withMainFirst(sortedImages),
+    images,
+    colors,
     categoryIds: Array.isArray(product.categoryIds) ? [...product.categoryIds] : [],
     costPrice: product.costPrice ?? '',
     makeMinutes: product.makeMinutes ?? '',
@@ -171,6 +180,8 @@ function ProductImagesField({
   onRemoveCloudImage,
   compact = false,
   hideTitle = false,
+  maxImages = MAX_IMAGES_PER_COLOR,
+  title = 'Hình ảnh sản phẩm',
 }) {
   const inputId = `product-images-${useId().replace(/:/g, '')}`
   const listRef = useRef(null)
@@ -180,8 +191,8 @@ function ProductImagesField({
   const [overId, setOverId] = useState(null)
   const [limitMessage, setLimitMessage] = useState('')
   const [isPicking, setIsPicking] = useState(false)
-  const maxImages = 6
-  const remainingSlots = Math.max(0, maxImages - images.length)
+  const limit = Math.max(1, Number(maxImages) || MAX_IMAGES_PER_COLOR)
+  const remainingSlots = Math.max(0, limit - images.length)
   const canAddMore = remainingSlots > 0 && !disabled && !isPicking
 
   imagesRef.current = images
@@ -199,9 +210,9 @@ function ProductImagesField({
     }
     if (files.length === 0) return
 
-    const slots = Math.max(0, maxImages - imagesRef.current.length)
+    const slots = Math.max(0, limit - imagesRef.current.length)
     if (slots <= 0) {
-      setLimitMessage('Chỉ được tải tối đa 6 hình ảnh.')
+      setLimitMessage(`Chỉ được tải tối đa ${limit} hình ảnh.`)
       return
     }
 
@@ -216,7 +227,7 @@ function ProductImagesField({
       }
       onChange(withMainFirst([...imagesRef.current, ...prepared]))
       if (files.length > accepted.length) {
-        setLimitMessage(`Chỉ thêm được ${accepted.length} ảnh nữa (tối đa 6).`)
+        setLimitMessage(`Chỉ thêm được ${accepted.length} ảnh nữa (tối đa ${limit}).`)
       } else {
         setLimitMessage('')
       }
@@ -313,22 +324,22 @@ function ProductImagesField({
       {pickerInput}
       <div className="flex flex-wrap items-center justify-between gap-1.5">
         {hideTitle ? (
-          <span className="text-xs text-on-surface-variant">{images.length}/6 ảnh</span>
+          <span className="text-xs text-on-surface-variant">{images.length}/{limit} ảnh</span>
         ) : (
           <p
             className={
               compact ? 'text-xs font-medium text-on-surface' : 'text-sm font-medium text-on-surface'
             }
           >
-            Hình ảnh sản phẩm
+            {title}
           </p>
         )}
         {!disabled ? (
           <label
             htmlFor={canAddMore ? inputId : undefined}
             aria-disabled={!canAddMore}
-            aria-label={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
-            title={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/6)`}
+            aria-label={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/${limit})`}
+            title={isPicking ? 'Đang thêm ảnh' : `Thêm ảnh (${images.length}/${limit})`}
             className={[
               'inline-flex cursor-pointer items-center gap-1 border border-outline-variant/40 bg-white font-medium text-primary',
               compact ? 'rounded-lg px-2 py-1 text-[11px]' : 'rounded-xl px-3 py-2 text-sm',
@@ -388,8 +399,8 @@ function ProductImagesField({
             {isPicking
               ? 'Đang xử lý ảnh...'
               : compact
-                ? 'Thêm ảnh (tối đa 6)'
-                : 'Chọn ảnh từ thư viện (tối đa 6)'}
+                ? `Thêm ảnh (tối đa ${limit})`
+                : `Chọn ảnh từ thư viện (tối đa ${limit})`}
           </label>
         )
       ) : (
@@ -477,6 +488,143 @@ function ProductImagesField({
           })}
         </ul>
       )}
+    </div>
+  )
+}
+
+
+function ProductColorsField({
+  colors = [],
+  onChange,
+  disabled = false,
+  onRemoveCloudImage,
+  compact = false,
+  readOnly = false,
+}) {
+  const list = Array.isArray(colors) && colors.length > 0 ? colors : [createEmptyColor({ name: 'Mặc định' })]
+
+  function commit(nextColors) {
+    const normalized = nextColors.length > 0 ? nextColors : [createEmptyColor({ name: 'Mặc định' })]
+    onChange(normalized, flattenColorsToImages(normalized))
+  }
+
+  function updateColor(colorId, patch) {
+    commit(
+      list.map((color) => (color.id === colorId ? { ...color, ...patch } : color)),
+    )
+  }
+
+  function updateColorImages(colorId, nextImages) {
+    updateColor(colorId, { images: withMainFirst(nextImages).slice(0, MAX_IMAGES_PER_COLOR) })
+  }
+
+  function addColor() {
+    commit([...list, createEmptyColor({ name: `Màu ${list.length + 1}` })])
+  }
+
+  function removeColor(colorId) {
+    const target = list.find((color) => color.id === colorId)
+    if (target) revokeLocalPreviews(target.images || [])
+    commit(list.filter((color) => color.id !== colorId))
+  }
+
+  return (
+    <div className={compact ? 'space-y-3' : 'space-y-4'}>
+      {list.map((color, index) => {
+        const hexValue = normalizeHexInput(color.hex) || '#C4A484'
+        const pickerValue = /^#[0-9A-F]{6}$/i.test(hexValue) ? hexValue : '#C4A484'
+        return (
+          <div
+            key={color.id}
+            className="rounded-xl border border-outline-variant/25 bg-white p-3 sm:p-3.5"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold tracking-wide text-on-surface-variant uppercase">
+                  Màu {index + 1}
+                </p>
+                {readOnly || disabled ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-block h-7 w-7 rounded-full border border-outline-variant/40 shadow-sm"
+                      style={{ backgroundColor: pickerValue }}
+                      title={pickerValue}
+                    />
+                    <span className="text-sm font-medium text-on-surface">
+                      {color.name || 'Không tên'}
+                    </span>
+                    <span className="font-mono text-xs text-on-surface-variant">{pickerValue}</span>
+                  </div>
+                ) : (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_7.5rem]">
+                    <input
+                      value={color.name || ''}
+                      onChange={(event) => updateColor(color.id, { name: event.target.value })}
+                      placeholder="Tên màu (VD: Hồng pastel)"
+                      className="w-full rounded-lg border border-outline-variant/30 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <label className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-low/40 px-2 py-1.5">
+                      <input
+                        type="color"
+                        value={pickerValue}
+                        onChange={(event) =>
+                          updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
+                        }
+                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0"
+                        title="Chọn mã màu"
+                      />
+                      <span className="text-xs text-on-surface-variant">Mã màu</span>
+                    </label>
+                    <input
+                      value={color.hex || ''}
+                      onChange={(event) =>
+                        updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
+                      }
+                      placeholder="#C4A484"
+                      maxLength={7}
+                      className="w-full rounded-lg border border-outline-variant/30 bg-white px-3 py-2 font-mono text-sm uppercase outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                )}
+              </div>
+              {!readOnly && !disabled && list.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => removeColor(color.id)}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                >
+                  <MaterialIcon name="delete" className="text-base" />
+                  Xóa màu
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-3">
+              <ProductImagesField
+                images={color.images || []}
+                onChange={(next) => updateColorImages(color.id, next)}
+                onRemoveCloudImage={onRemoveCloudImage}
+                disabled={disabled || readOnly}
+                compact={compact}
+                hideTitle
+                maxImages={MAX_IMAGES_PER_COLOR}
+                title={`Ảnh màu (${(color.images || []).length}/${MAX_IMAGES_PER_COLOR})`}
+              />
+            </div>
+          </div>
+        )
+      })}
+
+      {!readOnly && !disabled ? (
+        <button
+          type="button"
+          onClick={addColor}
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-outline-variant/50 bg-surface-container-low/30 px-3 py-2.5 text-sm font-medium text-primary hover:bg-surface-container-low"
+        >
+          <MaterialIcon name="add_circle" className="text-lg" />
+          Thêm màu hoa
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -833,15 +981,18 @@ function ProductFormDialog({
         <div className="border-b border-outline-variant/20 p-2.5">{categoryField}</div>
 
         <div className="p-2.5">
-          <h3 className={sectionTitleClass}>Hình ảnh</h3>
+          <h3 className={sectionTitleClass}>Màu hoa & ảnh</h3>
+          <p className="mt-1 text-[11px] text-on-surface-variant">Mỗi màu tối đa 3 ảnh</p>
           <div className="mt-1.5">
-            <ProductImagesField
-              images={values.images || []}
-              onChange={(next) => onChange('images', next)}
+            <ProductColorsField
+              colors={values.colors || []}
+              onChange={(nextColors, nextImages) => {
+                onChange('colors', nextColors)
+                onChange('images', nextImages)
+              }}
               onRemoveCloudImage={onRemoveCloudImage}
               disabled={false}
               compact
-              hideTitle
             />
           </div>
         </div>
@@ -939,9 +1090,12 @@ function ProductFormDialog({
 
       {categoryField}
 
-      <ProductImagesField
-        images={values.images || []}
-        onChange={(next) => onChange('images', next)}
+      <ProductColorsField
+        colors={values.colors || []}
+        onChange={(nextColors, nextImages) => {
+          onChange('colors', nextColors)
+          onChange('images', nextImages)
+        }}
         onRemoveCloudImage={onRemoveCloudImage}
         disabled={false}
       />
@@ -1022,26 +1176,23 @@ function ProductFormDialog({
   const formBodyEmbedded = (
     <div className="grid w-full gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:gap-6 xl:gap-8">
       <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
-        <h3 className={sectionTitleClass}>Hình ảnh</h3>
+        <h3 className={sectionTitleClass}>Màu hoa & ảnh</h3>
         {!readOnly ? (
           <p className="mt-1 text-xs text-on-surface-variant">
-            Kéo thả để đổi thứ tự · ảnh đầu là ảnh chính
+            Mỗi màu tối đa 3 ảnh · ảnh đầu của màu đầu là ảnh chính
           </p>
         ) : null}
         <div className="mt-3">
-          {(values.images || []).length === 0 && readOnly ? (
-            <div className="flex aspect-square items-center justify-center rounded-xl bg-surface-container-low text-on-surface-variant">
-              <MaterialIcon name="image" className="text-5xl opacity-35" />
-            </div>
-          ) : (
-            <ProductImagesField
-              images={values.images || []}
-              onChange={(next) => onChange('images', next)}
+          <ProductColorsField
+              colors={values.colors || []}
+              onChange={(nextColors, nextImages) => {
+                onChange('colors', nextColors)
+                onChange('images', nextImages)
+              }}
               onRemoveCloudImage={onRemoveCloudImage}
               disabled={readOnly}
-              hideTitle
+              readOnly={readOnly}
             />
-          )}
         </div>
       </section>
 
@@ -1340,7 +1491,9 @@ function ProductFormDialog({
 export {
   EMPTY_FORM,
   generateProductCode,
+  prepareColorsPayload,
   prepareImagesPayload,
+  revokeFormMedia,
   revokeLocalPreviews,
   toForm,
 }

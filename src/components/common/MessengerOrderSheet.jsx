@@ -7,6 +7,7 @@ import { useScrollLock } from '../../hooks/useScrollLock'
 import {
   buildFacebookMessengerUrl,
   buildProductOrderMessage,
+  buildProductOrderMessageShort,
 } from '../../utils/facebook'
 
 async function copyText(text) {
@@ -39,12 +40,14 @@ async function copyText(text) {
 /**
  * iOS/Messenger thường bỏ ?text= — hiện tin sẵn + copy + mở chat để khách dán.
  */
-function MessengerOrderSheet({ open, product, onClose }) {
+function MessengerOrderSheet({ open, product, selectedColor = null, onClose }) {
   useScrollLock(open)
   const [copied, setCopied] = useState(false)
   const [copyFailed, setCopyFailed] = useState(false)
-  const message = product ? buildProductOrderMessage(product) : ''
-  const messengerUrl = buildFacebookMessengerUrl(message)
+  const message = product ? buildProductOrderMessage(product, { selectedColor }) : ''
+  const messengerUrl = buildFacebookMessengerUrl(
+    product ? buildProductOrderMessageShort(product, { selectedColor }) : '',
+  )
 
   useEffect(() => {
     if (!open || !message) return undefined

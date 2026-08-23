@@ -14,6 +14,7 @@ import { useProducts } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
+import ProductColorSwatches from '../components/ProductColorSwatches'
 import ProductsListMobile, { ProductsListMobileSkeleton } from '../mobile/ProductsListMobile'
 
 const PAGE_SIZE = 25
@@ -780,11 +781,7 @@ function ProductsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-on-surface">{product.name}</p>
-                          {product.description ? (
-                            <p className="max-w-xs truncate text-xs text-on-surface-variant">
-                              {product.description}
-                            </p>
-                          ) : null}
+                          <ProductColorSwatches colors={product.colors} className="max-w-xs" />
                         </td>
                         <td className="max-w-[180px] px-4 py-3 text-xs text-on-surface-variant">
                           {(product.categories || []).length
@@ -873,6 +870,7 @@ function ProductsPage() {
                         <p className="truncate text-sm font-semibold text-on-surface">
                           {product.name}
                         </p>
+                        <ProductColorSwatches colors={product.colors} />
                         <p className="mt-0.5 text-sm font-semibold text-primary">
                           {formatMoney(product.sellPrice)}
                         </p>
