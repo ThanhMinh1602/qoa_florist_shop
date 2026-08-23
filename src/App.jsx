@@ -16,6 +16,11 @@ import CategoriesPage from './features/admin/pages/CategoriesPage'
 import CategoryEditPage from './features/admin/pages/CategoryEditPage'
 import QrListPage from './features/admin/pages/QrListPage'
 import SiteSettingsPage from './features/admin/pages/SiteSettingsPage'
+import SettingsFooterPage from './features/admin/pages/settings/SettingsFooterPage'
+import SettingsGoogleCalendarPage from './features/admin/pages/settings/SettingsGoogleCalendarPage'
+import SettingsHeroPage from './features/admin/pages/settings/SettingsHeroPage'
+import SettingsPriceTiersPage from './features/admin/pages/settings/SettingsPriceTiersPage'
+import SettingsSectionsPage from './features/admin/pages/settings/SettingsSectionsPage'
 import GalaxyOfLoveScreen from './features/greeting/GalaxyOfLoveScreen'
 import GreetingPage from './features/greeting/pages/GreetingPage'
 import LandingPage from './features/landing/pages/LandingPage'
@@ -61,7 +66,14 @@ function App() {
             <Route path=":categoryId/edit" element={<CategoryEditPage />} />
           </Route>
           <Route path="cashbook" element={<CashbookPage />} />
-          <Route path="settings" element={<SiteSettingsPage />} />
+          <Route path="settings">
+            <Route index element={<SiteSettingsPage />} />
+            <Route path="google-calendar" element={<SettingsGoogleCalendarPage />} />
+            <Route path="hero" element={<SettingsHeroPage />} />
+            <Route path="sections" element={<SettingsSectionsPage />} />
+            <Route path="footer" element={<SettingsFooterPage />} />
+            <Route path="price-tiers" element={<SettingsPriceTiersPage />} />
+          </Route>
           <Route path="create" element={<Navigate to="/admin/qr/new" replace />} />
           <Route path="create/:topicId" element={<Navigate to="/admin/qr/new" replace />} />
           <Route path="cards" element={<Navigate to="/admin/qr" replace />} />

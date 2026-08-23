@@ -9,12 +9,13 @@ import {
 } from '../../../api/googleCalendarApi'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { useDialog } from '../../../context/DialogContext'
+import NotifyTimePickerModal, { periodMetaForTime } from './NotifyTimePickerModal'
 
 const DEFAULT_TIMES = ['08:00', '13:00', '17:00']
 const MAX_TIMES = 10
 
 function emailsToText(emails = []) {
-  return (emails || []).join('\n')
+  return (emails || []).join(', ')
 }
 
 function textToEmails(text) {
@@ -32,7 +33,7 @@ function normalizeTimeValue(value) {
   return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
 }
 
-function GoogleCalendarSettingsSection({ open, onToggle }) {
+function GoogleCalendarSettingsSection({ bindActions }) {
   const { alert, confirm } = useDialog()
   const [searchParams, setSearchParams] = useSearchParams()
   const [status, setStatus] = useState(null)
@@ -44,6 +45,7 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
   const [saving, setSaving] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState('')
+  const [timeModal, setTimeModal] = useState(null)
 
   const maxTimes = status?.maxNotifyTimes || MAX_TIMES
 
@@ -100,19 +102,33 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
     })
   }, [alert, loadStatus, searchParams, setSearchParams])
 
-  function updateTimeAt(index, value) {
-    setNotifyTimes((previous) => {
-      const next = [...previous]
-      next[index] = value
-      return next
+  function openAddTimeModal() {
+    if (notifyTimes.length >= maxTimes) return
+    setTimeModal({ mode: 'add', index: -1, time: '08:00' })
+  }
+
+  function openEditTimeModal(index) {
+    setTimeModal({
+      mode: 'edit',
+      index,
+      time: notifyTimes[index] || '08:00',
     })
   }
 
-  function addTimeSlot() {
+  function handleConfirmTime(nextTime) {
+    const cleaned = normalizeTimeValue(nextTime)
+    if (!cleaned) return
+
     setNotifyTimes((previous) => {
-      if (previous.length >= maxTimes) return previous
-      return [...previous, '09:00']
+      if (timeModal?.mode === 'edit' && timeModal.index >= 0) {
+        const next = [...previous]
+        next[timeModal.index] = cleaned
+        return [...new Set(next.map(normalizeTimeValue).filter(Boolean))].sort()
+      }
+      if (previous.includes(cleaned) || previous.length >= maxTimes) return previous
+      return [...previous, cleaned].sort()
     })
+    setTimeModal(null)
   }
 
   function removeTimeSlot(index) {
@@ -173,7 +189,7 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
     }
   }
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     const cleanedTimes = [
       ...new Set(notifyTimes.map(normalizeTimeValue).filter(Boolean)),
     ]
@@ -226,7 +242,22 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
     } finally {
       setSaving(false)
     }
-  }
+  }, [alert, calendarId, emailsText, enabled, maxTimes, notifyTimes])
+
+  useEffect(() => {
+    if (!bindActions) return undefined
+    bindActions(
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving || loading}
+        className="btn-primary w-full !py-3 text-[10px] disabled:opacity-60 lg:w-auto lg:!py-2.5 lg:text-sm"
+      >
+        {saving ? 'Đang lưu...' : 'Lưu'}
+      </button>,
+    )
+    return () => bindActions(null)
+  }, [bindActions, handleSave, loading, saving])
 
   async function handleSyncShares() {
     setSaving(true)
@@ -253,212 +284,192 @@ function GoogleCalendarSettingsSection({ open, onToggle }) {
   }
 
   const connected = Boolean(status?.connected)
-  const summary = loading
-    ? 'Đang tải...'
-    : connected
-      ? `${enabled ? 'Đang đồng bộ' : 'Tắt đồng bộ'} · ${notifyTimes.length} giờ nhắc · ${(status?.notifyEmails || []).length}/3 mail`
-      : status?.configured
-        ? 'Chưa Connect Google'
-        : 'Chưa cấu hình env API'
 
   return (
-    <section className="glass-card overflow-hidden rounded-xl">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-start gap-3 px-5 py-4 text-left transition hover:bg-surface-container-low/50 md:px-6 md:py-5"
-        aria-expanded={open}
-      >
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-primary md:text-lg">Google Calendar</h3>
-          <p className="mt-0.5 text-xs text-on-surface-variant md:text-sm">
-            Đồng bộ đơn giao, share Gmail, và đặt nhiều khung giờ nhắc trong ngày (tối đa {maxTimes}).
-          </p>
-          <p
-            className={[
-              'truncate text-xs text-outline transition-[opacity,margin,max-height] duration-300 ease-out',
-              open ? 'mt-0 max-h-0 opacity-0' : 'mt-1.5 max-h-6 opacity-100',
-            ].join(' ')}
-          >
-            {summary}
-          </p>
-        </div>
-        <span
-          className={[
-            'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-primary transition-transform duration-300 ease-out',
-            open ? 'rotate-180' : '',
-          ].join(' ')}
-        >
-          <MaterialIcon name="expand_more" />
-        </span>
-      </button>
+    <div className="flex h-full min-h-0 w-full flex-col gap-5">
+      {error ? (
+        <p className="rounded-xl bg-error-container/50 px-4 py-3 text-sm text-error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
-      {open ? (
-        <div className="space-y-4 border-t border-outline-variant/20 px-5 py-5 md:px-6">
-          {error ? (
-            <p className="rounded-xl bg-error-container/50 px-4 py-3 text-sm text-error" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          {loading ? (
-            <p className="text-sm text-on-surface-variant">Đang tải trạng thái...</p>
-          ) : (
-            <>
-              <div className="rounded-xl bg-surface-container-low/70 px-4 py-3 text-sm text-on-surface-variant">
-                <p>
-                  Env API:{' '}
-                  <span className="font-medium text-on-surface">
-                    {status?.configured ? 'Đã cấu hình' : 'Thiếu CLIENT_ID / SECRET / API_PUBLIC_URL'}
-                  </span>
+      {loading ? (
+        <p className="py-16 text-center text-sm text-on-surface-variant">Đang tải...</p>
+      ) : (
+        <div className="grid flex-1 gap-6 xl:grid-cols-2 xl:gap-8">
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-outline">
+                  Kết nối
                 </p>
-                <p className="mt-1">
-                  Google:{' '}
-                  <span className="font-medium text-on-surface">
-                    {connected
-                      ? `Đã kết nối (${status?.connectedEmail || 'OK'})`
-                      : 'Chưa kết nối'}
-                  </span>
+                <p className="mt-0.5 text-sm text-on-surface-variant">
+                  {!status?.configured ? (
+                    <span className="text-error">Thiếu env API</span>
+                  ) : connected ? (
+                    <>
+                      <span className="font-medium text-on-surface">Đã kết nối</span>
+                      {status?.connectedEmail ? (
+                        <span className="text-outline"> · {status.connectedEmail}</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span>Chưa kết nối Google</span>
+                  )}
                 </p>
               </div>
-
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
                   onClick={handleConnect}
                   disabled={!status?.configured || connecting || saving}
-                  className="btn-primary disabled:opacity-60"
+                  className="btn-primary px-2.5 py-1.5 text-xs disabled:opacity-60"
                 >
-                  {connecting ? 'Đang mở Google...' : connected ? 'Connect lại' : 'Connect Google'}
+                  {connecting ? '...' : connected ? 'Connect lại' : 'Connect'}
                 </button>
                 {connected ? (
                   <button
                     type="button"
                     onClick={handleDisconnect}
                     disabled={saving}
-                    className="btn-glass disabled:opacity-60"
+                    className="btn-glass px-2.5 py-1.5 text-xs disabled:opacity-60"
                   >
-                    Disconnect
+                    Ngắt
                   </button>
                 ) : null}
                 <button
                   type="button"
                   onClick={handleSyncShares}
                   disabled={!connected || saving}
-                  className="btn-glass disabled:opacity-60"
+                  className="btn-glass px-2.5 py-1.5 text-xs disabled:opacity-60"
                 >
-                  Sync share 3 Gmail
+                  Sync share
                 </button>
               </div>
+            </div>
 
-              <label className="flex items-center gap-3 rounded-xl border border-outline-variant/25 px-4 py-3">
-                <input
-                  type="checkbox"
-                  checked={enabled}
-                  onChange={(event) => setEnabled(event.target.checked)}
-                  disabled={!connected}
-                  className="h-4 w-4 accent-primary"
-                />
-                <span className="text-sm text-on-surface">
-                  Bật đồng bộ đơn hàng → Google Calendar
-                </span>
-              </label>
+            <label className="flex items-center gap-3 rounded-xl border border-outline-variant/20 px-4 py-3">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={(event) => setEnabled(event.target.checked)}
+                disabled={!connected}
+                className="h-4 w-4 accent-primary"
+              />
+              <span className="text-sm text-on-surface">Bật đồng bộ đơn hàng → Calendar</span>
+            </label>
 
-              <label className="block">
-                <span className="label-caps text-on-surface-variant">Calendar ID</span>
-                <input
-                  type="text"
-                  value={calendarId}
-                  onChange={(event) => setCalendarId(event.target.value)}
-                  placeholder="xxxx@group.calendar.google.com hoặc primary"
-                  className="input-glass mt-1.5"
-                />
-              </label>
+            <label className="block">
+              <span className="label-caps text-on-surface-variant">Calendar ID</span>
+              <input
+                type="text"
+                value={calendarId}
+                onChange={(event) => setCalendarId(event.target.value)}
+                placeholder="xxx@group.calendar.google.com"
+                className="input-glass mt-1.5 h-11 text-sm"
+              />
+            </label>
 
-              <label className="block">
-                <span className="label-caps text-on-surface-variant">
-                  3 Gmail nhận lịch (mỗi dòng 1 mail)
-                </span>
-                <textarea
-                  rows={3}
-                  value={emailsText}
-                  onChange={(event) => setEmailsText(event.target.value)}
-                  placeholder={'mail1@gmail.com\nmail2@gmail.com\nmail3@gmail.com'}
-                  className="input-glass mt-1.5 resize-y font-mono text-sm"
-                />
-              </label>
+            <label className="block">
+              <span className="label-caps text-on-surface-variant">
+                Gmail share (tối đa 3, cách nhau bởi dấu phẩy)
+              </span>
+              <input
+                type="text"
+                value={emailsText}
+                onChange={(event) => setEmailsText(event.target.value)}
+                placeholder="a@gmail.com, b@gmail.com"
+                className="input-glass mt-1.5 h-11 text-sm"
+              />
+            </label>
+          </div>
 
-              <div className="rounded-xl border border-outline-variant/25 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="label-caps text-on-surface-variant">
-                      Khung giờ nhắc trong ngày
-                    </p>
-                    <p className="mt-1 text-xs text-outline">
-                      Giống báo thức: nếu ngày đó còn đơn chưa giao, Calendar sẽ nhắc đúng các giờ
-                      này. Tối đa {maxTimes} khung · mặc định 08:00, 13:00, 17:00.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={resetDefaultTimes}
-                    className="btn-glass px-2.5 py-1 text-xs"
-                  >
-                    Đặt lại mặc định
-                  </button>
-                </div>
+          <div className="flex min-h-0 flex-col rounded-xl border border-outline-variant/20 bg-surface-container-lowest/40 p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-primary">Giờ nhắc trong ngày</p>
+                <p className="mt-0.5 text-xs text-on-surface-variant">
+                  {notifyTimes.length}/{maxTimes} khung · bấm thẻ để sửa
+                </p>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={resetDefaultTimes}
+                  className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-white"
+                >
+                  Mặc định
+                </button>
+                <button
+                  type="button"
+                  onClick={openAddTimeModal}
+                  disabled={notifyTimes.length >= maxTimes}
+                  className="inline-flex items-center gap-0.5 rounded-md px-2 py-1 text-[11px] text-primary hover:bg-primary/10 disabled:opacity-40"
+                >
+                  <MaterialIcon name="add" className="text-sm" />
+                  Thêm
+                </button>
+              </div>
+            </div>
 
-                <ul className="mt-3 space-y-2">
-                  {notifyTimes.map((time, index) => (
-                    <li key={`notify-time-${index}`} className="flex items-center gap-2">
-                      <span className="w-6 text-center text-xs font-semibold text-outline">
-                        {index + 1}
-                      </span>
-                      <input
-                        type="time"
-                        value={time}
-                        onChange={(event) => updateTimeAt(index, event.target.value)}
-                        className="input-glass max-w-[10rem]"
-                      />
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {notifyTimes.map((time, index) => {
+                const period = periodMetaForTime(time)
+                return (
+                  <li key={`notify-time-${index}`}>
+                    <div className="flex items-center gap-1.5 rounded-xl border border-outline-variant/20 bg-white p-1.5 shadow-sm shadow-primary/5">
+                      <button
+                        type="button"
+                        onClick={() => openEditTimeModal(index)}
+                        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition hover:bg-surface-container-low/70"
+                      >
+                        <span
+                          className={[
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1',
+                            period.accent,
+                          ].join(' ')}
+                        >
+                          <MaterialIcon
+                            name={period.icon}
+                            className={`text-lg ${period.iconIdle}`}
+                          />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-display text-lg leading-none text-primary tabular-nums">
+                            {time}
+                          </span>
+                          <span className="mt-0.5 block text-[11px] text-on-surface-variant">
+                            {period.shortLabel} · sửa
+                          </span>
+                        </span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => removeTimeSlot(index)}
                         disabled={notifyTimes.length <= 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-error-container/40 hover:text-error disabled:opacity-30"
-                        aria-label={`Xóa khung giờ ${index + 1}`}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-on-surface-variant hover:bg-error-container/40 hover:text-error disabled:opacity-30"
+                        aria-label={`Xóa khung giờ ${time}`}
                       >
-                        <MaterialIcon name="delete" className="text-lg" />
+                        <MaterialIcon name="delete" className="text-base" />
                       </button>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  type="button"
-                  onClick={addTimeSlot}
-                  disabled={notifyTimes.length >= maxTimes}
-                  className="btn-glass mt-3 inline-flex items-center gap-1.5 disabled:opacity-40"
-                >
-                  <MaterialIcon name="alarm_add" className="text-lg" />
-                  Thêm khung giờ ({notifyTimes.length}/{maxTimes})
-                </button>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving || loading}
-                  className="btn-primary disabled:opacity-60"
-                >
-                  {saving ? 'Đang lưu...' : 'Lưu Google Calendar'}
-                </button>
-              </div>
-            </>
-          )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
         </div>
-      ) : null}
-    </section>
+      )}
+
+      <NotifyTimePickerModal
+        open={Boolean(timeModal)}
+        mode={timeModal?.mode || 'add'}
+        initialTime={timeModal?.time || '08:00'}
+        existingTimes={notifyTimes}
+        onClose={() => setTimeModal(null)}
+        onConfirm={handleConfirmTime}
+      />
+    </div>
   )
 }
 

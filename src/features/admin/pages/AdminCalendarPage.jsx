@@ -315,12 +315,18 @@ function AdminCalendarPage() {
                 Google Calendar
               </a>
             ) : (
-              <Link to="/admin/settings" className="btn-glass inline-flex items-center gap-1.5">
+              <Link
+                to="/admin/settings/google-calendar"
+                className="btn-glass inline-flex items-center gap-1.5"
+              >
                 <MaterialIcon name="link" className="text-lg" />
                 Kết nối Google
               </Link>
             )}
-            <Link to="/admin/settings" className="btn-glass inline-flex items-center gap-1.5">
+            <Link
+              to="/admin/settings/google-calendar"
+              className="btn-glass inline-flex items-center gap-1.5"
+            >
               <MaterialIcon name="tune" className="text-lg" />
               Cấu hình
             </Link>
