@@ -17,8 +17,8 @@ function isCategoryEditorPath(path) {
   return path === '/admin/categories/new' || /^\/admin\/categories\/[^/]+\/edit$/.test(path)
 }
 
-function isOrderEditorPath(path) {
-  return path === '/admin/orders/new' || /^\/admin\/orders\/[^/]+\/edit$/.test(path)
+function isOrderOverlayPath(path) {
+  return path === '/admin/orders/new' || path === '/admin/orders/import'
 }
 
 /** Giữ layout /admin/products không remount khi vào nested detail */
@@ -31,14 +31,23 @@ function outletAnimationKey(pathname) {
   ) {
     return '/admin/products'
   }
-  if (pathname === '/admin/manage' || isOrderEditorPath(pathname) || pathname === '/admin/orders/import') {
+  if (pathname === '/admin/manage' || isOrderOverlayPath(pathname)) {
     return '/admin/manage'
   }
   return pathname
 }
 
 function isFillHeightAdminPath(path) {
-  return path === '/admin/manage' || path === '/admin/products'
+  if (path === '/admin/manage' || path === '/admin/products') return true
+  // Full-page order detail (not new/import overlays)
+  if (
+    /^\/admin\/orders\/[^/]+$/.test(path) &&
+    path !== '/admin/orders/new' &&
+    path !== '/admin/orders/import'
+  ) {
+    return true
+  }
+  return false
 }
 
 function resolveAdminDirection(fromPath, toPath, navType) {
@@ -88,7 +97,7 @@ function AnimatedOutlet({ variant = 'shop' }) {
 
   if (variant === 'admin' && isFillHeightAdminPath(animKey)) {
     const pathname = location.pathname
-    if (isOrderEditorPath(pathname) || pathname === '/admin/orders/import') {
+    if (isOrderOverlayPath(pathname)) {
       return outlet
     }
     return <AdminFillShell>{outlet}</AdminFillShell>

@@ -7,6 +7,7 @@ import ChangePasswordPage from './features/admin/pages/ChangePasswordPage'
 import CreateOrderPage from './features/admin/pages/CreateOrderPage'
 import EditOrderPage from './features/admin/pages/EditOrderPage'
 import ImportOrdersPage from './features/admin/pages/ImportOrdersPage'
+import OrderDetailPage from './features/admin/pages/OrderDetailPage'
 import CreateQrPage from './features/admin/pages/CreateQrPage'
 import DashboardPage from './features/admin/pages/DashboardPage'
 import LoginPage from './features/admin/pages/LoginPage'
@@ -51,6 +52,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="orders/new" element={<CreateOrderPage />} />
           <Route path="orders/import" element={<ImportOrdersPage />} />
+          <Route path="orders/:orderId" element={<OrderDetailPage />} />
           <Route path="orders/:orderId/edit" element={<EditOrderPage />} />
           <Route path="qr/new" element={<CreateQrPage />} />
           <Route path="qr" element={<QrListPage />} />

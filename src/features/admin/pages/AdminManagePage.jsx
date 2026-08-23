@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   bulkDeleteCustomRequestsApi,
   deleteCustomRequestApi,
-  fetchCustomRequestByIdApi,
   fetchCustomRequestsApi,
   updateCustomRequestApi,
-  updateCustomRequestStatusApi,
 } from '../../../api/notificationsApi'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import MaterialIcon from '../../../components/common/MaterialIcon'
@@ -21,7 +18,6 @@ import {
   toOrderListQuery,
 } from '../../../utils/orderFilters'
 import ManageUnifiedTable, { ManageUnifiedTableSkeleton } from '../components/ManageUnifiedTable'
-import OrderDetailModal from '../components/OrderDetailModal'
 import ExportOrdersExcelModal from '../components/ExportOrdersExcelModal'
 import OrderFilters from '../components/OrderFilters'
 import ManageUnifiedListMobile, {
@@ -57,7 +53,6 @@ function AdminManagePage() {
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [page, setPage] = useState(1)
-  const [selectedItem, setSelectedItem] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
   const [isLoadingOrders, setIsLoadingOrders] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -175,33 +170,12 @@ function AdminManagePage() {
   }, [unifiedItems])
 
   useEffect(() => {
-    if (!highlightId) return undefined
-    if (!isLgUp) {
-      navigate(`/admin/orders/${highlightId}/edit`, { replace: true })
-      return undefined
-    }
-    let cancelled = false
-    ;(async () => {
-      try {
-        const result = await fetchCustomRequestByIdApi(highlightId)
-        if (cancelled || !result?.data) return
-        const [matched] = buildUnifiedManageItems([result.data])
-        if (matched) setSelectedItem(matched)
-      } catch {
-        // ignore missing highlight target
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [highlightId, isLgUp, navigate])
+    if (!highlightId) return
+    navigate(`/admin/orders/${highlightId}`, { replace: true })
+  }, [highlightId, navigate])
 
   function handleSelectOrder(item) {
-    if (!isLgUp) {
-      navigate(`/admin/orders/${item.id}/edit`)
-      return
-    }
-    setSelectedItem(item)
+    navigate(`/admin/orders/${item.id}`)
   }
 
   function toggleSelect(id) {
@@ -222,37 +196,11 @@ function AdminManagePage() {
     })
   }
 
-  async function handleStatusChange(id, status) {
-    setUpdatingId(id)
-    try {
-      const result = await updateCustomRequestStatusApi(id, status)
-      setOrders((items) => items.map((item) => (item.id === id ? result.data : item)))
-      setSelectedItem((current) =>
-        current?.kind === 'order' && current.id === id
-          ? { ...current, raw: result.data, status: result.data.status }
-          : current,
-      )
-    } catch (err) {
-      await alert({
-        title: 'Không thể cập nhật',
-        message: err.message || 'Không thể cập nhật trạng thái.',
-        variant: 'error',
-      })
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
   async function handleShippingStatusChange(id, shippingStatus) {
     setUpdatingId(id)
     try {
       const result = await updateCustomRequestApi(id, { shippingStatus })
       setOrders((items) => items.map((item) => (item.id === id ? result.data : item)))
-      setSelectedItem((current) => {
-        if (!(current?.kind === 'order' && current.id === id)) return current
-        const [next] = buildUnifiedManageItems([result.data])
-        return next
-      })
     } catch (err) {
       await alert({
         title: 'Không thể cập nhật',
@@ -262,15 +210,6 @@ function AdminManagePage() {
     } finally {
       setUpdatingId(null)
     }
-  }
-
-  function handleOrderUpdated(updated) {
-    setOrders((items) => items.map((item) => (item.id === updated.id ? updated : item)))
-    setSelectedItem((current) => {
-      if (!(current?.kind === 'order' && current.id === updated.id)) return current
-      const [next] = buildUnifiedManageItems([updated])
-      return next
-    })
   }
 
   async function handleDelete(item) {
@@ -288,7 +227,6 @@ function AdminManagePage() {
     try {
       await deleteCustomRequestApi(item.id)
       setSelectedIds((previous) => previous.filter((id) => id !== item.id))
-      if (selectedItem?.id === item.id) setSelectedItem(null)
       setBusy(false)
       await loadOrders()
     } catch (err) {
@@ -317,7 +255,6 @@ function AdminManagePage() {
     try {
       await bulkDeleteCustomRequestsApi(ids)
       setSelectedIds([])
-      if (selectedItem && ids.includes(selectedItem.id)) setSelectedItem(null)
       setBusy(false)
       await loadOrders()
     } catch (err) {
@@ -548,20 +485,6 @@ function AdminManagePage() {
             {renderPaginationBar()}
           </div>
         ) : null}
-
-        <AnimatePresence>
-          {selectedItem?.kind === 'order' ? (
-            <OrderDetailModal
-              key={selectedItem.id}
-              request={selectedItem.raw}
-              onClose={() => setSelectedItem(null)}
-              onStatusChange={handleStatusChange}
-              onShippingStatusChange={handleShippingStatusChange}
-              onUpdated={handleOrderUpdated}
-              isUpdating={updatingId === selectedItem.id}
-            />
-          ) : null}
-        </AnimatePresence>
 
         <ExportOrdersExcelModal open={exportOpen} orders={exportOrders} onClose={() => setExportOpen(false)} />
         <LoadingOverlay open={busy} message={busyMessage} />
