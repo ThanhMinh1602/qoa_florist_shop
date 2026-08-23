@@ -40,6 +40,123 @@ function buildPageButtons(totalPages, safePage) {
   }, [])
 }
 
+
+function CategoryMoreMenu({ category, disabled, onEdit, onToggleQuick, onToggleActive, onDelete }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onPointerDown(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    function onKeyDown(event) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className="relative shrink-0" ref={rootRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((value) => !value)}
+        className={`${actionBtnClass} text-on-surface-variant`}
+        title="Thêm"
+        aria-label="Thêm thao tác"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <MaterialIcon name="more_vert" className="text-base" />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest py-1 shadow-xl shadow-primary/10"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            disabled={disabled}
+            onClick={() => {
+              setOpen(false)
+              onEdit(category)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-low disabled:opacity-50"
+          >
+            <MaterialIcon name="edit" className="text-base text-primary" />
+            Sửa
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={disabled}
+            onClick={() => {
+              setOpen(false)
+              onToggleQuick(category)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-low disabled:opacity-50"
+          >
+            <MaterialIcon
+              name={category.showInQuickFilter ? 'filter_alt_off' : 'filter_alt'}
+              className="text-base text-on-surface-variant"
+            />
+            {category.showInQuickFilter ? 'Ẩn lọc nhanh' : 'Hiện lọc nhanh'}
+          </button>
+          {category.active ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={disabled}
+              onClick={() => {
+                setOpen(false)
+                onToggleActive(category)
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-low disabled:opacity-50"
+            >
+              <MaterialIcon name="visibility_off" className="text-base text-on-surface-variant" />
+              Ẩn danh mục
+            </button>
+          ) : (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={disabled}
+              onClick={() => {
+                setOpen(false)
+                onToggleActive(category)
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-on-surface hover:bg-surface-container-low disabled:opacity-50"
+            >
+              <MaterialIcon name="visibility" className="text-base text-emerald-700" />
+              Hiện danh mục
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            disabled={disabled}
+            onClick={() => {
+              setOpen(false)
+              onDelete(category)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50/80 disabled:opacity-50"
+          >
+            <MaterialIcon name="delete" className="text-base" />
+            Xóa danh mục
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function CategoriesPage() {
   const navigate = useNavigate()
   const { alert, confirm } = useDialog()
@@ -590,41 +707,36 @@ function CategoriesPage() {
             </button>
           </header>
 
-          {categories.length > 0 ? (
-            <div className="glass-card flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/55 px-4 py-3 backdrop-blur-xl">
-              <label className="inline-flex items-center gap-2 text-sm text-on-surface">
-                <input
-                  type="checkbox"
-                  className="accent-primary"
-                  checked={allSelected}
-                  onChange={toggleSelectAll}
-                />
-                Chọn tất cả ({categories.length})
-              </label>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
               {selectedCount > 0 ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-xl border border-white/55 bg-white/40 px-3 py-2 text-sm font-medium text-on-surface backdrop-blur-md">
+                <>
+                  <span className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface">
                     Đã chọn {selectedCount}
                   </span>
                   <button
                     type="button"
                     onClick={clearSelection}
-                    className="rounded-xl border border-white/55 bg-white/40 px-3 py-2 text-sm font-medium text-on-surface-variant backdrop-blur-md hover:bg-white/70"
+                    className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
                   >
                     Bỏ chọn
                   </button>
                   <button
                     type="button"
                     onClick={handleBulkDelete}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 backdrop-blur-md hover:bg-red-100/80"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100/80"
                   >
                     <MaterialIcon name="delete" className="text-base" />
                     Xóa đã chọn
                   </button>
-                </div>
-              ) : null}
+                </>
+              ) : (
+                <p className="text-sm text-on-surface-variant">
+                  {categories.length} danh mục
+                </p>
+              )}
             </div>
-          ) : null}
+          </div>
 
           {error ? (
             <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
@@ -635,7 +747,7 @@ function CategoriesPage() {
           {isLoading ? (
             <p className="py-12 text-center text-sm text-on-surface-variant">Đang tải...</p>
           ) : categories.length === 0 ? (
-            <div className="glass-card rounded-2xl border border-dashed border-outline-variant/40 px-6 py-16 text-center">
+            <div className="rounded-2xl border border-dashed border-outline-variant/40 bg-surface-container-lowest px-6 py-16 text-center">
               <MaterialIcon name="category" className="text-4xl text-outline" />
               <p className="mt-3 text-sm font-medium text-on-surface">Chưa có danh mục</p>
               <button
@@ -648,102 +760,111 @@ function CategoriesPage() {
               </button>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {categories.map((category) => {
-                const checked = selectedIds.includes(category.id)
-                return (
-                  <li
-                    key={category.id}
-                    className={[
-                      'glass-card flex flex-wrap items-center gap-3 rounded-2xl border border-white/55 px-4 py-3.5 backdrop-blur-xl',
-                      !category.active ? 'opacity-60' : '',
-                      checked ? 'border-primary/30 bg-primary/5' : '',
-                    ].join(' ')}
-                  >
-                    <input
-                      type="checkbox"
-                      className="accent-primary"
-                      checked={checked}
-                      onChange={() => toggleSelect(category.id)}
-                      aria-label={`Chọn ${category.name}`}
-                    />
-
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/50 bg-white/35 text-primary backdrop-blur-md">
-                      <MaterialIcon name="label" className="text-xl" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-on-surface">
-                        {category.name}
-                        {!category.active ? (
-                          <span className="ml-2 text-xs font-normal text-outline">Đã ẩn</span>
-                        ) : null}
-                      </p>
-                      <p className="mt-0.5 text-[11px] tracking-wide text-outline">{category.slug}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => handleToggleQuick(category)}
-                        className={[
-                          actionBtnClass,
-                          category.showInQuickFilter
-                            ? 'border-primary/25 bg-primary/15 text-primary'
-                            : 'text-on-surface-variant',
-                        ].join(' ')}
-                        title="Hiện trong lọc nhanh shop"
-                        aria-label={
-                          category.showInQuickFilter ? 'Ẩn lọc nhanh' : 'Hiện lọc nhanh'
-                        }
-                      >
-                        <MaterialIcon
-                          name={category.showInQuickFilter ? 'filter_alt' : 'filter_alt_off'}
-                          className="text-base"
+            <div className="glass-card overflow-hidden rounded-xl">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-white/55 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    <tr>
+                      <th className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          className="accent-primary"
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          aria-label="Chọn tất cả"
                         />
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => openEdit(category)}
-                        className={`${actionBtnClass} text-primary`}
-                        title="Sửa"
-                        aria-label="Sửa"
-                      >
-                        <MaterialIcon name="edit" className="text-base" />
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => handleToggleActive(category)}
-                        className={`${actionBtnClass} text-on-surface-variant`}
-                        title={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}
-                        aria-label={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}
-                      >
-                        <MaterialIcon
-                          name={category.active ? 'visibility_off' : 'visibility'}
-                          className="text-base"
-                        />
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => handleDelete(category)}
-                        className={`${actionBtnClass} text-red-600 hover:border-red-200 hover:bg-red-50/70`}
-                        title="Xóa"
-                        aria-label="Xóa"
-                      >
-                        <MaterialIcon name="delete" className="text-base" />
-                      </button>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
+                      </th>
+                      <th className="px-4 py-3">Icon</th>
+                      <th className="px-4 py-3">Tên</th>
+                      <th className="px-4 py-3">Slug</th>
+                      <th className="px-4 py-3">Lọc nhanh</th>
+                      <th className="px-4 py-3">Trạng thái</th>
+                      <th className="px-4 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container">
+                    {categories.map((category) => {
+                      const checked = selectedIds.includes(category.id)
+                      return (
+                        <tr
+                          key={category.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => openEdit(category)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              openEdit(category)
+                            }
+                          }}
+                          className={[
+                            'cursor-pointer transition-colors hover:bg-surface-container-low/60',
+                            !category.active ? 'opacity-50' : '',
+                            checked ? 'bg-primary/5' : '',
+                          ].join(' ')}
+                        >
+                          <td
+                            className="px-4 py-3"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              className="accent-primary"
+                              checked={checked}
+                              onChange={() => toggleSelect(category.id)}
+                              aria-label={`Chọn ${category.name}`}
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-container-low text-primary">
+                              <MaterialIcon name="label" className="text-lg" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-on-surface">{category.name}</p>
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-on-surface-variant">
+                            {category.slug || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {category.showInQuickFilter ? (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                                <MaterialIcon name="filter_alt" className="text-sm" />
+                                Có
+                              </span>
+                            ) : (
+                              <span className="text-xs text-on-surface-variant">Không</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {category.active ? (
+                              <span className="text-xs font-medium text-emerald-700">Đang hiện</span>
+                            ) : (
+                              <span className="text-xs font-medium text-outline">Đã ẩn</span>
+                            )}
+                          </td>
+                          <td
+                            className="whitespace-nowrap px-4 py-3 text-right"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <CategoryMoreMenu
+                              category={category}
+                              disabled={busy}
+                              onEdit={openEdit}
+                              onToggleQuick={handleToggleQuick}
+                              onToggleActive={handleToggleActive}
+                              onDelete={handleDelete}
+                            />
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
 

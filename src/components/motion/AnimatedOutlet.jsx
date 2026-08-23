@@ -18,7 +18,7 @@ function isCategoryEditorPath(path) {
 }
 
 function isOrderOverlayPath(path) {
-  return path === '/admin/orders/new' || path === '/admin/orders/import'
+  return false
 }
 
 /** Giữ layout /admin/products không remount khi vào nested detail */
@@ -31,7 +31,7 @@ function outletAnimationKey(pathname) {
   ) {
     return '/admin/products'
   }
-  if (pathname === '/admin/manage' || isOrderOverlayPath(pathname)) {
+  if (pathname === '/admin/manage') {
     return '/admin/manage'
   }
   return pathname
@@ -39,10 +39,10 @@ function outletAnimationKey(pathname) {
 
 function isFillHeightAdminPath(path) {
   if (path === '/admin/manage' || path === '/admin/products') return true
-  // Full-page order detail (not new/import overlays)
+  if (path === '/admin/orders/new' || path === '/admin/orders/import') return true
+  // Full-page order detail (not import overlay)
   if (
     /^\/admin\/orders\/[^/]+$/.test(path) &&
-    path !== '/admin/orders/new' &&
     path !== '/admin/orders/import'
   ) {
     return true

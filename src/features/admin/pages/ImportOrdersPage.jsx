@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { importCustomRequestsBulkApi } from '../../../api/customRequestsApi'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { formatMoney } from '../../../utils/money'
 import { parseOrderSheetFromFile } from '../../../utils/parseOrderSheet'
-import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import ImportProgressModal from '../components/ImportProgressModal'
 
 const IMPORT_CHUNK_SIZE = 20
 const PREVIEW_PAGE_SIZE = 25
 
 function ImportOrdersPage() {
-  const isLgUp = useIsLgUp()
-  const closeRef = useRef(null)
   const [orders, setOrders] = useState([])
   const [parseErrors, setParseErrors] = useState([])
   const [meta, setMeta] = useState(null)
@@ -209,48 +205,43 @@ function ImportOrdersPage() {
   }
 
   const page = (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-outline-variant/25 bg-surface-container-lowest/90 px-3 py-2.5 backdrop-blur lg:px-8 lg:py-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {!isLgUp ? (
-              <button
-                type="button"
-                onClick={() => closeRef.current?.()}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
-                aria-label="Quay lại"
-              >
-                <MaterialIcon name="arrow_back" className="text-xl" />
-              </button>
-            ) : null}
-            <div className="min-w-0">
-              <h2 className="font-display text-base text-primary lg:text-2xl">Import đơn từ Sheet</h2>
-              <p className="mt-0.5 hidden text-xs text-on-surface-variant lg:block lg:text-sm">
-                Nhập Excel/CSV đúng cột form hiện tại (Ngày đặt, Ngày cần, Thời gian ship, Note SP, Note đơn, Mã hóa đơn).
-              </p>
-            </div>
-          </div>
-          {isLgUp ? (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col p-2 pb-[calc(var(--admin-bottom-nav-offset)+1rem)] sm:p-3 lg:p-4 lg:pb-4">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-outline-variant/15 bg-white shadow-[0_8px_30px_rgba(74,48,32,0.06)]">
+          <header className="shrink-0 border-b border-outline-variant/15 px-4 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4">
             <Link
               to="/admin/manage"
-              className="rounded-xl border border-outline-variant/40 px-3 py-2 text-xs font-medium text-primary hover:bg-surface-container-low"
+              className="mb-1.5 inline-flex items-center gap-1 text-xs font-medium text-on-surface-variant transition hover:text-primary"
             >
-              Về quản lý đơn
-            </Link>
-          ) : (
-            <Link
-              to="/admin/manage"
-              className="inline-flex h-8 items-center rounded-lg border border-outline-variant/40 px-2.5 text-[11px] font-medium text-primary"
-            >
+              <MaterialIcon name="arrow_back" className="text-base" />
               Đơn hàng
             </Link>
-          )}
-        </div>
-      </header>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="font-display text-lg leading-tight text-primary sm:text-xl lg:text-2xl">
+                  Import đơn từ Sheet
+                </h2>
+                <p className="mt-1 text-xs text-on-surface-variant sm:text-sm">
+                  Nhập Excel/CSV đúng cột form hiện tại (Ngày đặt, Ngày cần, Thời gian ship, Note SP, Note
+                  đơn, Mã hóa đơn).
+                </p>
+              </div>
+              {orders.length > 0 ? (
+                <button
+                  type="button"
+                  disabled={isImporting}
+                  onClick={() => void handleImport()}
+                  className="btn-primary shrink-0 !px-3 !py-2 text-xs sm:text-sm disabled:opacity-60"
+                >
+                  {isImporting ? 'Đang import…' : `Import ${selectedCount} đơn`}
+                </button>
+              ) : null}
+            </div>
+          </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto w-full max-w-6xl space-y-4 p-3 md:p-5 lg:p-6">
-        <section className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest p-4 shadow-sm">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 lg:p-6">
+            <div className="mx-auto w-full max-w-6xl space-y-4">
+<section className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
           <h3 className="text-sm font-semibold text-on-surface">1. Chuẩn bị file</h3>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-on-surface-variant">
             <li>Xuất file từ Quản lý đơn (Excel hiện tại), hoặc Google Sheet cùng cột đó</li>
@@ -500,31 +491,23 @@ function ImportOrdersPage() {
             </div>
           </section>
         ) : null}
-        </div>
-      </div>
 
-      <ImportProgressModal
-        open={Boolean(progress)}
-        total={progress?.total || 0}
-        done={progress?.done || 0}
-        createdCount={progress?.createdCount || 0}
-        errorCount={progress?.errorCount || 0}
-        phase={progress?.phase || 'importing'}
-        currentLabel={progress?.currentLabel || ''}
-      />
+            </div>
+          </div>
+
+          <ImportProgressModal
+            open={Boolean(progress)}
+            total={progress?.total || 0}
+            done={progress?.done || 0}
+            createdCount={progress?.createdCount || 0}
+            errorCount={progress?.errorCount || 0}
+            phase={progress?.phase || 'importing'}
+            currentLabel={progress?.currentLabel || ''}
+          />
+        </section>
+      </div>
     </div>
   )
-
-  if (!isLgUp) {
-    return (
-      <AdminMobileOverlayShell backTo="/admin/manage">
-        {({ requestClose }) => {
-          closeRef.current = requestClose
-          return page
-        }}
-      </AdminMobileOverlayShell>
-    )
-  }
 
   return page
 }
