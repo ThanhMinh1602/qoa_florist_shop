@@ -4,6 +4,7 @@ import {
   disconnectGoogleCalendarApi,
   fetchGoogleCalendarConnectUrlApi,
   fetchGoogleCalendarStatusApi,
+  syncGoogleCalendarOrdersApi,
   syncGoogleCalendarSharesApi,
   updateGoogleCalendarSettingsApi,
 } from '../../../api/googleCalendarApi'
@@ -12,6 +13,18 @@ import { useDialog } from '../../../context/DialogContext'
 import NotifyTimePickerModal, { periodMetaForTime } from './NotifyTimePickerModal'
 
 const DEFAULT_TIMES = ['08:00', '13:00', '17:00']
+
+/** Gợi ý việc cần làm ở từng khung mặc định */
+const TIME_PURPOSE = {
+  '08:00': 'Xem đơn trong ngày + giờ ship',
+  '13:00': 'Check đơn chiều',
+  '17:00': 'Chụp ảnh (shot) + đóng đơn',
+}
+
+function purposeForTime(time) {
+  return TIME_PURPOSE[time] || ''
+}
+
 const MAX_TIMES = 10
 
 function emailsToText(emails = []) {
@@ -43,6 +56,7 @@ function GoogleCalendarSettingsSection({ bindActions }) {
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [syncingOrders, setSyncingOrders] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState('')
   const [timeModal, setTimeModal] = useState(null)
@@ -259,7 +273,44 @@ function GoogleCalendarSettingsSection({ bindActions }) {
     return () => bindActions(null)
   }, [bindActions, handleSave, loading, saving])
 
-  async function handleSyncShares() {
+  
+  async function handleSyncOrders() {
+    const ok = await confirm({
+      title: 'Đồng bộ đơn lên Calendar?',
+      message:
+        'Hệ thống sẽ tạo/cập nhật event cho các đơn còn mở trong 60 ngày tới (ưu tiên đơn chưa có trên Calendar). Có thể mất vài phút.',
+      confirmLabel: 'Đồng bộ',
+    })
+    if (!ok) return
+
+    setSyncingOrders(true)
+    try {
+      const result = await syncGoogleCalendarOrdersApi({
+        daysAhead: 60,
+        onlyMissing: true,
+        limit: 300,
+      })
+      const sync = result.data?.syncOrdersResult || result.data
+      setStatus(result.data)
+      await alert({
+        title: sync?.ok === false ? 'Không đồng bộ được' : 'Đã đồng bộ đơn',
+        message: sync?.ok === false
+          ? sync?.message || 'Thất bại.'
+          : `Đã quét ${sync.scanned || 0} đơn · sync ${sync.synced || 0} · bỏ qua ${sync.skipped || 0} · lỗi ${sync.failed || 0}.`,
+        variant: sync?.ok === false ? 'error' : 'success',
+      })
+    } catch (err) {
+      await alert({
+        title: 'Đồng bộ thất bại',
+        message: err.message || 'Không đồng bộ được đơn lên Calendar.',
+        variant: 'error',
+      })
+    } finally {
+      setSyncingOrders(false)
+    }
+  }
+
+async function handleSyncShares() {
     setSaving(true)
     try {
       const result = await syncGoogleCalendarSharesApi()
@@ -340,10 +391,19 @@ function GoogleCalendarSettingsSection({ bindActions }) {
                 <button
                   type="button"
                   onClick={handleSyncShares}
-                  disabled={!connected || saving}
+                  disabled={!connected || saving || syncingOrders}
                   className="btn-glass px-2.5 py-1.5 text-xs disabled:opacity-60"
                 >
                   Sync share
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSyncOrders()}
+                  disabled={!connected || !enabled || saving || syncingOrders}
+                  className="btn-glass px-2.5 py-1.5 text-xs disabled:opacity-60"
+                  title="Tạo/cập nhật event cho đơn còn mở trong 60 ngày"
+                >
+                  {syncingOrders ? 'Đang sync đơn…' : 'Sync đơn → Calendar'}
                 </button>
               </div>
             </div>
@@ -356,19 +416,42 @@ function GoogleCalendarSettingsSection({ bindActions }) {
                 disabled={!connected}
                 className="h-4 w-4 accent-primary"
               />
-              <span className="text-sm text-on-surface">Bật đồng bộ đơn hàng → Calendar</span>
+              <span className="min-w-0">
+                <span className="block text-sm text-on-surface">Bật đồng bộ đơn hàng → Calendar</span>
+                <span className="mt-0.5 block text-[11px] text-on-surface-variant">
+                  Đơn mới/sửa sẽ upsert event. Bấm “Sync đơn → Calendar” để kéo các đơn mở hiện có.
+                </span>
+              </span>
             </label>
 
-            <label className="block">
-              <span className="label-caps text-on-surface-variant">Calendar ID</span>
-              <input
-                type="text"
-                value={calendarId}
-                onChange={(event) => setCalendarId(event.target.value)}
-                placeholder="xxx@group.calendar.google.com"
-                className="input-glass mt-1.5 h-11 text-sm"
-              />
-            </label>
+            <div>
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <label className="block min-w-0 flex-1">
+                  <span className="label-caps text-on-surface-variant">Calendar ID</span>
+                  <input
+                    type="text"
+                    value={calendarId}
+                    onChange={(event) => setCalendarId(event.target.value)}
+                    placeholder="primary hoặc xxx@group.calendar.google.com"
+                    className="input-glass mt-1.5 h-11 text-sm"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={!connected || saving}
+                  onClick={() => setCalendarId('primary')}
+                  className="btn-glass shrink-0 px-2.5 py-2 text-xs disabled:opacity-60"
+                  title="Dùng lịch chính của tài khoản Google đã Connect"
+                >
+                  Dùng primary
+                </button>
+              </div>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-on-surface-variant">
+                ID lịch Google của shop (chung). Gmail trong danh sách chỉ được share xem lịch này — không phải
+                calendar riêng từng người. Để trống rủi ro; nên dùng <code className="text-primary">primary</code>{' '}
+                hoặc ID lịch phụ copy từ Google Calendar → Cài đặt lịch.
+              </p>
+            </div>
 
             <label className="block">
               <span className="label-caps text-on-surface-variant">
@@ -381,6 +464,9 @@ function GoogleCalendarSettingsSection({ bindActions }) {
                 placeholder="a@gmail.com, b@gmail.com"
                 className="input-glass mt-1.5 h-11 text-sm"
               />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-on-surface-variant">
+                Gỡ Gmail chỉ thu hồi quyền xem lịch shop; event đơn vẫn giữ trên Calendar ID ở trên.
+              </p>
             </label>
           </div>
 
@@ -389,7 +475,7 @@ function GoogleCalendarSettingsSection({ bindActions }) {
               <div>
                 <p className="text-sm font-semibold text-primary">Giờ nhắc trong ngày</p>
                 <p className="mt-0.5 text-xs text-on-surface-variant">
-                  {notifyTimes.length}/{maxTimes} khung · bấm thẻ để sửa
+                  Setup gợi ý: 08:00 · 13:00 · 17:00 · bấm thẻ để sửa
                 </p>
               </div>
               <div className="flex gap-1">
@@ -398,7 +484,7 @@ function GoogleCalendarSettingsSection({ bindActions }) {
                   onClick={resetDefaultTimes}
                   className="rounded-md px-2 py-1 text-[11px] text-on-surface-variant hover:bg-white"
                 >
-                  Mặc định
+                  Mặc định 08/13/17
                 </button>
                 <button
                   type="button"
@@ -439,7 +525,8 @@ function GoogleCalendarSettingsSection({ bindActions }) {
                             {time}
                           </span>
                           <span className="mt-0.5 block text-[11px] text-on-surface-variant">
-                            {period.shortLabel} · sửa
+                            {period.shortLabel}
+                            {purposeForTime(time) ? ` · ${purposeForTime(time)}` : ' · sửa'}
                           </span>
                         </span>
                       </button>
