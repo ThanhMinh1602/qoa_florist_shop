@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useParams } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
-import MarkdownContent from '../../../components/common/MarkdownContent'
+import RichTextContent from '../../../components/common/RichTextContent'
 import MessengerOrderSheet from '../../../components/common/MessengerOrderSheet'
 import ShopImage from '../../../components/common/ShopImage'
 import { SHOP_IMAGES } from '../../../constants/shopImagery'
@@ -253,9 +253,10 @@ function ShopProductPage() {
                 className="glass-card rounded-2xl p-3.5 sm:rounded-[1.75rem] sm:p-6"
               >
                 <p className="label-caps text-[10px] text-primary sm:text-xs">Mô tả</p>
-                <MarkdownContent className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-[0.95rem]">
-                  {product.description}
-                </MarkdownContent>
+                <RichTextContent
+                  className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-[0.95rem]"
+                  html={product.description}
+                />
               </motion.div>
             ) : null}
 

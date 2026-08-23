@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import MaterialIcon from '../../../components/common/MaterialIcon'
+import RichTextContent from '../../../components/common/RichTextContent'
+import RichTextEditor from '../../../components/common/RichTextEditor'
 import { overlayFade } from '../../../lib/motion'
 import { uploadImagesApi } from '../../../api/uploadsApi'
 import { useScrollLock } from '../../../hooks/useScrollLock'
@@ -99,26 +101,6 @@ async function prepareImagesPayload(images = []) {
 
 const inputClass =
   'w-full rounded-xl border border-outline-variant/25 bg-white px-3 py-2.5 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20'
-
-const DESCRIPTION_MIN_ROWS = 5
-const DESCRIPTION_MAX_ROWS = 15
-
-function resizeDescriptionTextarea(el, minRows = DESCRIPTION_MIN_ROWS) {
-  if (!el) return
-  const style = window.getComputedStyle(el)
-  const lineHeight = Number.parseFloat(style.lineHeight) || 22
-  const paddingY =
-    (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0)
-  const borderY =
-    (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0)
-  const minHeight = lineHeight * minRows + paddingY + borderY
-  const maxHeight = lineHeight * DESCRIPTION_MAX_ROWS + paddingY + borderY
-
-  el.style.height = '0px'
-  const next = Math.min(Math.max(el.scrollHeight, minHeight), maxHeight)
-  el.style.height = `${next}px`
-  el.style.overflowY = el.scrollHeight > maxHeight + 1 ? 'auto' : 'hidden'
-}
 
 function withMainFirst(list = []) {
   return list.map((image, index) => ({
@@ -532,7 +514,6 @@ function ProductFormDialog({
   const [quickCategoryError, setQuickCategoryError] = useState('')
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false)
   const quickCategoryRef = useRef(null)
-  const descriptionRef = useRef(null)
   const categoryMenuRef = useRef(null)
 
   const useCompactFields = isPage || isEmbedded
@@ -542,7 +523,6 @@ function ProductFormDialog({
   const labelClass = useCompactFields
     ? 'mb-1 block text-xs font-medium text-on-surface'
     : 'mb-1 block font-medium text-on-surface'
-  const descMinRows = useCompactFields ? 3 : DESCRIPTION_MIN_ROWS
   const sectionTitleClass =
     'text-[10px] font-semibold tracking-wide text-on-surface-variant uppercase'
 
@@ -555,14 +535,6 @@ function ProductFormDialog({
       setCategoryMenuOpen(false)
     }
   }, [open])
-
-  useEffect(() => {
-    if (!open) return undefined
-    const frame = window.requestAnimationFrame(() => {
-      resizeDescriptionTextarea(descriptionRef.current, descMinRows)
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [open, values.description, descMinRows])
 
   useEffect(() => {
     if (!quickCategoryOpen) return undefined
@@ -848,16 +820,11 @@ function ProductFormDialog({
             </div>
             <label className="block">
               <span className={labelClass}>Mô tả</span>
-              <textarea
-                ref={descriptionRef}
-                rows={descMinRows}
+              <RichTextEditor
                 value={values.description}
-                onChange={(e) => {
-                  onChange('description', e.target.value)
-                  resizeDescriptionTextarea(e.target, descMinRows)
-                }}
+                onChange={(next) => onChange('description', next)}
                 placeholder="Mô tả hoa, ý nghĩa, kích thước..."
-                className={`${fieldClass} resize-none overflow-hidden leading-relaxed`}
+                minHeightClass="min-h-[100px]"
               />
             </label>
           </div>
@@ -962,16 +929,11 @@ function ProductFormDialog({
 
       <label className="block text-sm">
         <span className={labelClass}>Mô tả sản phẩm</span>
-        <textarea
-          ref={descriptionRef}
-          rows={descMinRows}
+        <RichTextEditor
           value={values.description}
-          onChange={(e) => {
-            onChange('description', e.target.value)
-            resizeDescriptionTextarea(e.target, descMinRows)
-          }}
+          onChange={(next) => onChange('description', next)}
           placeholder="Mô tả hoa, ý nghĩa, kích thước, dịp phù hợp..."
-          className={`${fieldClass} resize-none overflow-hidden py-3 text-base leading-relaxed sm:py-2.5 sm:text-sm sm:leading-normal`}
+          minHeightClass="min-h-[140px]"
         />
       </label>
 
@@ -1134,20 +1096,19 @@ function ProductFormDialog({
             <div>
               <span className={labelClass}>Mô tả</span>
               {readOnly ? (
-                <p className={`${readValueClass} min-h-[120px] whitespace-pre-wrap leading-relaxed`}>
-                  {String(values.description || '').trim() || '—'}
-                </p>
+                values.description?.trim() ? (
+                  <div className={`${readValueClass} min-h-[120px]`}>
+                    <RichTextContent html={values.description} />
+                  </div>
+                ) : (
+                  <p className={`${readValueClass} min-h-[120px]`}>—</p>
+                )
               ) : (
-                <textarea
-                  ref={descriptionRef}
-                  rows={Math.max(descMinRows, 5)}
+                <RichTextEditor
                   value={values.description}
-                  onChange={(e) => {
-                    onChange('description', e.target.value)
-                    resizeDescriptionTextarea(e.target, Math.max(descMinRows, 5))
-                  }}
+                  onChange={(next) => onChange('description', next)}
                   placeholder="Mô tả hoa, ý nghĩa, kích thước..."
-                  className={`${fieldClass} min-h-[120px] resize-none overflow-hidden leading-relaxed`}
+                  minHeightClass="min-h-[120px]"
                 />
               )}
             </div>
