@@ -60,6 +60,18 @@ function normalizeCodeInput(value) {
     .slice(0, 20)
 }
 
+/** Convert tên SP → mã (bỏ dấu, chỉ A-Z0-9, tối đa 20) */
+function codeFromProductName(name, { maxLength = 20 } = {}) {
+  return String(name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '')
+    .slice(0, maxLength)
+}
+
 function revokeLocalPreview(image) {
   if (image?.url?.startsWith('blob:')) {
     URL.revokeObjectURL(image.url)
@@ -945,7 +957,7 @@ function ProductFormDialog({
                   <input
                     value={values.code}
                     onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
-                    placeholder="Mã"
+                    placeholder="Trống = từ tên"
                     maxLength={20}
                     className={`${fieldClass} min-w-0 font-mono font-bold tracking-wider`}
                   />
@@ -1070,7 +1082,7 @@ function ProductFormDialog({
             <input
               value={values.code}
               onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
-              placeholder="Nhập mã hoặc bấm Random"
+              placeholder="Để trống = tạo từ tên SP"
               maxLength={20}
               className={`${fieldClass} font-mono font-bold tracking-wider text-on-surface`}
             />
@@ -1246,7 +1258,7 @@ function ProductFormDialog({
                     <input
                       value={values.code}
                       onChange={(e) => onChange('code', normalizeCodeInput(e.target.value))}
-                      placeholder="Mã"
+                      placeholder="Trống = từ tên"
                       maxLength={20}
                       className={`${fieldClass} min-w-0 font-mono font-bold tracking-wider`}
                     />
@@ -1535,7 +1547,9 @@ function ProductFormDialog({
 
 export {
   EMPTY_FORM,
+  codeFromProductName,
   generateProductCode,
+  normalizeCodeInput,
   prepareColorsPayload,
   prepareImagesPayload,
   revokeFormMedia,

@@ -14,7 +14,9 @@ import { useAdminCategories, useProducts } from '../../../hooks/swr'
 import { formatMoney } from '../../../utils/money'
 import ProductFormDialog, {
   EMPTY_FORM,
+  codeFromProductName,
   generateProductCode,
+  normalizeCodeInput,
   prepareColorsPayload,
   prepareImagesPayload,
   revokeFormMedia,
@@ -40,9 +42,7 @@ function ProductDetailPage() {
 
   const editFromQuery = searchParams.get('edit') === '1'
   const [isEditing, setIsEditing] = useState(isCreate || editFromQuery)
-  const [form, setForm] = useState(() =>
-    isCreate ? { ...EMPTY_FORM, code: generateProductCode() } : EMPTY_FORM,
-  )
+  const [form, setForm] = useState(() => (isCreate ? { ...EMPTY_FORM } : EMPTY_FORM))
   const [formReady, setFormReady] = useState(isCreate)
   const [formError, setFormError] = useState('')
   const [isBusy, setIsBusy] = useState(false)
@@ -50,6 +50,8 @@ function ProductDetailPage() {
   const removedPublicIdsRef = useRef([])
   const initializedIdRef = useRef(isCreate ? 'new' : null)
   const formImagesRef = useRef(form.images)
+  /** true khi user tự nhập mã hoặc bấm Random — không ghi đè bằng tên */
+  const codeManualRef = useRef(false)
   formImagesRef.current = form.images
 
   useEffect(() => {
@@ -65,7 +67,8 @@ function ProductDetailPage() {
       if (initializedIdRef.current !== 'new') {
         revokeFormMedia({ images: formImagesRef.current, colors: form?.colors })
         removedPublicIdsRef.current = []
-        setForm({ ...EMPTY_FORM, code: generateProductCode() })
+        codeManualRef.current = false
+        setForm({ ...EMPTY_FORM })
         setFormError('')
         setFormReady(true)
         initializedIdRef.current = 'new'
@@ -78,6 +81,7 @@ function ProductDetailPage() {
 
     revokeFormMedia({ images: formImagesRef.current, colors: form?.colors })
     removedPublicIdsRef.current = []
+    codeManualRef.current = true
     setForm(toForm(product))
     setFormError('')
     setFormReady(true)
@@ -100,6 +104,7 @@ function ProductDetailPage() {
 
   function enterEdit() {
     if (product) setForm(toForm(product))
+    codeManualRef.current = true
     setFormError('')
     removedPublicIdsRef.current = []
     setIsEditing(true)
@@ -122,12 +127,28 @@ function ProductDetailPage() {
     revokeFormMedia(form)
     removedPublicIdsRef.current = []
     if (product) setForm(toForm(product))
+    codeManualRef.current = true
     setFormError('')
     exitEdit()
   }
 
   function handleChange(field, value) {
     setFormError('')
+    if (field === 'code') {
+      codeManualRef.current = String(value || '').trim().length > 0
+      setForm((previous) => ({ ...previous, code: value }))
+      return
+    }
+    if (field === 'name') {
+      setForm((previous) => {
+        const next = { ...previous, name: value }
+        if (!codeManualRef.current) {
+          next.code = codeFromProductName(value)
+        }
+        return next
+      })
+      return
+    }
     setForm((previous) => ({ ...previous, [field]: value }))
   }
 
@@ -139,6 +160,7 @@ function ProductDetailPage() {
   }
 
   function regenerateCode() {
+    codeManualRef.current = true
     setForm((previous) => ({ ...previous, code: generateProductCode() }))
   }
 
@@ -146,8 +168,14 @@ function ProductDetailPage() {
     event.preventDefault()
     if (isBusy) return
 
+    const resolvedCode =
+      normalizeCodeInput(form.code) ||
+      codeFromProductName(form.name) ||
+      generateProductCode()
+
     const snapshot = {
       ...form,
+      code: resolvedCode,
       images: [...(form.images || [])],
       colors: (form.colors || []).map((color) => ({
         ...color,
@@ -184,10 +212,8 @@ function ProductDetailPage() {
         soldCount: Math.max(0, Math.floor(Number(snapshot.soldCount) || 0)),
       }
 
-      let savedId = productId
       if (isCreate) {
-        const result = await createProductApi(payload)
-        savedId = result?.data?.id
+        await createProductApi(payload)
       } else {
         await updateProductApi(productId, payload)
       }
@@ -201,23 +227,19 @@ function ProductDetailPage() {
       revokeFormMedia(snapshot)
       setIsBusy(false)
 
-      await alert({
-        title: isCreate ? 'Thêm sản phẩm thành công' : 'Đã cập nhật',
-        message: isCreate
-          ? 'Sản phẩm mới đã được thêm vào danh sách.'
-          : 'Thông tin sản phẩm đã được cập nhật.',
-        variant: 'success',
+      initializedIdRef.current = null
+      navigate('/admin/products', {
+        replace: true,
+        state: {
+          notice: {
+            title: isCreate ? 'Thêm sản phẩm thành công' : 'Cập nhật sản phẩm thành công',
+            message: isCreate
+              ? 'Sản phẩm mới đã được thêm vào danh sách.'
+              : 'Thông tin sản phẩm đã được cập nhật.',
+            variant: 'success',
+          },
+        },
       })
-
-      if (isCreate && savedId) {
-        initializedIdRef.current = null
-        navigate(`/admin/products/${savedId}`, { replace: true })
-      } else if (isCreate) {
-        navigate('/admin/products')
-      } else {
-        initializedIdRef.current = null
-        exitEdit()
-      }
     } catch (err) {
       setIsBusy(false)
       setFormError(err.message || 'Không thể lưu sản phẩm.')

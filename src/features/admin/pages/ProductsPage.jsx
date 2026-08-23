@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import LoadingOverlay from '../../../components/common/LoadingOverlay'
 import {
@@ -161,6 +161,7 @@ function ProductThumb({ product }) {
 
 function ProductsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { alert, confirm } = useDialog()
   const {
     products,
@@ -188,6 +189,17 @@ function ProductsPage() {
   const skipScrollOnMount = useRef(true)
   const lastScrollTopRef = useRef(0)
   const [toolsOpen, setToolsOpen] = useState(true)
+
+  useEffect(() => {
+    const notice = location.state?.notice
+    if (!notice) return
+    navigate(location.pathname, { replace: true, state: null })
+    void alert({
+      title: notice.title || 'Thành công',
+      message: notice.message || '',
+      variant: notice.variant || 'success',
+    })
+  }, [alert, location.pathname, location.state, navigate])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
