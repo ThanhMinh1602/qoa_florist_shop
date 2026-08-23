@@ -11,7 +11,8 @@ import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { createId } from '../../../utils/id'
 import { resizeImageFile, resizeImageFiles } from '../../../utils/resizeImage'
 import AdminMobileFormActions from './AdminMobileFormActions'
-import { formatMoney } from '../../../utils/money'
+import MoneyInput from './MoneyInput'
+import { formatMoney, parseMoneyInput } from '../../../utils/money'
 import {
   MAX_IMAGES_PER_COLOR,
   collectColorImages,
@@ -404,7 +405,13 @@ function ProductImagesField({
           </label>
         )
       ) : (
-        <ul className={compact ? 'grid grid-cols-4 gap-1.5' : 'grid grid-cols-3 gap-2 sm:gap-3'}>
+        <ul
+          className={
+            compact
+              ? 'grid grid-cols-4 gap-1.5'
+              : 'flex w-fit max-w-full flex-wrap gap-1.5 sm:gap-2'
+          }
+        >
           {images.map((image, index) => {
             const isMain = index === 0
             const isDragging = draggingId === image.id
@@ -420,8 +427,8 @@ function ProductImagesField({
                 onDrop={handleDrop}
                 onDragEnd={handleDragEnd}
                 className={[
-                  'relative aspect-square overflow-hidden border-2 bg-white transition-all duration-200 ease-out',
-                  compact ? 'rounded-lg' : 'rounded-xl',
+                  'relative aspect-square shrink-0 overflow-hidden border-2 bg-white transition-all duration-200 ease-out',
+                  compact ? 'rounded-lg' : 'h-28 w-28 rounded-xl sm:h-32 sm:w-32',
                   disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
                   isMain
                     ? 'border-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]'
@@ -529,77 +536,76 @@ function ProductColorsField({
   }
 
   return (
-    <div className={compact ? 'space-y-3' : 'space-y-4'}>
+    <div className={compact ? 'w-fit max-w-full space-y-3' : 'w-fit max-w-full space-y-4'}>
       {list.map((color, index) => {
         const hexValue = normalizeHexInput(color.hex) || '#C4A484'
         const pickerValue = /^#[0-9A-F]{6}$/i.test(hexValue) ? hexValue : '#C4A484'
         return (
           <div
             key={color.id}
-            className="rounded-xl border border-outline-variant/25 bg-white p-3 sm:p-3.5"
+            className="w-fit max-w-full rounded-xl border border-outline-variant/25 bg-white p-3 sm:p-3.5"
           >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
+            <div className="w-[calc(3*7rem+2*0.5rem)] max-w-full sm:w-[calc(3*8rem+2*0.5rem)]">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold tracking-wide text-on-surface-variant uppercase">
                   Màu {index + 1}
                 </p>
-                {readOnly || disabled ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span
-                      className="inline-block h-7 w-7 rounded-full border border-outline-variant/40 shadow-sm"
-                      style={{ backgroundColor: pickerValue }}
-                      title={pickerValue}
-                    />
-                    <span className="text-sm font-medium text-on-surface">
-                      {color.name || 'Không tên'}
-                    </span>
-                    <span className="font-mono text-xs text-on-surface-variant">{pickerValue}</span>
-                  </div>
-                ) : (
-                  <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_7.5rem]">
-                    <input
-                      value={color.name || ''}
-                      onChange={(event) => updateColor(color.id, { name: event.target.value })}
-                      placeholder="Tên màu (VD: Hồng pastel)"
-                      className="w-full rounded-lg border border-outline-variant/30 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <label className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-low/40 px-2 py-1.5">
-                      <input
-                        type="color"
-                        value={pickerValue}
-                        onChange={(event) =>
-                          updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
-                        }
-                        className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0"
-                        title="Chọn mã màu"
-                      />
-                      <span className="text-xs text-on-surface-variant">Mã màu</span>
-                    </label>
-                    <input
-                      value={color.hex || ''}
-                      onChange={(event) =>
-                        updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
-                      }
-                      placeholder="#C4A484"
-                      maxLength={7}
-                      className="w-full rounded-lg border border-outline-variant/30 bg-white px-3 py-2 font-mono text-sm uppercase outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                )}
+                {!readOnly && !disabled && list.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => removeColor(color.id)}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <MaterialIcon name="delete" className="text-base" />
+                    Xóa màu
+                  </button>
+                ) : null}
               </div>
-              {!readOnly && !disabled && list.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => removeColor(color.id)}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                >
-                  <MaterialIcon name="delete" className="text-base" />
-                  Xóa màu
-                </button>
-              ) : null}
+              {readOnly || disabled ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span
+                    className="inline-block h-7 w-7 rounded-full border border-outline-variant/40 shadow-sm"
+                    style={{ backgroundColor: pickerValue }}
+                    title={pickerValue}
+                  />
+                  <span className="text-sm font-medium text-on-surface">
+                    {color.name || 'Không tên'}
+                  </span>
+                  <span className="font-mono text-xs text-on-surface-variant">{pickerValue}</span>
+                </div>
+              ) : (
+                <div className="mt-2 flex w-full min-w-0 items-center gap-1.5">
+                  <input
+                    value={color.name || ''}
+                    onChange={(event) => updateColor(color.id, { name: event.target.value })}
+                    placeholder="Tên màu"
+                    className="min-w-0 flex-1 basis-0 rounded-lg border border-outline-variant/30 bg-white px-2.5 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <input
+                    type="color"
+                    value={pickerValue}
+                    onChange={(event) =>
+                      updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
+                    }
+                    className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-outline-variant/30 bg-white p-0.5"
+                    title="Chọn mã màu"
+                    aria-label="Chọn mã màu"
+                  />
+                  <input
+                    value={color.hex || ''}
+                    onChange={(event) =>
+                      updateColor(color.id, { hex: normalizeHexInput(event.target.value) })
+                    }
+                    placeholder="#C4A484"
+                    maxLength={7}
+                    className="w-[5.75rem] shrink-0 rounded-lg border border-outline-variant/30 bg-white px-2 py-2 font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-primary/20"
+                    aria-label="Mã màu hex"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 w-fit max-w-full">
               <ProductImagesField
                 images={color.images || []}
                 onChange={(next) => updateColorImages(color.id, next)}
@@ -1003,22 +1009,35 @@ function ProductFormDialog({
         <div className="mt-1.5 space-y-2.5">
           <div className="grid grid-cols-2 gap-2">
             {[
-              ['costPrice', 'Giá cost', 'Giá vốn'],
-              ['sellPrice', 'Giá bán', 'Giá bán'],
-              ['otherCost', 'Chi phí khác', 'Ship…'],
-              ['soldCount', 'Doanh số', 'Đã bán'],
+              ['costPrice', 'Giá cost', '0'],
+              ['sellPrice', 'Giá bán', '0'],
+              ['otherCost', 'Chi phí khác', '0'],
+              ['soldCount', 'Doanh số', '0'],
             ].map(([field, label, placeholder]) => (
               <label key={field} className="block">
                 <span className={labelClass}>{label}</span>
-                <input
-                  type="number"
-                  min="0"
-                  step={field === 'soldCount' ? '1' : undefined}
-                  value={values[field]}
-                  onChange={(e) => onChange(field, e.target.value)}
-                  placeholder={placeholder}
-                  className={fieldClass}
-                />
+                {field === 'soldCount' ? (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={
+                      values.soldCount === '' || values.soldCount == null
+                        ? ''
+                        : String(values.soldCount)
+                    }
+                    onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                    placeholder={placeholder}
+                    className={`${fieldClass} tabular-nums`}
+                  />
+                ) : (
+                  <MoneyInput
+                    value={values[field]}
+                    onChange={(next) => onChange(field, next)}
+                    placeholder={placeholder}
+                    className={fieldClass}
+                  />
+                )}
               </label>
             ))}
           </div>
@@ -1102,22 +1121,35 @@ function ProductFormDialog({
 
       <div className="grid grid-cols-2 gap-3">
         {[
-          ['costPrice', 'Giá cost', 'Giá vốn'],
-          ['sellPrice', 'Giá bán', 'Giá bán cho khách'],
-          ['otherCost', 'Chi phí khác', 'Ship, phụ kiện…'],
-          ['soldCount', 'Doanh số', 'Số đã bán'],
+          ['costPrice', 'Giá cost', '0'],
+          ['sellPrice', 'Giá bán', '0'],
+          ['otherCost', 'Chi phí khác', '0'],
+          ['soldCount', 'Doanh số', '0'],
         ].map(([field, label, placeholder]) => (
           <label key={field} className="block text-sm">
             <span className={labelClass}>{label}</span>
-            <input
-              type="number"
-              min="0"
-              step={field === 'soldCount' ? '1' : undefined}
-              value={values[field]}
-              onChange={(e) => onChange(field, e.target.value)}
-              placeholder={placeholder}
-              className={fieldClass}
-            />
+            {field === 'soldCount' ? (
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={
+                  values.soldCount === '' || values.soldCount == null
+                    ? ''
+                    : String(values.soldCount)
+                }
+                onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                placeholder={placeholder}
+                className={`${fieldClass} tabular-nums`}
+              />
+            ) : (
+              <MoneyInput
+                value={values[field]}
+                onChange={(next) => onChange(field, next)}
+                placeholder={placeholder}
+                className={fieldClass}
+              />
+            )}
           </label>
         ))}
       </div>
@@ -1174,14 +1206,16 @@ function ProductFormDialog({
     'mt-1 min-h-[42px] rounded-lg border border-transparent bg-surface-container-low/60 px-3 py-2.5 text-[15px] text-on-surface'
 
   const formBodyEmbedded = (
-    <div className="grid w-full gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:gap-6 xl:gap-8">
-      <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
-        <h3 className={sectionTitleClass}>Màu hoa & ảnh</h3>
-        {!readOnly ? (
-          <p className="mt-1 text-xs text-on-surface-variant">
-            Mỗi màu tối đa 3 ảnh · ảnh đầu của màu đầu là ảnh chính
-          </p>
-        ) : null}
+    <div className="flex w-full flex-col gap-5 lg:flex-row lg:items-start lg:gap-6 xl:gap-8">
+      <section className="w-fit max-w-full shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
+        <div className="w-[calc(3*7rem+2*0.5rem)] max-w-full sm:w-[calc(3*8rem+2*0.5rem)]">
+          <h3 className={sectionTitleClass}>Màu hoa & ảnh</h3>
+          {!readOnly ? (
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Mỗi màu tối đa 3 ảnh · ảnh đầu của màu đầu là ảnh chính
+            </p>
+          ) : null}
+        </div>
         <div className="mt-3">
           <ProductColorsField
               colors={values.colors || []}
@@ -1196,7 +1230,7 @@ function ProductFormDialog({
         </div>
       </section>
 
-      <div className="min-w-0 space-y-4">
+      <div className="min-w-0 flex-1 space-y-4">
         <section className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-5">
           <h3 className={sectionTitleClass}>Thông tin</h3>
           <div className="mt-3 space-y-3">
@@ -1295,10 +1329,10 @@ function ProductFormDialog({
           <div className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                ['costPrice', 'Giá cost', 'Giá vốn'],
-                ['sellPrice', 'Giá bán', 'Giá bán'],
-                ['otherCost', 'Chi phí khác', 'Ship…'],
-                ['soldCount', 'Doanh số', 'Đã bán'],
+                ['costPrice', 'Giá cost', '0'],
+                ['sellPrice', 'Giá bán', '0'],
+                ['otherCost', 'Chi phí khác', '0'],
+                ['soldCount', 'Doanh số', '0'],
               ].map(([field, label, placeholder]) => (
                 <div key={field} className="min-w-0">
                   <span className={labelClass}>{label}</span>
@@ -1308,13 +1342,24 @@ function ProductFormDialog({
                         ? String(values.soldCount ?? 0)
                         : formatMoney(values[field])}
                     </p>
-                  ) : (
+                  ) : field === 'soldCount' ? (
                     <input
-                      type="number"
-                      min="0"
-                      step={field === 'soldCount' ? '1' : undefined}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={
+                        values.soldCount === '' || values.soldCount == null
+                          ? ''
+                          : String(values.soldCount)
+                      }
+                      onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                      placeholder={placeholder}
+                      className={`${fieldClass} tabular-nums`}
+                    />
+                  ) : (
+                    <MoneyInput
                       value={values[field]}
-                      onChange={(e) => onChange(field, e.target.value)}
+                      onChange={(next) => onChange(field, next)}
                       placeholder={placeholder}
                       className={fieldClass}
                     />

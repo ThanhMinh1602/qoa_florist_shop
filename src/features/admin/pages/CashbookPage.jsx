@@ -8,6 +8,7 @@ import { useDialog } from '../../../context/DialogContext'
 import { useCashbook } from '../../../hooks/swr'
 import { useScrollLock } from '../../../hooks/useScrollLock'
 import { formatMoney, toDateInputValue } from '../../../utils/money'
+import MoneyInput from '../components/MoneyInput'
 
 const EMPTY = {
   type: 'expense',
@@ -145,14 +146,11 @@ function CashbookPage() {
         onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
         className="input-glass"
       />
-      <input
-        type="number"
+      <MoneyInput
         required
-        min="0"
-        inputMode="decimal"
         placeholder="Số tiền"
         value={form.amount}
-        onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+        onChange={(next) => setForm((p) => ({ ...p, amount: next }))}
         className="input-glass"
       />
       <input
