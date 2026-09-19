@@ -40,7 +40,7 @@ function isProductDetailPath(path) {
 }
 
 function isFillHeightAdminPath(path) {
-  if (path === '/admin/manage' || path === '/admin/products') return true
+  if (path === '/admin/manage') return true
   if (path === '/admin/calendar') return true
   if (path === '/admin/orders/new' || path === '/admin/orders/import') return true
   if (isProductDetailPath(path)) return true
