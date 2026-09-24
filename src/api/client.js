@@ -37,7 +37,10 @@ export async function apiRequest(path, options = {}) {
 
     if (!response.ok) {
       logger.warn('API error', { method, path, status: response.status, ms, message: payload.message })
-      throw new Error(payload.message || 'Yêu cầu thất bại.')
+      const error = new Error(payload.message || 'Yêu cầu thất bại.')
+      error.code = payload.code
+      error.shortages = payload.shortages
+      throw error
     }
 
     logger.debug('API ok', { method, path, status: response.status, ms })

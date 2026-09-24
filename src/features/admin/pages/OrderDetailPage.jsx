@@ -9,7 +9,7 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import { ORDER_STATUS_LABELS } from '../../../constants/orderStatus'
 import { SHIPPING_STATUS_LABELS } from '../../../constants/customRequestDefaults'
 import { useDialog } from '../../../context/DialogContext'
-import { formatTimeAgo } from '../../../utils/formatTimeAgo'
+import { formatViDate } from '../../../utils/dateFormat'
 import { getInvoiceCode } from '../../../utils/invoiceCode'
 import { formatMoney } from '../../../utils/money'
 import OrderDetailContent from '../components/OrderDetailContent'
@@ -188,7 +188,7 @@ function OrderDetailPage() {
                     {request.customerName || '—'}
                   </h2>
                   <p className="mt-1 text-xs text-on-surface-variant sm:text-sm">
-                    {formatTimeAgo(request.createdAt)}
+                    {formatViDate(request.createdAt)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <span

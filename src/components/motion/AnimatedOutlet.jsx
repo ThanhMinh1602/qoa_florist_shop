@@ -148,7 +148,11 @@ function AnimatedOutlet({ variant = 'shop' }) {
   const motionProps = variant === 'admin' ? adminPageTransition : shopPageTransition
 
   return (
-    <motion.div key={animKey} {...motionProps}>
+    <motion.div
+      key={animKey}
+      {...motionProps}
+      className={variant === 'admin' && (animKey === '/admin/products' || animKey === '/admin/categories') ? 'flex min-h-full flex-col' : undefined}
+    >
       {outlet}
     </motion.div>
   )

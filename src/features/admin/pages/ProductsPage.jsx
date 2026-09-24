@@ -15,9 +15,11 @@ import { formatMoney } from '../../../utils/money'
 import { cloudinaryUrl } from '../../../utils/cloudinaryUrl'
 import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import ProductColorSwatches from '../components/ProductColorSwatches'
+import AdminTablePagination from '../components/AdminTablePagination'
+import AdminFloatingMenu from '../components/AdminFloatingMenu'
 import ProductsListMobile, { ProductsListMobileSkeleton } from '../mobile/ProductsListMobile'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 const SCROLL_TOGGLE_DELTA = 8
 
@@ -42,22 +44,6 @@ function ProductMoreMenu({ product, disabled, onHide, onShow, onDelete }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
 
-  useEffect(() => {
-    if (!open) return undefined
-    function onPointerDown(event) {
-      if (!rootRef.current?.contains(event.target)) setOpen(false)
-    }
-    function onKeyDown(event) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
-
   return (
     <div className="relative shrink-0" ref={rootRef}>
       <button
@@ -72,11 +58,7 @@ function ProductMoreMenu({ product, disabled, onHide, onShow, onDelete }) {
       >
         <MaterialIcon name="more_vert" className="text-base" />
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-30 mt-1 min-w-[10rem] overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest py-1 shadow-xl shadow-primary/10"
-        >
+      <AdminFloatingMenu open={open} anchorRef={rootRef} onClose={() => setOpen(false)} className="min-w-[10rem]">
           {product.active ? (
             <button
               type="button"
@@ -119,8 +101,7 @@ function ProductMoreMenu({ product, disabled, onHide, onShow, onDelete }) {
             <MaterialIcon name="delete" className="text-base" />
             Xóa sản phẩm
           </button>
-        </div>
-      ) : null}
+      </AdminFloatingMenu>
     </div>
   )
 }
@@ -172,6 +153,7 @@ function ProductsPage() {
   const [isBusy, setIsBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [search, setSearch] = useState('')
+  const [desktopPage, setDesktopPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState([])
   const isLgUp = useIsLgUp()
   const error = productsError?.message || ''
@@ -303,14 +285,18 @@ function ProductsPage() {
     )
   }, [products, search])
 
+  const desktopPageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const desktopSafePage = Math.min(desktopPage, desktopPageCount)
+  const desktopProducts = filtered.slice((desktopSafePage - 1) * PAGE_SIZE, desktopSafePage * PAGE_SIZE)
+  const desktopIds = desktopProducts.map((item) => item.id)
+
   const mobileList = isLgUp ? filtered : pagedProducts
   const mobileIds = useMemo(() => mobileList.map((item) => item.id), [mobileList])
   const allMobileSelected =
     mobileIds.length > 0 && mobileIds.every((id) => selectedIds.includes(id))
 
-  const filteredIds = useMemo(() => filtered.map((item) => item.id), [filtered])
   const allFilteredSelected =
-    filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id))
+    desktopIds.length > 0 && desktopIds.every((id) => selectedIds.includes(id))
   const selectedCount = selectedIds.length
 
   function toggleSelect(id) {
@@ -331,9 +317,9 @@ function ProductsPage() {
   function toggleSelectAllFiltered() {
     setSelectedIds((previous) => {
       if (allFilteredSelected) {
-        return previous.filter((id) => !filteredIds.includes(id))
+        return previous.filter((id) => !desktopIds.includes(id))
       }
-      return [...new Set([...previous, ...filteredIds])]
+      return [...new Set([...previous, ...desktopIds])]
     })
   }
 
@@ -638,45 +624,39 @@ function ProductsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-10">
-        <header className="flex flex-wrap items-center justify-between gap-2.5 lg:items-end lg:gap-4">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg text-primary lg:text-3xl">Quản lý sản phẩm</h2>
-            <p className="mt-0.5 hidden text-sm text-on-surface-variant lg:mt-1 lg:block lg:text-base">
-              Tổng quan và tùy chỉnh bộ sưu tập hoa.
-            </p>
-          </div>
-          {isLgUp ? (
-            <div className="flex items-center gap-2">
-              <Link
-                to="/admin/categories"
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-outline-variant/40 px-3 text-xs font-semibold text-primary hover:bg-surface-container-low"
-              >
-                <MaterialIcon name="category" className="text-lg" />
-                Danh mục
-              </Link>
-              <button
-                type="button"
-                onClick={openCreate}
-                className="btn-primary inline-flex items-center gap-1.5 !px-3 !py-2 text-xs"
-              >
-                <MaterialIcon name="add" className="text-lg" />
-                Thêm
-              </button>
-            </div>
-          ) : null}
-        </header>
-
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <header className="sticky top-0 z-20 border-b border-outline-variant/25 bg-background/95 px-4 py-4 backdrop-blur lg:px-10">
+        <div className="flex items-center gap-4">
+          <h2 className="shrink-0 font-display text-2xl text-primary">Quản lý sản phẩm</h2>
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setDesktopPage(1)
+            }}
             placeholder="Tìm mã, tên..."
-            className="w-full rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface outline-none ring-primary/20 transition focus:ring-2 lg:max-w-md"
+            className="min-w-0 max-w-md flex-1 rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface outline-none ring-primary/20 transition focus:ring-2"
           />
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Link
+              to="/admin/categories"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-outline-variant/40 px-3 text-xs font-semibold text-primary hover:bg-surface-container-low"
+            >
+              <MaterialIcon name="category" className="text-lg" />
+              Danh mục
+            </Link>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="btn-primary inline-flex items-center gap-1.5 !px-3 !py-2 text-xs"
+            >
+              <MaterialIcon name="add" className="text-lg" />
+              Thêm
+            </button>
+          </div>
+        </div>
           {selectedCount > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface">
                 Đã chọn {selectedCount}
               </span>
@@ -697,7 +677,9 @@ function ProductsPage() {
               </button>
             </div>
           ) : null}
-        </div>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-4 lg:gap-6 lg:px-10 lg:pb-10 lg:pt-6">
 
         {error ? (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
@@ -748,11 +730,12 @@ function ProductsPage() {
                     <th className="px-4 py-3">Giá bán</th>
                     <th className="px-4 py-3">Lợi nhuận</th>
                     <th className="px-4 py-3">Đã bán</th>
+                    <th className="px-4 py-3">Tồn kho</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-container">
-                  {filtered.map((product) => {
+                  {desktopProducts.map((product) => {
                     const checked = selectedIds.includes(product.id)
                     return (
                       <tr
@@ -809,6 +792,9 @@ function ProductsPage() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 font-medium text-on-surface">
                           {product.soldCount || 0}
+                        </td>
+                        <td className={`whitespace-nowrap px-4 py-3 font-semibold tabular-nums ${Number(product.stock) < 0 ? 'text-red-600' : 'text-on-surface'}`}>
+                          {product.stock ?? 0}
                         </td>
                         <td
                           className="whitespace-nowrap px-4 py-3 text-right"
@@ -886,6 +872,9 @@ function ProductsPage() {
                         <p className="mt-0.5 text-sm font-semibold text-primary">
                           {formatMoney(product.sellPrice)}
                         </p>
+                        <p className={`mt-0.5 text-xs font-medium ${Number(product.stock) < 0 ? 'text-red-600' : 'text-on-surface-variant'}`}>
+                          Tồn kho: {product.stock ?? 0}
+                        </p>
                         {!product.active ? (
                           <p className="mt-0.5 text-[11px] font-medium text-on-surface-variant">
                             Đã ẩn
@@ -907,6 +896,12 @@ function ProductsPage() {
           </div>
         )}
       </div>
+
+      {isLgUp && !isLoading && filtered.length > 0 ? (
+        <div className="sticky bottom-0 z-10 mt-auto border-t border-outline-variant/25 bg-background/95 px-4 py-3 backdrop-blur lg:px-10">
+          <AdminTablePagination page={desktopSafePage} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setDesktopPage} />
+        </div>
+      ) : null}
 
 
       <LoadingOverlay open={isBusy} message={busyMessage} />

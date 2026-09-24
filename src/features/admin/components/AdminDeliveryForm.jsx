@@ -1,5 +1,6 @@
 import { SHIPPING_PROVIDERS } from '../../../constants/customRequestDefaults'
 import { normalizeTrackingCode } from '../../../utils/trackingCode'
+import DateDmYField from './DateDmYField'
 
 const fieldClassName =
   'w-full rounded-lg border border-outline-variant/25 px-2.5 py-1.5 text-sm text-on-surface outline-none transition placeholder:text-outline/55 focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
@@ -60,19 +61,17 @@ export function OrderScheduleFields({ values, onChange }) {
     <div className="grid gap-2 sm:grid-cols-3">
       <label className="block">
         <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">Ngày đặt</span>
-        <input
-          type="date"
+        <DateDmYField
           value={values.orderDate || ''}
-          onChange={handleChange('orderDate')}
+          onChange={(value) => onChange('orderDate', value)}
           className={fieldClassName}
         />
       </label>
       <label className="block">
         <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">Ngày cần</span>
-        <input
-          type="date"
+        <DateDmYField
           value={values.deliveryDate || ''}
-          onChange={handleChange('deliveryDate')}
+          onChange={(value) => onChange('deliveryDate', value)}
           className={fieldClassName}
         />
       </label>
@@ -80,10 +79,9 @@ export function OrderScheduleFields({ values, onChange }) {
         <span className="mb-0.5 block text-[11px] font-medium text-on-surface-variant">
           Thời gian ship
         </span>
-        <input
-          type="date"
+        <DateDmYField
           value={values.shipDate || ''}
-          onChange={handleChange('shipDate')}
+          onChange={(value) => onChange('shipDate', value)}
           className={fieldClassName}
         />
       </label>

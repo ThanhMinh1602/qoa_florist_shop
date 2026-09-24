@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { importCustomRequestsBulkApi } from '../../../api/customRequestsApi'
+import { useDialog } from '../../../context/DialogContext'
+import { stockConfirmationMessage } from '../../../utils/stockConfirmation'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import { formatMoney } from '../../../utils/money'
 import { parseOrderSheetFromFile } from '../../../utils/parseOrderSheet'
@@ -10,6 +12,7 @@ const IMPORT_CHUNK_SIZE = 20
 const PREVIEW_PAGE_SIZE = 25
 
 function ImportOrdersPage() {
+  const { confirm } = useDialog()
   const [orders, setOrders] = useState([])
   const [parseErrors, setParseErrors] = useState([])
   const [meta, setMeta] = useState(null)
@@ -143,10 +146,24 @@ function ImportOrdersPage() {
           currentLabel: `Đang import đơn ${from}–${to} / ${total}…`,
         }))
 
-        const payload = await importCustomRequestsBulkApi({
-          orders: chunk,
-          createCashEntry,
-        })
+        let payload
+        try {
+          payload = await importCustomRequestsBulkApi({ orders: chunk, createCashEntry })
+        } catch (stockError) {
+          if (stockError.code !== 'NEGATIVE_STOCK_CONFIRMATION_REQUIRED') throw stockError
+          const approved = await confirm({
+            title: 'Xác nhận đơn hàng âm kho',
+            message: stockConfirmationMessage(stockError.shortages, 'nhập các đơn này'),
+            confirmLabel: 'Vẫn nhập đơn',
+            cancelLabel: 'Dừng nhập',
+          })
+          if (!approved) {
+            setProgress(null)
+            if (aggregated.createdCount > 0 || aggregated.errorCount > 0) setResult(aggregated)
+            return
+          }
+          payload = await importCustomRequestsBulkApi({ orders: chunk, createCashEntry, confirmNegativeStock: true })
+        }
         const data = payload.data || {}
         aggregated.createdCount += Number(data.createdCount) || 0
         aggregated.errorCount += Number(data.errorCount) || 0

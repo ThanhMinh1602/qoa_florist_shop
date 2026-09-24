@@ -71,6 +71,7 @@ function FeaturedProductsRail({ products = [] }) {
   const draggingRef = useRef(false)
   const didDragRef = useRef(false)
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
   const dragStartOffset = useRef(0)
   const resumeTimerRef = useRef(0)
   const [isPaused, setIsPaused] = useState(false) 
@@ -183,14 +184,19 @@ function FeaturedProductsRail({ products = [] }) {
     didDragRef.current = false
     pause()
     dragStartX.current = event.clientX
+    dragStartY.current = event.clientY
     dragStartOffset.current = offsetRef.current
-    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   function onPointerMove(event) {
     if (!draggingRef.current || !trackRef.current) return
     const dx = event.clientX - dragStartX.current
-    if (Math.abs(dx) > 6) didDragRef.current = true
+    const dy = event.clientY - dragStartY.current
+    if (!didDragRef.current) {
+      if (Math.abs(dx) <= 6 || Math.abs(dx) <= Math.abs(dy)) return
+      didDragRef.current = true
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    }
     offsetRef.current = dragStartOffset.current - dx
     const half = halfWidthRef.current
     if (half > 0) {
@@ -202,7 +208,9 @@ function FeaturedProductsRail({ products = [] }) {
 
   function onPointerUp(event) {
     draggingRef.current = false
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
     resume()
   }
 

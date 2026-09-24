@@ -68,7 +68,7 @@ function OrderItemsEditor({ products = [], items = [], onChange }) {
             .filter((product) => product.active !== false)
             .map((product) => (
               <option key={product.id} value={product.id}>
-                {product.name} — {formatMoney(product.sellPrice)}
+                {product.name} — {formatMoney(product.sellPrice)} — Tồn {product.stock ?? 0}
               </option>
             ))}
         </select>

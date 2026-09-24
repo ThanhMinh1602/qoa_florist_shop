@@ -15,6 +15,7 @@ import MaterialIcon from '../../../components/common/MaterialIcon'
 import OrderItemsEditor, { calcItemsSubtotal } from './OrderItemsEditor'
 import OrderMoneyFields from './OrderMoneyFields'
 import RequestExportButton from './RequestExportButton'
+import DateDmYField from './DateDmYField'
 
 function moneyStateFromRequest(request) {
   return {
@@ -215,7 +216,7 @@ const OrderDetailContent = forwardRef(function OrderDetailContent(
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {request.customerPhone ? (
           <button
@@ -259,8 +260,8 @@ const OrderDetailContent = forwardRef(function OrderDetailContent(
         </select>
       </div>
 
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4">
-        <h4 className="text-sm font-semibold text-on-surface">Khách & địa chỉ</h4>
+      <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
+        <h4 className="text-sm font-semibold text-on-surface">Khách hàng</h4>
         {isEditing ? (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-sm">
@@ -308,28 +309,25 @@ const OrderDetailContent = forwardRef(function OrderDetailContent(
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <label className="block min-w-0 text-sm">
               <span className="mb-1 block font-medium text-on-surface">Ngày đặt</span>
-              <input
-                type="date"
+              <DateDmYField
                 value={orderDate}
-                onChange={(e) => setOrderDate(e.target.value)}
+                onChange={setOrderDate}
                 className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
               />
             </label>
             <label className="block min-w-0 text-sm">
               <span className="mb-1 block font-medium text-rose-700">Ngày cần</span>
-              <input
-                type="date"
+              <DateDmYField
                 value={neededDate}
-                onChange={(e) => setNeededDate(e.target.value)}
+                onChange={setNeededDate}
                 className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm text-rose-700 outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
               />
             </label>
             <label className="block min-w-0 text-sm">
               <span className="mb-1 block font-medium text-sky-700">Thời gian ship</span>
-              <input
-                type="date"
+              <DateDmYField
                 value={shipDate}
-                onChange={(e) => setShipDate(e.target.value)}
+                onChange={setShipDate}
                 className="w-full min-w-0 max-w-full rounded-xl border border-outline-variant/25 px-3 py-2.5 text-sm text-sky-700 outline-none [color-scheme:light] focus:ring-2 focus:ring-primary/20"
               />
             </label>
@@ -393,7 +391,7 @@ const OrderDetailContent = forwardRef(function OrderDetailContent(
       </div>
 
       <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-lowest p-4">
-        <h4 className="text-sm font-semibold text-on-surface">Sản phẩm & tiền</h4>
+        <h4 className="text-sm font-semibold text-on-surface">Sản phẩm & tiền đơn</h4>
         {isEditing ? (
           <>
             <div className="mt-3">

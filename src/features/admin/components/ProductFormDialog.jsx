@@ -37,6 +37,7 @@ const EMPTY_FORM = {
   sellPrice: '',
   otherCost: '',
   soldCount: '',
+  stock: 0,
   active: true,
 }
 
@@ -156,6 +157,7 @@ function toForm(product) {
     sellPrice: product.sellPrice ?? '',
     otherCost: product.otherCost ?? '',
     soldCount: product.soldCount ?? 0,
+    stock: product.stock ?? 0,
     active: product.active !== false,
   }
 }
@@ -1025,22 +1027,23 @@ function ProductFormDialog({
               ['sellPrice', 'Giá bán', '0'],
               ['otherCost', 'Chi phí khác', '0'],
               ['soldCount', 'Doanh số', '0'],
+              ['stock', 'Tồn kho', '0'],
             ].map(([field, label, placeholder]) => (
               <label key={field} className="block">
                 <span className={labelClass}>{label}</span>
-                {field === 'soldCount' ? (
+                {field === 'soldCount' || field === 'stock' ? (
                   <input
                     type="text"
-                    inputMode="numeric"
+                    inputMode={field === 'stock' ? 'text' : 'numeric'}
                     autoComplete="off"
                     value={
-                      values.soldCount === '' || values.soldCount == null
+                      values[field] === '' || values[field] == null
                         ? ''
-                        : String(values.soldCount)
-                    }
-                    onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                        : String(values[field])
+                      }
+                    onChange={(e) => onChange(field, field === 'stock' ? e.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '') : parseMoneyInput(e.target.value))}
                     placeholder={placeholder}
-                    className={`${fieldClass} tabular-nums`}
+                    className={`${fieldClass} tabular-nums ${field === 'stock' && Number(values.stock) < 0 ? '!text-red-600' : ''}`}
                   />
                 ) : (
                   <MoneyInput
@@ -1137,22 +1140,23 @@ function ProductFormDialog({
           ['sellPrice', 'Giá bán', '0'],
           ['otherCost', 'Chi phí khác', '0'],
           ['soldCount', 'Doanh số', '0'],
+          ['stock', 'Tồn kho', '0'],
         ].map(([field, label, placeholder]) => (
           <label key={field} className="block text-sm">
             <span className={labelClass}>{label}</span>
-            {field === 'soldCount' ? (
+            {field === 'soldCount' || field === 'stock' ? (
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode={field === 'stock' ? 'text' : 'numeric'}
                 autoComplete="off"
                 value={
-                  values.soldCount === '' || values.soldCount == null
+                  values[field] === '' || values[field] == null
                     ? ''
-                    : String(values.soldCount)
-                }
-                onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                    : String(values[field])
+                  }
+                onChange={(e) => onChange(field, field === 'stock' ? e.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '') : parseMoneyInput(e.target.value))}
                 placeholder={placeholder}
-                className={`${fieldClass} tabular-nums`}
+                className={`${fieldClass} tabular-nums ${field === 'stock' && Number(values.stock) < 0 ? '!text-red-600' : ''}`}
               />
             ) : (
               <MoneyInput
@@ -1345,28 +1349,29 @@ function ProductFormDialog({
                 ['sellPrice', 'Giá bán', '0'],
                 ['otherCost', 'Chi phí khác', '0'],
                 ['soldCount', 'Doanh số', '0'],
+                ['stock', 'Tồn kho', '0'],
               ].map(([field, label, placeholder]) => (
                 <div key={field} className="min-w-0">
                   <span className={labelClass}>{label}</span>
                   {readOnly ? (
-                    <p className={`${readValueClass} tabular-nums`}>
-                      {field === 'soldCount'
-                        ? String(values.soldCount ?? 0)
+                    <p className={`${readValueClass} tabular-nums ${field === 'stock' && Number(values.stock) < 0 ? '!text-red-600' : ''}`}>
+                      {field === 'soldCount' || field === 'stock'
+                        ? String(values[field] ?? 0)
                         : formatMoney(values[field])}
                     </p>
-                  ) : field === 'soldCount' ? (
+                  ) : field === 'soldCount' || field === 'stock' ? (
                     <input
                       type="text"
-                      inputMode="numeric"
+                      inputMode={field === 'stock' ? 'text' : 'numeric'}
                       autoComplete="off"
                       value={
-                        values.soldCount === '' || values.soldCount == null
+                        values[field] === '' || values[field] == null
                           ? ''
-                          : String(values.soldCount)
+                          : String(values[field])
                       }
-                      onChange={(e) => onChange(field, parseMoneyInput(e.target.value))}
+                      onChange={(e) => onChange(field, field === 'stock' ? e.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '') : parseMoneyInput(e.target.value))}
                       placeholder={placeholder}
-                      className={`${fieldClass} tabular-nums`}
+                      className={`${fieldClass} tabular-nums ${field === 'stock' && Number(values.stock) < 0 ? '!text-red-600' : ''}`}
                     />
                   ) : (
                     <MoneyInput

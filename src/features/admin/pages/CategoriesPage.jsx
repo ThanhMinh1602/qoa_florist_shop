@@ -16,11 +16,13 @@ import { useIsLgUp } from '../../../hooks/useMediaQuery'
 import { swrKeys } from '../../../hooks/swr/keys'
 import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import CategoryFormDialog, { EMPTY_CATEGORY_FORM } from '../components/CategoryFormDialog'
+import AdminTablePagination from '../components/AdminTablePagination'
+import AdminFloatingMenu from '../components/AdminFloatingMenu'
 import CategoriesListMobile, {
   CategoriesListMobileSkeleton,
 } from '../mobile/CategoriesListMobile'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 const SCROLL_TOGGLE_DELTA = 8
 
@@ -45,22 +47,6 @@ function CategoryMoreMenu({ category, disabled, onEdit, onToggleQuick, onToggleA
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
 
-  useEffect(() => {
-    if (!open) return undefined
-    function onPointerDown(event) {
-      if (!rootRef.current?.contains(event.target)) setOpen(false)
-    }
-    function onKeyDown(event) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
-
   return (
     <div className="relative shrink-0" ref={rootRef}>
       <button
@@ -75,11 +61,7 @@ function CategoryMoreMenu({ category, disabled, onEdit, onToggleQuick, onToggleA
       >
         <MaterialIcon name="more_vert" className="text-base" />
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] overflow-hidden rounded-xl border border-outline-variant/25 bg-surface-container-lowest py-1 shadow-xl shadow-primary/10"
-        >
+      <AdminFloatingMenu open={open} anchorRef={rootRef} onClose={() => setOpen(false)} className="min-w-[11rem]">
           <button
             type="button"
             role="menuitem"
@@ -151,8 +133,7 @@ function CategoryMoreMenu({ category, disabled, onEdit, onToggleQuick, onToggleA
             <MaterialIcon name="delete" className="text-base" />
             Xóa danh mục
           </button>
-        </div>
-      ) : null}
+      </AdminFloatingMenu>
     </div>
   )
 }
@@ -175,6 +156,7 @@ function CategoriesPage() {
   const [busy, setBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('Đang xử lý...')
   const [selectedIds, setSelectedIds] = useState([])
+  const [desktopPage, setDesktopPage] = useState(1)
   const error = categoriesError?.message || ''
   const isLgUp = useIsLgUp()
 
@@ -193,8 +175,12 @@ function CategoriesPage() {
   const lastScrollTopRef = useRef(0)
   const [toolsOpen, setToolsOpen] = useState(true)
 
+  const desktopPageCount = Math.max(1, Math.ceil(categories.length / PAGE_SIZE))
+  const desktopSafePage = Math.min(desktopPage, desktopPageCount)
+  const desktopCategories = categories.slice((desktopSafePage - 1) * PAGE_SIZE, desktopSafePage * PAGE_SIZE)
+  const desktopIds = desktopCategories.map((item) => item.id)
   const allSelected =
-    categories.length > 0 && categories.every((item) => selectedIds.includes(item.id))
+    desktopIds.length > 0 && desktopIds.every((id) => selectedIds.includes(id))
   const selectedCount = selectedIds.length
 
   useEffect(() => {
@@ -303,7 +289,11 @@ function CategoriesPage() {
   }
 
   function toggleSelectAll() {
-    setSelectedIds(allSelected ? [] : categories.map((item) => item.id))
+    setSelectedIds((previous) =>
+      allSelected
+        ? previous.filter((id) => !desktopIds.includes(id))
+        : [...new Set([...previous, ...desktopIds])],
+    )
   }
 
   function toggleSelectAllMobile() {
@@ -760,6 +750,7 @@ function CategoriesPage() {
               </button>
             </div>
           ) : (
+            <div>
             <div className="glass-card overflow-hidden rounded-xl">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
@@ -783,7 +774,7 @@ function CategoriesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-container">
-                    {categories.map((category) => {
+                    {desktopCategories.map((category) => {
                       const checked = selectedIds.includes(category.id)
                       return (
                         <tr
@@ -865,8 +856,15 @@ function CategoriesPage() {
                 </table>
               </div>
             </div>
+            </div>
           )}
         </div>
+
+        {!isLoading && categories.length > 0 ? (
+          <div className="sticky bottom-0 z-10 mt-auto border-t border-outline-variant/25 bg-background/95 px-4 py-3 backdrop-blur lg:px-10">
+            <AdminTablePagination page={desktopSafePage} total={categories.length} pageSize={PAGE_SIZE} onPageChange={setDesktopPage} />
+          </div>
+        ) : null}
 
         <CategoryFormDialog
           open={showForm}

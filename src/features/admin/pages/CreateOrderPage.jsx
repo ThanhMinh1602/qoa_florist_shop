@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { submitCustomRequestApi } from '../../../api/customRequestsApi'
 import { fetchProductsApi } from '../../../api/productsApi'
+import { useDialog } from '../../../context/DialogContext'
+import { stockConfirmationMessage } from '../../../utils/stockConfirmation'
 import MaterialIcon from '../../../components/common/MaterialIcon'
 import {
   DEFAULT_DELIVERY_STEP,
@@ -23,6 +25,7 @@ import AdminMobileOverlayShell from '../components/AdminMobileOverlayShell'
 import CreateOrderMobileView from '../mobile/CreateOrderMobileView'
 
 function CreateOrderPage() {
+  const { confirm } = useDialog()
   const [deliveryData, setDeliveryData] = useState(DEFAULT_DELIVERY_STEP)
   const [products, setProducts] = useState([])
   const [items, setItems] = useState([])
@@ -80,7 +83,7 @@ function CreateOrderPage() {
     try {
       const customerName = deliveryData.customerName.trim()
       const customerPhone = deliveryData.customerPhone.trim()
-      const result = await submitCustomRequestApi({
+      const orderPayload = {
         withQr: false,
         source: 'admin',
         customerName,
@@ -105,7 +108,23 @@ function CreateOrderPage() {
         codAmount: totals.codAmount,
         paidAmount: totals.deposit,
         paymentNote: money.paymentNote,
-      })
+      }
+      let result
+      try {
+        result = await submitCustomRequestApi(orderPayload)
+      } catch (stockError) {
+        if (stockError.code !== 'NEGATIVE_STOCK_CONFIRMATION_REQUIRED') throw stockError
+        setIsSubmitting(false)
+        const approved = await confirm({
+          title: 'Xác nhận đơn hàng âm kho',
+          message: stockConfirmationMessage(stockError.shortages),
+          confirmLabel: 'Vẫn tạo đơn',
+          cancelLabel: 'Kiểm tra lại',
+        })
+        if (!approved) return
+        setIsSubmitting(true)
+        result = await submitCustomRequestApi({ ...orderPayload, confirmNegativeStock: true })
+      }
       setSavedRequest(result.data)
     } catch (err) {
       setError(err.message || 'Không thể lên đơn. Vui lòng thử lại.')

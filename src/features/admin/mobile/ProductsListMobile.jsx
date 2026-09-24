@@ -208,6 +208,8 @@ function ProductsListMobile({
                     <span className="font-mono">{product.code || '—'}</span>
                     {' · '}
                     <span className="font-semibold text-primary">{formatMoney(product.sellPrice)}</span>
+                    {' · '}
+                    <span className={Number(product.stock) < 0 ? 'font-semibold text-red-600' : ''}>Tồn kho: {product.stock ?? 0}</span>
                     {!product.active ? ' · Đã ẩn' : ''}
                   </p>
                 </div>

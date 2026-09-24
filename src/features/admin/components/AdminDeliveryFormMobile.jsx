@@ -1,8 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import MaterialIcon from '../../../components/common/MaterialIcon'
 import { SHIPPING_PROVIDERS } from '../../../constants/customRequestDefaults'
-import { dmYToIso, isoToDmY, maskDmYInput } from '../../../utils/dateFormat'
 import { normalizeTrackingCode } from '../../../utils/trackingCode'
+import DateDmYField from './DateDmYField'
 
 const fieldClassName =
   'w-full rounded-lg border border-outline-variant/25 px-3 py-2.5 text-[15px] text-on-surface outline-none transition placeholder:text-outline/55 focus:border-primary/40 focus:ring-2 focus:ring-primary/20'
@@ -12,79 +10,6 @@ function makeFieldChange(onChange) {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
     onChange(field, value)
   }
-}
-
-/** Hiển thị dd/mm/yyyy, lưu nội bộ yyyy-mm-dd */
-function DateDmYField({ value, onChange, className }) {
-  const pickerId = useId()
-  const pickerRef = useRef(null)
-  const [text, setText] = useState(() => isoToDmY(value))
-
-  useEffect(() => {
-    setText(isoToDmY(value))
-  }, [value])
-
-  function commitText(nextText) {
-    const trimmed = nextText.trim()
-    if (!trimmed) {
-      onChange('')
-      setText('')
-      return
-    }
-    const iso = dmYToIso(trimmed)
-    if (iso) {
-      onChange(iso)
-      setText(isoToDmY(iso))
-      return
-    }
-    setText(isoToDmY(value))
-  }
-
-  return (
-    <div className="relative min-w-0">
-      <input
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        placeholder="dd/mm/yyyy"
-        value={text}
-        onChange={(event) => {
-          const masked = maskDmYInput(event.target.value)
-          setText(masked)
-          const iso = dmYToIso(masked)
-          if (iso) onChange(iso)
-        }}
-        onBlur={() => commitText(text)}
-        className={className}
-      />
-      <input
-        ref={pickerRef}
-        id={pickerId}
-        type="date"
-        value={value || ''}
-        onChange={(event) => {
-          onChange(event.target.value)
-          setText(isoToDmY(event.target.value))
-        }}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-      />
-      <button
-        type="button"
-        className="absolute inset-y-0 right-0 z-10 flex w-8 items-center justify-center text-outline"
-        aria-label="Chọn ngày"
-        onClick={() => {
-          const el = pickerRef.current
-          if (!el) return
-          if (typeof el.showPicker === 'function') el.showPicker()
-          else el.click()
-        }}
-      >
-        <MaterialIcon name="calendar_month" className="text-[1.05rem]" />
-      </button>
-    </div>
-  )
 }
 
 export function OrderCustomerFieldsMobile({ values, onChange }) {

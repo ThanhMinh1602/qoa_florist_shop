@@ -210,6 +210,7 @@ function ProductDetailPage() {
         sellPrice: Number(snapshot.sellPrice) || 0,
         otherCost: Number(snapshot.otherCost) || 0,
         soldCount: Math.max(0, Math.floor(Number(snapshot.soldCount) || 0)),
+        stock: Number.isFinite(Number(snapshot.stock)) ? Math.trunc(Number(snapshot.stock)) : 0,
       }
 
       if (isCreate) {
